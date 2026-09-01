@@ -1,37 +1,22 @@
 # Cinq tickets backend
 
-Repo `lcc-booking-manager`, branche `main`. Les deux premiers bloquent toute l'app.
+Repo `lcc-booking-manager`, branche `main`.
+
+**Mise à jour du 1er septembre, après relevé du code : il n'en reste que trois, et un seul est bloquant.** T1 et T5 étaient des faux problèmes — détail ci-dessous.
 
 ---
 
-## T1 — `POST /api/auth/token` (bloquant)
+## T1 — ~~`POST /api/auth/token`~~ **ANNULÉ, rien à faire**
 
-Le web authentifie par cookie de session ; une app native a besoin d'un jeton qu'elle range dans le Keychain.
+Je supposais que le backend n'authentifiait que par cookie de session. C'est faux : `POST /api/auth/login` renvoie déjà un JWT, `POST /api/sub-accounts/login` fait de même pour les sous-comptes en incluant les permissions, `GET /api/auth/verify` valide un jeton, et `POST /api/auth/refresh-faceid` en délivre un de 90 jours pour la reconnexion biométrique.
 
-L'infrastructure JWT existe déjà : `routes/chat_routes.js` vérifie `Bearer` avec `jsonwebtoken` et `process.env.JWT_SECRET`, et `sub-accounts-middleware.js` expose `authenticateAny`. Il manque la route d'émission.
+L'app web Capacitor fait déjà tout ce dont l'app iOS a besoin, Face ID compris.
 
-**Requête** `{ email, password }`
-
-**Réponse 200**
-```json
-{
-  "token": "<jwt>",
-  "expires_in": 2592000,
-  "user": { "id": "...", "email": "...", "name": "Marc Dubois", "plan": "agence" },
-  "is_sub_account": false,
-  "permissions": null
-}
-```
-
-Pour un sous-compte : `is_sub_account: true` et `permissions` = l'objet complet des colonnes `can_*` (voir T4/T5). L'app en dérive sa barre d'onglets ; elle ne doit pas avoir à faire un second appel pour savoir quoi afficher.
-
-**Réponse 401** `{ "error": "Identifiants incorrects" }` — message affichable tel quel.
-
-Durée de vie longue (30 jours) plutôt qu'un refresh token : l'app est mono-utilisateur et le Keychain est protégé par la biométrie.
+**Aucune ligne de Node à écrire.** Le flux à reproduire côté Swift est décrit dans `05-auth-implementation.md`.
 
 ---
 
-## T2 — `GET /api/aujourdhui/etats` (bloquant)
+## T2 — `GET /api/aujourdhui/etats` (le seul ticket bloquant)
 
 Vue unifiée du jour. Cette route existait sur la branche `refonte-modules` puis a été perdue au reset ; elle est à réécrire proprement.
 
@@ -89,15 +74,29 @@ L'app sépare Propriétaires et Séjours en deux sous-écrans. Or `can_view_invo
 - `can_view_invoices` garde les factures séjour et les cautions.
 - `can_view_owners` (nouvelle colonne `sub_account_permissions`, défaut `FALSE`) couvre les propriétaires, contrats, factures propriétaires, attestation fiscale, débours.
 
-À ajouter aussi dans l'écran Équipe & accès et dans le payload de T1.
+Trois endroits à toucher, pas un :
+1. la colonne dans `sub_account_permissions` ;
+2. la table `permissionMapping` de `sub-accounts-middleware.js` — sans entrée là, `requirePermission` cherche une colonne qui n'existe pas et refuse tout ;
+3. l'écran Équipe & accès, pour pouvoir cocher le droit.
+
+Le droit arrive ensuite tout seul dans `subAccount.permissions` à la connexion.
 
 ---
 
-## T5 — Trancher `can_view_calendar` vs `can_view_reservations`
+## T5 — ~~`can_view_calendar` vs `can_view_reservations`~~ **FAUX PROBLÈME**
 
-Le même droit porte deux noms selon le fichier :
+Ce n'est pas une incohérence, c'est une traduction volontaire. `sub-accounts-middleware.js` porte une table `permissionMapping` qui convertit les noms du front vers les colonnes de la base :
 
-- `can_view_calendar` — `CLAUDE.md`, `enable-message-permissions.js`, `list-subaccounts.js`
-- `can_view_reservations` — `public/js/bh-layout.js`, `public/js/sub-account-guard.js`
+```
+can_view_reservations  → can_view_calendar
+can_manage_cleaning    → can_assign_cleaning
+can_view_conversations → can_view_messages
+can_mark_read          → can_view_messages
+can_generate_booking_messages → can_send_messages
+```
 
-Vérifier la colonne réelle en base, garder ce nom, et corriger les autres. L'app dérive sa barre d'onglets de ces clés : une faute de frappe masque un onglet entier sans erreur visible.
+`can_view_calendar` est la colonne réelle ; `can_view_reservations` est l'alias côté front. Les deux sont corrects.
+
+**Conséquence pour l'app :** elle reçoit les **noms de colonnes** dans `subAccount.permissions`, donc elle doit tester `can_view_calendar`, pas `can_view_reservations`. La correspondance de la barre d'onglets est corrigée dans `02-architecture.md`.
+
+Rien à faire côté serveur.

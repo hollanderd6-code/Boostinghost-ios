@@ -1,6 +1,6 @@
 # 01 — Connexion
 
-Maquette : `8b`. Route : T1.
+Maquette : `8b`. Routes : elles existent déjà — voir `05-auth-implementation.md`.
 
 ## Structure
 
@@ -19,11 +19,14 @@ Les halos de fond sont plus larges qu'ailleurs (ø400 / ø380) : l'écran est vi
 
 ## Comportement
 
+- **Deux appels en séquence**, comme le web : `/api/auth/login`, puis `/api/sub-accounts/login` si le premier échoue. L'utilisateur ne sait pas s'il est un compte principal ou un sous-compte, et n'a pas à le savoir. Un seul indicateur d'activité pour les deux.
 - Le bouton reste inactif tant que les deux champs ne sont pas remplis ; il ne montre pas d'erreur avant le premier envoi.
 - Pendant l'appel, le libellé du bouton devient un indicateur d'activité — pas de superposition modale.
-- `401` → message sous la carte, en `#A8452A` 13.5, et le champ mot de passe se vide. Pas d'alerte système.
+- Les deux échouent → message sous la carte, en `#A8452A` 13.5, et le champ mot de passe se vide. Pas d'alerte système. Reprendre le texte du web : « Email ou mot de passe incorrect. »
 - Réseau indisponible → « Pas de connexion » au même endroit, le mot de passe est conservé.
-- « Utiliser Face ID » n'apparaît qu'à partir de la seconde ouverture, quand un jeton existe au Keychain.
+- « Utiliser Face ID » n'apparaît qu'à partir de la seconde ouverture, quand un jeton existe au Keychain. Si la biométrie réussit mais que `verify` répond 401, le jeton est expiré : effacer, masquer le bouton, et dire « Votre session a expiré. Reconnectez-vous pour réactiver Face ID. »
 - Succès : jeton au Keychain, `AuthStore` rempli, transition vers `MainTabView` en fondu.
 
-Un sous-compte utilise le même écran. C'est le `permissions` de la réponse qui décide ensuite de la barre d'onglets.
+Un sous-compte utilise le même écran. C'est `subAccount.permissions` — des noms de colonnes, pas les alias du front — qui décide ensuite de la barre d'onglets.
+
+Le web offre aussi un lien de connexion par mail (`/api/auth/magic-link`). La maquette ne le montre pas ; `À TRANCHER`.

@@ -45,23 +45,42 @@ Un dossier par écran, avec sa `View`, son `ViewModel` (`@Observable`) et ses so
 
 ## Authentification
 
-1. Au lancement, `KeychainStore` cherche le jeton.
-2. Absent → écran de connexion. Présent → `MainTabView`, et une requête de contrôle en tâche de fond.
-3. `POST /api/auth/token` (T1) renvoie jeton, `is_sub_account` et `permissions`. Le jeton va au Keychain avec `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, le reste dans `AuthStore`.
-4. Toute requête porte `Authorization: Bearer <token>`.
-5. Un `401` vide le Keychain et ramène à la connexion, sans alerte : l'écran de connexion est le message.
-6. Face ID / Touch ID protège la relecture du jeton à partir de la seconde ouverture (`LocalAuthentication`). Un échec biométrique ne déconnecte pas, il redemande le mot de passe.
+**Voir `05-auth-implementation.md`** — les routes existent toutes, il n'y a rien à construire côté serveur. En résumé :
+
+1. Deux appels en séquence à la connexion : `/api/auth/login`, puis `/api/sub-accounts/login` en cas d'échec. Les permissions arrivent dans la seconde réponse.
+2. `POST /api/auth/refresh-faceid` juste après, pour obtenir un jeton de 90 jours au lieu de 7. C'est celui-là qu'on garde au Keychain (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`).
+3. Toute requête porte `Authorization: Bearer <token>`.
+4. Au lancement : `GET /api/auth/verify`. **Ne purger le Keychain que sur un 401** — un 404, un 5xx ou un démarrage à froid de Render ne doit pas déconnecter une session valide.
+5. Face ID **avant** d'entrer, jamais après. Un échec biométrique ne déconnecte pas, il redemande le mot de passe.
 
 ## Barre d'onglets dérivée des droits
 
 Un compte principal voit les quatre onglets. Un sous-compte ne voit que ceux dont il a le droit :
 
+Les clés à tester sont les **noms de colonnes**, tels qu'ils arrivent dans `subAccount.permissions` — pas les alias du front (voir T5) :
+
 ```
-Aujourd'hui  can_view_reservations   (cf. T5)
-Calendrier   can_view_reservations
+Aujourd'hui  can_view_calendar
+Calendrier   can_view_calendar
 Messages     can_view_messages
 Gestion      can_view_properties | can_view_cleaning | can_view_owners | can_view_invoices
 ```
+
+Le jeu complet des colonnes existantes, relevé dans `permissionMapping` :
+
+```
+can_view_calendar        can_view_messages        can_send_messages
+can_delete_messages      can_view_cleaning        can_assign_cleaning
+can_view_properties      can_edit_properties      can_delete_properties
+can_view_deposits        can_manage_deposits      can_view_invoices
+can_manage_invoices      can_view_payments        can_manage_payments
+can_view_pricing         can_manage_pricing       can_view_reporting
+can_view_debours         can_manage_debours       can_view_smart_locks
+can_manage_smart_locks   can_view_welcome_book    can_view_templates
+can_manage_templates     can_view_contracts
+```
+
+Un compte principal n'a **pas** d'objet de permissions : `permissions == nil` signifie tout autorisé. Ne pas confondre avec un objet vide, qui signifierait l'inverse.
 
 Gestion n'affiche que les entrées autorisées ; si une seule l'est, le tap ouvre directement le sous-écran au lieu du sommaire.
 
