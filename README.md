@@ -17,13 +17,14 @@ Maquettes : `App iOS - Aujourd'hui.dc.html` (10 écrans, ids 1a → 9b) et `Arch
 
 ## Ordre de travail
 
-1. `00-backend-tickets.md` — les tickets serveur. **Il n'en reste qu'un de bloquant : T2.** T1 et T5 étaient des faux problèmes, le code les résolvait déjà.
+1. `00-backend-tickets.md` — les tickets serveur. T1 et T5 étaient des faux problèmes. **T2 est écrit** : `T2-aujourdhui-routes.js` + `06-ticket-T2.md`. Restent T3 et T4, tous deux petits.
 2. `01-design-tokens.md` — couleurs, type, matériaux, symboles, contraste.
 3. `02-architecture.md` — structure Xcode, auth, Keychain, barre dérivée des droits.
 4. `03-api-contracts.md` — les routes du cœur de l'app (auth, messages, reporting, logements).
 5. `04-routes-relevees.md` — les routes des écrans Séjours, Propriétaires, Contrats et Ménage, plus l'écriture de la fiche logement. **Contient une correction importante : le sens de la signature de contrat.**
 6. `05-auth-implementation.md` — la connexion, le Keychain et Face ID. Tout existe côté serveur.
-7. `screens/` — un fichier par écran, dans l'ordre d'usage.
+7. `06-ticket-T2.md` + `T2-aujourdhui-routes.js` — la route du jour, code compris. **Va dans le dépôt backend, pas ici.**
+8. `screens/` — un fichier par écran, dans l'ordre d'usage.
 
 ## Règle de fidélité
 

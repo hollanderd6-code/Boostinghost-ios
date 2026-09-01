@@ -1,6 +1,6 @@
 # 02 — Aujourd'hui
 
-Maquette : `1a`. Route : T2, un seul appel.
+Maquette : `1a`. Routes : `GET /api/aujourdhui/etats` (code fourni, voir `06-ticket-T2.md`) **plus** `GET /api/cleaning/assignments` pour la section Ménage — deux appels en parallèle.
 
 ## Structure
 
@@ -16,12 +16,14 @@ Maquette : `1a`. Route : T2, un seul appel.
 3. **« À TRAITER MAINTENANT »** — intertitre, puis une carte par réservation bloquée : bordure terracotta, filet vertical 4px en dégradé `#C4552F → #A8452A` à gauche, nom 18/semibold, ligne « logement · heure · N nuits », badge plateforme en haut à droite. Les motifs de blocage en pastilles (« Fiche police non signée », « Infos bloquées »). Deux actions : la principale pleine largeur en vert, la secondaire « Écrire » en verre.
 4. **« ARRIVÉES »** — une carte par arrivée, sans filet ni bordure colorée. Pastilles vertes pour ce qui est fait : `checkmark.circle` « Fiche signée », `key.fill` « Codes envoyés ».
 5. **« DÉPARTS »** — même forme, avec l'heure de départ. **Cette section est vide si `departure_time` est absent**, d'où l'exigence de T2.
-6. **« MÉNAGES DU JOUR »** — une ligne par ménage : logement, intervenante, créneau. Tap → écran 07.
+6. **« MÉNAGES DU JOUR »** — une ligne par ménage : logement, intervenante, créneau. Tap → écran 07. Source : `GET /api/cleaning/assignments`, appel séparé. La section n'apparaît qu'une fois cet appel revenu ; elle ne bloque pas le reste de l'écran.
 
 **Barre d'onglets flottante**, onglet Aujourd'hui actif.
 
 ## Comportement
 
 - Pull-to-refresh rappelle T2.
-- Le tap sur une carte d'arrivée ouvre la réservation ; « Écrire » ouvre directement le fil de conversation.
+- Le tap sur une carte d'arrivée ouvre la réservation ; « Écrire » ouvre directement le fil de conversation — sauf si `conversation_id` est `null`, auquel cas le bouton propose de créer la conversation.
+
+Les motifs de `blocking` renvoyés par la route sont pour l'instant : `pas_de_conversation`, `ia_a_passe_la_main`, `message_non_lu`, `code_acces_manquant`. Les pastilles « Fiche police non signée » et « Infos bloquées » de la maquette demandent des états du flux `checkin.html` qui n'ont pas encore été relevés — à ne pas afficher avant que la route les renvoie.
 - Ordre des sections : à traiter, arrivées, départs, ménages. Une section sans contenu disparaît, elle n'affiche pas d'état vide — sauf si tout est vide, où l'écran montre une seule phrase centrée.

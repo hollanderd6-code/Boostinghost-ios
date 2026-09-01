@@ -16,7 +16,13 @@ L'app web Capacitor fait déjà tout ce dont l'app iOS a besoin, Face ID compris
 
 ---
 
-## T2 — `GET /api/aujourdhui/etats` (le seul ticket bloquant)
+## T2 — `GET /api/aujourdhui/etats` — **CODE ÉCRIT, prêt à déposer**
+
+Le fichier `T2-aujourdhui-routes.js` contient la route complète, et `06-ticket-T2.md` explique les trois causes du bug des sept arrivées. À déposer dans `routes/aujourdhui-routes.js` du dépôt backend.
+
+Ce qui suit est la spécification d'origine, conservée pour référence.
+
+### Spécification
 
 Vue unifiée du jour. Cette route existait sur la branche `refonte-modules` puis a été perdue au reset ; elle est à réécrire proprement.
 
