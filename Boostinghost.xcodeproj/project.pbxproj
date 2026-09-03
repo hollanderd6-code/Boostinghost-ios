@@ -14,6 +14,9 @@
 		56A0A44F30497C07001E71EE /* CalendarNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A44630497C06001E71EE /* CalendarNavBar.swift */; };
 		56A0A45230497C47001E71EE /* DayPrice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45030497C47001E71EE /* DayPrice.swift */; };
 		56A0A45330497C47001E71EE /* Reservation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45130497C47001E71EE /* Reservation.swift */; };
+		56A0A4573049D523001E71EE /* AccountViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A4553049D523001E71EE /* AccountViewModel.swift */; };
+		56A0A4583049D523001E71EE /* AccountModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A4543049D523001E71EE /* AccountModels.swift */; };
+		56A0A4593049D523001E71EE /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A4563049D523001E71EE /* SubscriptionView.swift */; };
 		AB0000000000000000000001 /* BoostinghostApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000102 /* BoostinghostApp.swift */; };
 		AB0000000000000000000002 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000103 /* APIClient.swift */; };
 		AB0000000000000000000003 /* AuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000104 /* AuthStore.swift */; };
@@ -54,6 +57,8 @@
 		AB0000000000000000000032 /* ManageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000141 /* ManageModels.swift */; };
 		AB0000000000000000000033 /* AccountSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000142 /* AccountSheet.swift */; };
 		AB0000000000000000000034 /* AccountSwitcherSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000143 /* AccountSwitcherSheet.swift */; };
+		AB0000000000000000000035 /* Reporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000144 /* Reporting.swift */; };
+		AB0000000000000000000036 /* RevenusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000145 /* RevenusView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +69,9 @@
 		56A0A44A30497C06001E71EE /* TimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineView.swift; sourceTree = "<group>"; };
 		56A0A45030497C47001E71EE /* DayPrice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPrice.swift; sourceTree = "<group>"; };
 		56A0A45130497C47001E71EE /* Reservation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reservation.swift; sourceTree = "<group>"; };
+		56A0A4543049D523001E71EE /* AccountModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountModels.swift; sourceTree = "<group>"; };
+		56A0A4553049D523001E71EE /* AccountViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountViewModel.swift; sourceTree = "<group>"; };
+		56A0A4563049D523001E71EE /* SubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000101 /* Boostinghost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Boostinghost.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB0000000000000000000102 /* BoostinghostApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostinghostApp.swift; sourceTree = "<group>"; };
 		AB0000000000000000000103 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -105,6 +113,8 @@
 		AB0000000000000000000141 /* ManageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageModels.swift; sourceTree = "<group>"; };
 		AB0000000000000000000142 /* AccountSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000143 /* AccountSwitcherSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSwitcherSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000144 /* Reporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reporting.swift; sourceTree = "<group>"; };
+		AB0000000000000000000145 /* RevenusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenusView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -191,6 +201,7 @@
 				56A0A44830497C06001E71EE /* CalendarViewModel.swift */,
 				56A0A44930497C06001E71EE /* MonthGridView.swift */,
 				56A0A44A30497C06001E71EE /* TimelineView.swift */,
+				AB0000000000000000000145 /* RevenusView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -223,6 +234,7 @@
 				AB000000000000000000013A /* Property.swift */,
 				56A0A45030497C47001E71EE /* DayPrice.swift */,
 				56A0A45130497C47001E71EE /* Reservation.swift */,
+				AB0000000000000000000144 /* Reporting.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -280,6 +292,9 @@
 			children = (
 				AB0000000000000000000142 /* AccountSheet.swift */,
 				AB0000000000000000000143 /* AccountSwitcherSheet.swift */,
+				56A0A4543049D523001E71EE /* AccountModels.swift */,
+				56A0A4553049D523001E71EE /* AccountViewModel.swift */,
+				56A0A4563049D523001E71EE /* SubscriptionView.swift */,
 			);
 			path = Account;
 			sourceTree = "<group>";
@@ -397,9 +412,14 @@
 				AB000000000000000000002F /* CleaningView.swift in Sources */,
 				AB0000000000000000000030 /* OwnersView.swift in Sources */,
 				AB0000000000000000000031 /* StaysView.swift in Sources */,
+				56A0A4573049D523001E71EE /* AccountViewModel.swift in Sources */,
+				56A0A4583049D523001E71EE /* AccountModels.swift in Sources */,
+				56A0A4593049D523001E71EE /* SubscriptionView.swift in Sources */,
 				AB0000000000000000000032 /* ManageModels.swift in Sources */,
 				AB0000000000000000000033 /* AccountSheet.swift in Sources */,
 				AB0000000000000000000034 /* AccountSwitcherSheet.swift in Sources */,
+				AB0000000000000000000035 /* Reporting.swift in Sources */,
+				AB0000000000000000000036 /* RevenusView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

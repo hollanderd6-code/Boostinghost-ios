@@ -33,6 +33,22 @@ struct Reservation: Decodable, Identifiable {
         return s == "block" || p == "block" || r == "block"
     }
 
+    // Five observed forms in prod — substring match after stripping spaces and underscores:
+    //   null/"guest_app" · "GUEST_APP"/"GUEST_APP" · "bhguest"/"bhguest"
+    //   "HOLD"/"bhguest_hold" · "Boostinghost Guest"/"guest_app"
+    var isBhGuest: Bool {
+        let p = Self.bhNorm(platform)
+        let s = Self.bhNorm(source)
+        return p.contains("bhguest") || p.contains("guestapp")
+            || s.contains("bhguest") || s.contains("guestapp")
+    }
+
+    private static func bhNorm(_ raw: String?) -> String {
+        (raw ?? "").lowercased()
+                   .replacingOccurrences(of: " ", with: "")
+                   .replacingOccurrences(of: "_", with: "")
+    }
+
     var startDayDate: Date? { Self.parseDay(startDate) }
     var endDayDate:   Date? { Self.parseDay(endDate) }
 

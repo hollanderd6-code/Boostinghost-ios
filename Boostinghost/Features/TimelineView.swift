@@ -4,7 +4,7 @@ import SwiftUI
 
 private let colWidth:   CGFloat = 46
 private let rowHeight:  CGFloat = 52
-private let labelWidth: CGFloat = 74
+private let labelWidth: CGFloat = 88
 private let dayHeaderH: CGFloat = 44
 private let barHeight:  CGFloat = 36
 private let barRadius:  CGFloat = 11
@@ -34,15 +34,32 @@ private let tlCal: Calendar = {
 
 // MARK: - Design-token colors
 
-// rgba(20,32,27,.06) — séparateur de ligne
-private let tlSeparator = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.06)
+// rgba(20,32,27,.07) — fond de mise en évidence (ligne ou colonne)
+private let tlHighlight = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.07)
+
+// rgba(20,32,27,.05) — filet vertical entre colonnes de jour
+private let tlColSep    = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.05)
+// rgba(20,32,27,.08) — filet vertical dim→lun (frontière de semaine)
+private let tlWeekSep   = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.08)
+// rgba(20,32,27,.06) — filet horizontal entre lignes de logements
+private let tlRowSep    = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.06)
 // rgba(201,161,91,.07) — fond weekend
 private let tlWeekend   = Color(red: 201/255, green: 161/255, blue: 91/255).opacity(0.07)
+
+// MARK: - Mise en évidence (ligne ou colonne, une seule à la fois)
+
+private enum TimelineHighlight: Equatable {
+    case none
+    case row(String)   // propertyId
+    case col(Int)      // offset depuis le 1er du mois
+}
 
 // MARK: - Vue principale
 
 struct TimelineView: View {
     var vm: CalendarViewModel
+
+    @State private var highlight: TimelineHighlight = .none
 
     private var visibleProperties: [PropertySummary] {
         switch vm.displayMode {
@@ -73,23 +90,30 @@ struct TimelineView: View {
 
     private var fixedLabelColumn: some View {
         VStack(spacing: 0) {
-            Color.clear.frame(height: dayHeaderH)
+            Color.clear.frame(width: labelWidth, height: dayHeaderH)
             ForEach(visibleProperties) { prop in
                 Text(prop.displayName)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.bhEncre)
                     .lineLimit(1)
+                    .truncationMode(.tail)
                     .padding(.leading, 16)
                     .padding(.trailing, 6)
                     .frame(width: labelWidth, height: rowHeight, alignment: .leading)
+                    .background { if highlight == .row(prop.id) { tlHighlight } }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        highlight = highlight == .row(prop.id) ? .none : .row(prop.id)
+                    }
                     .overlay(alignment: .bottom) { thinSep }
             }
         }
+        .frame(width: labelWidth)
         .background {
             HStack {
                 Spacer()
                 Rectangle()
-                    .fill(tlSeparator)
+                    .fill(tlRowSep)
                     .frame(width: 0.5)
             }
         }
@@ -106,9 +130,11 @@ struct TimelineView: View {
                     HStack(spacing: 0) {
                         ForEach(0..<vm.daysInMonth, id: \.self) { offset in
                             DayColumnHeader(
-                                date: vm.dateAtOffset(offset),
-                                colWidth: colWidth,
-                                height: dayHeaderH
+                                date:          vm.dateAtOffset(offset),
+                                colWidth:      colWidth,
+                                height:        dayHeaderH,
+                                isHighlighted: highlight == .col(offset),
+                                onTap:         { highlight = highlight == .col(offset) ? .none : .col(offset) }
                             )
                             .id("col-\(offset)")
                         }
@@ -117,39 +143,43 @@ struct TimelineView: View {
                     // Lignes des logements
                     ForEach(visibleProperties) { prop in
                         TimelineRow(
-                            reservations: vm.monthReservations.filter { $0.propertyId == prop.id },
-                            daysInMonth:  vm.daysInMonth,
-                            firstDay:     vm.firstDayOfMonth
+                            reservations:      vm.monthReservations.filter { $0.propertyId == prop.id },
+                            daysInMonth:       vm.daysInMonth,
+                            firstDay:          vm.firstDayOfMonth,
+                            isRowHighlighted:  highlight == .row(prop.id),
+                            highlightedColumn: { if case .col(let c) = highlight { return c }; return nil }()
                         )
                     }
                 }
                 .frame(width: CGFloat(vm.daysInMonth) * colWidth)
-                .onAppear {
-                    // Scroll to today on first display, centered in the visible area
-                    if let offset = vm.todayOffset {
-                        proxy.scrollTo("col-\(offset)", anchor: .center)
-                    }
+                .task {
+                    guard let offset = vm.todayOffset else { return }
+                    // Yield once so SwiftUI finishes its first layout pass before scrolling.
+                    try? await Task.sleep(for: .milliseconds(1))
+                    proxy.scrollTo("col-\(offset)", anchor: .leading)
                 }
             }
         }
     }
 
     private var thinSep: some View {
-        Rectangle().fill(tlSeparator).frame(height: 0.5)
+        Rectangle().fill(tlRowSep).frame(height: 1.0)
     }
 }
 
 // MARK: - En-tête de colonne de jour
 
 private struct DayColumnHeader: View {
-    let date:     Date
-    let colWidth: CGFloat
-    let height:   CGFloat
+    let date:          Date
+    let colWidth:      CGFloat
+    let height:        CGFloat
+    let isHighlighted: Bool
+    let onTap:         () -> Void
 
-    // File-scope formatters — no allocation per render
     private var dayNumber:  String { tlDayFmt.string(from: date) }
     private var weekLetter: String { tlWeekFmt.string(from: date).uppercased() }
     private var isToday:    Bool   { Calendar.current.isDateInToday(date) }
+    private var isSunday:   Bool   { tlCal.component(.weekday, from: date) == 1 }
 
     var body: some View {
         VStack(spacing: 2) {
@@ -161,17 +191,24 @@ private struct DayColumnHeader: View {
                 .foregroundStyle(isToday ? Color.bhVert : Color.bhEncre)
         }
         .frame(width: colWidth, height: height)
+        .background { if isHighlighted { tlHighlight } }
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
         .overlay(alignment: .bottom) {
             if isToday {
-                // Liseré vert 2.5 px (token) sous le jour courant
                 Rectangle()
                     .fill(Color.bhVert)
                     .frame(height: 2.5)
             } else {
                 Rectangle()
-                    .fill(tlSeparator)
+                    .fill(tlRowSep)
                     .frame(height: 0.5)
             }
+        }
+        .overlay(alignment: .trailing) {
+            Rectangle()
+                .fill(isSunday ? tlWeekSep : tlColSep)
+                .frame(width: isSunday ? 1.0 : 0.5)
         }
     }
 }
@@ -179,26 +216,37 @@ private struct DayColumnHeader: View {
 // MARK: - Ligne de logement
 
 private struct TimelineRow: View {
-    let reservations: [Reservation]
-    let daysInMonth:  Int
-    let firstDay:     Date
+    let reservations:      [Reservation]
+    let daysInMonth:       Int
+    let firstDay:          Date
+    let isRowHighlighted:  Bool
+    let highlightedColumn: Int?
 
     private var totalWidth: CGFloat { CGFloat(daysInMonth) * colWidth }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // Fond : teinte weekend + séparateurs verticaux
+            // Fond : teinte weekend + mise en évidence de colonne + séparateurs
             HStack(spacing: 0) {
                 ForEach(0..<daysInMonth, id: \.self) { offset in
                     Rectangle()
                         .fill(isWeekend(offset: offset) ? tlWeekend : Color.clear)
                         .frame(width: colWidth)
+                        .overlay { if highlightedColumn == offset { tlHighlight } }
                         .overlay(alignment: .trailing) {
+                            let sun = isSunday(offset: offset)
                             Rectangle()
-                                .fill(tlSeparator)
-                                .frame(width: 0.3)
+                                .fill(sun ? tlWeekSep : tlColSep)
+                                .frame(width: sun ? 1.0 : 0.5)
                         }
                 }
+            }
+
+            // Mise en évidence de ligne (entre fond et barres, ne masque pas)
+            if isRowHighlighted {
+                tlHighlight
+                    .frame(width: totalWidth, height: rowHeight)
+                    .allowsHitTesting(false)
             }
 
             // Barres de séjour et de blocage
@@ -212,15 +260,19 @@ private struct TimelineRow: View {
         .frame(width: totalWidth, height: rowHeight)
         .clipped()
         .overlay(alignment: .bottom) {
-            Rectangle().fill(tlSeparator).frame(height: 0.5)
+            Rectangle().fill(tlRowSep).frame(height: 1.0)
         }
     }
 
-    // File-scope tlCal — no Calendar allocation per call
     private func isWeekend(offset: Int) -> Bool {
         guard let d = tlCal.date(byAdding: .day, value: offset, to: firstDay) else { return false }
         let weekday = tlCal.component(.weekday, from: d)
-        return weekday == 1 || weekday == 7   // dimanche ou samedi
+        return weekday == 1 || weekday == 7
+    }
+
+    private func isSunday(offset: Int) -> Bool {
+        guard let d = tlCal.date(byAdding: .day, value: offset, to: firstDay) else { return false }
+        return tlCal.component(.weekday, from: d) == 1
     }
 
     private func barGeometry(for r: Reservation) -> (x: CGFloat, width: CGFloat)? {
@@ -251,12 +303,14 @@ private struct ReservationBar: View {
                     height: barHeight,
                     radius: barRadius
                 )
+            } else if reservation.isBhGuest {
+                RoundedRectangle(cornerRadius: barRadius, style: .continuous)
+                    .fill(Color.bhTerracottaFond)
+                    .overlay(alignment: .leading) { guestLabel }
             } else {
                 RoundedRectangle(cornerRadius: barRadius, style: .continuous)
                     .fill(Color.platform(reservation.platform))
-                    .overlay(alignment: .leading) {
-                        guestLabel
-                    }
+                    .overlay(alignment: .leading) { guestLabel }
             }
         }
         .frame(width: width, height: barHeight)
@@ -265,17 +319,35 @@ private struct ReservationBar: View {
     @ViewBuilder
     private var guestLabel: some View {
         HStack(spacing: 3) {
-            PlatformMiniChip(platform: reservation.platform)
+            if reservation.isBhGuest {
+                BhGuestChip()
+            } else {
+                PlatformMiniChip(platform: reservation.platform)
+            }
 
             if let name = reservation.guestName, width > 52 {
                 Text(name)
                     .font(.system(size: 12.5, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(reservation.isBhGuest ? Color.bhTerracotta : .white)
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
         }
         .padding(.leading, 4)
+    }
+}
+
+// MARK: - Pastille BHGuest 16×16
+
+private struct BhGuestChip: View {
+    var body: some View {
+        ZStack {
+            Circle().fill(Color.bhTerracotta)
+            Text("b")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(.white)
+        }
+        .frame(width: 16, height: 16)
     }
 }
 

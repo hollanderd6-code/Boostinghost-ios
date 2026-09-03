@@ -42,6 +42,10 @@ final class CalendarViewModel {
     private(set) var properties:       [PropertySummary] = []
     private(set) var dayPrices:        [String: Double] = [:]
 
+    // MARK: Reporting (Vue Revenus)
+    private(set) var reportingState: LoadState          = .idle
+    private(set) var reportingData:  ReportingResponse?
+
     // Reservation index built once after load(): [propertyId → reservations sorted by start]
     private var reservationIndex: [String: [Reservation]] = [:]
 
@@ -243,6 +247,41 @@ final class CalendarViewModel {
     }
 
     func clearPricing() { dayPrices = [:] }
+
+    // MARK: Reporting
+
+    func loadReporting() async {
+        if case .loading = reportingState { return }
+        reportingState = .loading
+        reportingData  = nil
+
+        let parts = selectedMonthKey.split(separator: "-")
+        guard parts.count == 2,
+              let year  = Int(parts[0]),
+              let month = Int(parts[1]) else {
+            reportingState = .error("Mois invalide")
+            return
+        }
+        let propertyId: String?
+        if case .single(let id) = displayMode { propertyId = id } else { propertyId = nil }
+
+        do {
+            let url = Endpoint.reporting(year: year, month: month, propertyId: propertyId)
+            // Reporting is always agency-wide ("données de gestion").
+            reportingData  = try await APIClient.shared.get(url, agencyAll: true)
+            reportingState = .loaded
+        } catch is CancellationError {
+            // View disappeared — reset so the next appearance retries cleanly.
+            reportingState = .idle
+        } catch {
+            reportingState = .error("Impossible de charger les revenus")
+        }
+    }
+
+    func clearReporting() {
+        reportingState = .idle
+        reportingData  = nil
+    }
 
     func loadPricing(for propertyId: String) async {
         dayPrices = [:]

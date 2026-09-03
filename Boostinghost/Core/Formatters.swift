@@ -65,6 +65,22 @@ enum Formatters {
         return day(date)
     }
 
+    // MARK: - Full date with year  →  "mercredi 1 octobre 2026"
+
+    private static let dayWithYearFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale     = Locale(identifier: "fr_FR")
+        f.dateFormat = "EEEE d MMMM yyyy"
+        return f
+    }()
+
+    static func dayWithYear(_ isoDate: String) -> String {
+        guard let date = isoDateFormatter.date(from: String(isoDate.prefix(10))) else {
+            return isoDate
+        }
+        return dayWithYearFormatter.string(from: date)
+    }
+
     // MARK: - Short date for bande calendrier  →  "1"  "3"  etc.
 
     static func dayNumber(_ date: Date) -> String {

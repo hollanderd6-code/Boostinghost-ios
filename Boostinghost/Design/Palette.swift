@@ -44,9 +44,11 @@ extension Color {
     static let bhOccupe       = Color(hex: "#2E8B62")
     static let bhOccupeFonce  = Color(hex: "#1F6B4C")
     static let bhMentheFond   = Color(red: 46/255, green: 139/255, blue: 98/255).opacity(0.13)
-    static let bhTerracotta   = Color(hex: "#A8452A")
+    static let bhTerracotta     = Color(hex: "#A8452A")
     /// Bordure de carte urgente
-    static let bhTerracottaBd = Color(red: 255/255, green: 222/255, blue: 210/255).opacity(0.90)
+    static let bhTerracottaBd   = Color(red: 255/255, green: 222/255, blue: 210/255).opacity(0.90)
+    /// Fond de barre BHGuest — rgba(253,240,236,.72)
+    static let bhTerracottaFond = Color(red: 253/255, green: 240/255, blue: 236/255).opacity(0.72)
     /// Avertissement (texte)
     static let bhOr           = Color(hex: "#8A5B14")
     static let bhOrClair      = Color(hex: "#C9A15B")
@@ -64,29 +66,40 @@ extension Color {
     static let platformDirect  = Color(hex: "#0E3B2E")
     static let platformBloque  = Color(hex: "#9CA3AF")
 
+    /// Lowercase + strip spaces and underscores — same rule as Reservation.bhNorm.
+    private static func norm(_ raw: String?) -> String {
+        (raw ?? "").lowercased()
+                   .replacingOccurrences(of: " ", with: "")
+                   .replacingOccurrences(of: "_", with: "")
+    }
+
     /// Normalise les valeurs de plateforme renvoyées par le backend.
     static func platform(_ name: String?) -> Color {
-        switch name?.lowercased().trimmingCharacters(in: .whitespaces) {
-        case "airbnb":                        return .platformAirbnb
-        case "booking", "booking.com":        return .platformBooking
-        case "expedia":                       return .platformExpedia
-        case "vrbo":                          return .platformVrbo
-        case "direct", "manuel", "manual":    return .platformDirect
-        case "block", "blocked", "bloque":    return .platformBloque
-        default:                              return .platformBloque
+        let k = norm(name)
+        if k.contains("bhguest") || k.contains("guestapp") { return .bhTerracotta }
+        switch k {
+        case "airbnb":                          return .platformAirbnb
+        case "booking", "booking.com":          return .platformBooking
+        case "expedia":                         return .platformExpedia
+        case "vrbo":                            return .platformVrbo
+        case "direct", "manuel", "manual":      return .platformDirect
+        case "block", "blocked", "bloque":      return .platformBloque
+        default:                                return .platformBloque
         }
     }
 
     /// Libellé affiché (français, normalisé)
     static func platformLabel(_ name: String?) -> String {
-        switch name?.lowercased().trimmingCharacters(in: .whitespaces) {
-        case "airbnb":                        return "Airbnb"
-        case "booking", "booking.com":        return "Booking.com"
-        case "expedia":                       return "Expedia"
-        case "vrbo":                          return "Vrbo"
-        case "direct", "manuel", "manual":    return "Direct"
-        case "block", "blocked", "bloque":    return "Bloqué"
-        default:                              return name?.capitalized ?? "—"
+        let k = norm(name)
+        if k.contains("bhguest") || k.contains("guestapp") { return "BH Guest" }
+        switch k {
+        case "airbnb":                          return "Airbnb"
+        case "booking", "booking.com":          return "Booking.com"
+        case "expedia":                         return "Expedia"
+        case "vrbo":                            return "Vrbo"
+        case "direct", "manuel", "manual":      return "Direct"
+        case "block", "blocked", "bloque":      return "Bloqué"
+        default:                                return name?.capitalized ?? "—"
         }
     }
 }

@@ -58,6 +58,10 @@ struct Delegation: Decodable, Identifiable, Sendable {
     let email: String
     let propertyCount: Int?
     let acceptedAt: String?
+    // Server may include pending delegations; filter to accepted only via acceptedAt or status.
+    let status: String?
+
+    var isAccepted: Bool { acceptedAt != nil || status == "accepted" }
 }
 
 struct DelegationsResponse: Decodable {

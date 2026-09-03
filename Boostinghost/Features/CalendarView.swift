@@ -19,7 +19,13 @@ struct CalendarView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .refreshable { await vm.reload() }
+            .refreshable {
+                await vm.reload()
+                if tab == .revenus {
+                    vm.clearReporting()
+                    await vm.loadReporting()
+                }
+            }
         }
         .task {
             vm.agencyAll = authStore.agencyAll
@@ -69,14 +75,9 @@ struct CalendarView: View {
         }
     }
 
-    // MARK: Placeholder Revenus
+    // MARK: Revenus
 
     private var revenus: some View {
-        ContentUnavailableView(
-            "Revenus",
-            systemImage: "eurosign.circle",
-            description: Text("Vue Revenus — bientôt disponible")
-        )
-        .padding(.top, 60)
+        RevenusView(vm: vm)
     }
 }

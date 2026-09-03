@@ -31,15 +31,27 @@ enum Endpoint {
     static func sante(_ id: String) -> URL     { base.appending(path: "/api/properties/\(id)/sante") }
 
     // Reporting
-    static let reporting = base.appending(path: "/api/reporting")
+    static func reporting(year: Int, month: Int, propertyId: String? = nil) -> URL {
+        guard var c = URLComponents(url: base.appending(path: "/api/reporting"),
+                                    resolvingAgainstBaseURL: false) else { return base }
+        var items = [URLQueryItem(name: "year",  value: String(year)),
+                     URLQueryItem(name: "month", value: String(month))]
+        if let pid = propertyId { items.append(.init(name: "property_id", value: pid)) }
+        c.queryItems = items
+        return c.url ?? base
+    }
 
-    // Profile
-    static let userProfile        = base.appending(path: "/api/user/profile")
-    static let subscriptionStatus = base.appending(path: "/api/subscription/status")
+    // Profile & account
+    static let userProfile          = base.appending(path: "/api/user/profile")
+    static let subscriptionStatus   = base.appending(path: "/api/subscription/status")
+    static let subAccountsList      = base.appending(path: "/api/sub-accounts/list")
+    static let notificationSettings = base.appending(path: "/api/settings/notifications")
+    static let messageTemplates     = base.appending(path: "/api/message-templates")
 
     // Cleaning management
-    static let cleaners           = base.appending(path: "/api/cleaners")
-    static let cleaningChecklists = base.appending(path: "/api/cleaning/checklists")
+    static let cleaners            = base.appending(path: "/api/cleaners")
+    static let cleaningChecklists  = base.appending(path: "/api/cleaning/checklists")
+    static let cleaningTemplates   = base.appending(path: "/api/cleaning/templates")
     static func checklist(_ id: Int) -> URL    { base.appending(path: "/api/cleaning/checklists/\(id)") }
 
     // Owners / contracts

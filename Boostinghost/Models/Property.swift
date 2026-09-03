@@ -53,6 +53,10 @@ struct Property: Decodable, Identifiable {
     let welcomeBookUrl: String?       // "welcomeBookUrl" / "welcomeUrl"
     let autoResponsesEnabled: Bool?
 
+    // MARK: - Platform connectivity (for AccountSheet platform count)
+    let channexEnabled: Bool?         // OTA channel via Channex
+    let icalUrlsRaw: String?          // JSON-encoded array of iCal URLs (may be "[]" or null)
+
     // MARK: - Decoding
 
     private enum CodingKeys: String, CodingKey {
@@ -77,6 +81,9 @@ struct Property: Decodable, Identifiable {
         case accessCode, accessInstructions, wifiName, wifiPassword
         // Links
         case ownerId, welcomeBookUrl, welcomeUrl, autoResponsesEnabled
+        // Platform connectivity
+        case channexEnabled
+        case icalUrls
     }
 
     init(from decoder: Decoder) throws {
@@ -134,6 +141,9 @@ struct Property: Decodable, Identifiable {
         welcomeBookUrl     = (try? c.decodeIfPresent(String.self, forKey: .welcomeBookUrl))
                           ?? (try? c.decodeIfPresent(String.self, forKey: .welcomeUrl))
         autoResponsesEnabled = try? c.decodeIfPresent(Bool.self, forKey: .autoResponsesEnabled)
+
+        channexEnabled     = try? c.decodeIfPresent(Bool.self, forKey: .channexEnabled)
+        icalUrlsRaw        = try? c.decodeIfPresent(String.self, forKey: .icalUrls)
     }
 }
 
