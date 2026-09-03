@@ -118,7 +118,7 @@ Les maquettes emploient Material Symbols Rounded comme substituts.
 | error | `exclamationmark.triangle.fill` |
 | key | `key.fill` |
 | auto_awesome | `sparkles` |
-| cleaning_services | `spray.and.wipe` |
+| cleaning_services | `sparkles` |
 | login (arrivée) | `arrow.down.right.circle` |
 | logout (départ) | `arrow.up.right.circle` |
 | block | `nosign` |

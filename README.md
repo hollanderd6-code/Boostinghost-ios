@@ -24,7 +24,8 @@ Maquettes : `App iOS - Aujourd'hui.dc.html` (10 écrans, ids 1a → 9b) et `Arch
 5. `04-routes-relevees.md` — les routes des écrans Séjours, Propriétaires, Contrats et Ménage, plus l'écriture de la fiche logement. **Contient une correction importante : le sens de la signature de contrat.**
 6. `05-auth-implementation.md` — la connexion, le Keychain et Face ID. Tout existe côté serveur.
 7. `06-ticket-T2.md` + `T2-aujourdhui-routes.js` — la route du jour, code compris. **Va dans le dépôt backend, pas ici.**
-8. `screens/` — un fichier par écran, dans l'ordre d'usage.
+8. `07-ticket-changer-de-compte.md` — modale sélecteur de compte ; mécanisme des comptes délégants individuels **à relever dans `server.js` avant de spécifier l'écran**.
+9. `screens/` — un fichier par écran, dans l'ordre d'usage.
 
 ## Règle de fidélité
 

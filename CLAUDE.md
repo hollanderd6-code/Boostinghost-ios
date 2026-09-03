@@ -56,6 +56,18 @@ backend, pas devinés ; toute addition doit l'être aussi.
 **Un écran à la fois.** S'arrêter après chaque écran pour validation. Ne pas
 enchaîner sur le suivant sans accord.
 
+## Périmètre des données : Gestion vs Facturation
+
+**Les données de l'écran Gestion suivent le périmètre agence (`agency=all`)** :
+ménage, séjours/cautions, logements/groupes. Ces chiffres couvrent tous les
+logements gérés par le compte, y compris ceux des délégants.
+
+**Les données de facturation suivent le compte propre (sans `agency=all`)** :
+`GET /api/subscription/status` ne reçoit pas `agency=all`. Pour un compte
+agence, `propertiesUsed` vaut 0 même si 26 logements sont gérés — c'est juste
+(aucun logement en propre) mais incompréhensible en contexte agence. La règle :
+n'afficher le quota `propertiesUsed / propertiesLimit` que si `propertiesUsed > 0`.
+
 ## Pièges connus, déjà rencontrés
 
 Le backend **mélange camelCase et snake_case** dans ses réponses. Le front web
