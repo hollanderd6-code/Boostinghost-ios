@@ -146,6 +146,9 @@ struct ManageHubView: View {
                     .padding(.top, 40)
                 case .loaded:
                     entriesCard
+                    if !vm.diffusionAlertProperties.isEmpty {
+                        diffusionAlertCard
+                    }
                     shortcutsSection
                 }
             }
@@ -219,6 +222,51 @@ struct ManageHubView: View {
         case .owners:
             return nil
         }
+    }
+
+    // MARK: - Carte alerte diffusion (or)
+
+    private var diffusionAlertCard: some View {
+        let props = vm.diffusionAlertProperties
+        let n = props.count
+        return HStack(spacing: 0) {
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.bhOrClair, Color.bhOr],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: 4)
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 22,
+                        bottomLeadingRadius: 22,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: 0
+                    )
+                )
+
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 7) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.bhOr)
+                    Text("\(n) logement\(n == 1 ? "" : "s") à préparer")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.bhOr)
+                }
+                Text(props.map { $0.nom.isEmpty ? "Logement" : $0.nom }.joined(separator: ", "))
+                    .font(.bhMeta)
+                    .foregroundStyle(Color.bhAttenue)
+                    .lineLimit(2)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .background(Color.bhOrFond, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
     // MARK: - Raccourcis

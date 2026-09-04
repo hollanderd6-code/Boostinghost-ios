@@ -103,8 +103,9 @@ struct GlassTabBar: View {
 
 struct MainTabView: View {
     @Environment(AuthStore.self) var authStore
-    @State private var selection: AppTab = .today
-    @State private var tabBarHidden = false
+    @State private var selection:   AppTab          = .today
+    @State private var tabBarHidden                 = false
+    @State private var calendarVM   = CalendarViewModel()
 
     private var tabs: [AppTab] {
         AppTab.visible(for: authStore.session)
@@ -118,6 +119,7 @@ struct MainTabView: View {
             if tabs.count == 1, let only = tabs.first {
                 featureView(for: only)
                     .environment(\.tabBarHidden, $tabBarHidden)
+                    .environment(calendarVM)
             } else {
                 ZStack(alignment: .bottom) {
                     featureView(for: selection)
@@ -127,6 +129,7 @@ struct MainTabView: View {
                             }
                         }
                         .environment(\.tabBarHidden, $tabBarHidden)
+                        .environment(calendarVM)
 
                     if tabs.count >= 3 && !tabBarHidden {
                         VStack {
@@ -140,9 +143,32 @@ struct MainTabView: View {
                 }
             }
         }
+        .task { debugLogTabs() }
         .onChange(of: authStore.accountSwitchTrigger) {
             selection = .today
         }
+    }
+
+    private func debugLogTabs() {
+        let s = authStore.session
+        print("[DEBUG-TABS] isSubAccount=\(s?.isSubAccount ?? false)")
+        print("[DEBUG-TABS] permissions=\(s?.permissions as Any)")
+
+        let candidates: [(AppTab, [String])] = [
+            (.today,    ["can_view_calendar"]),
+            (.calendar, ["can_view_calendar"]),
+            (.messages, ["can_view_messages"]),
+            (.manage,   ["can_view_properties", "can_view_cleaning",
+                         "can_view_owners", "can_view_invoices"]),
+        ]
+        for (tab, keys) in candidates {
+            for key in keys {
+                let result = s?.can(key) ?? true
+                let dictVal = s?.permissions?[key]
+                print("[DEBUG-TABS]   \(tab.rawValue) key=\(key) can()=\(result) dict[\(key)]=\(dictVal as Any)")
+            }
+        }
+        print("[DEBUG-TABS] tabs.count=\(tabs.count) tabs=\(tabs.map(\.rawValue))")
     }
 
     @ViewBuilder

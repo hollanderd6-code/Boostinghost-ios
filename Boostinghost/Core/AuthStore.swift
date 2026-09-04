@@ -101,7 +101,10 @@ final class AuthStore {
         let token = await refreshedToken(sub.token)
         await finalize(Session(token: token, isSubAccount: true,
                                permissions: sub.subAccount.permissions,
-                               displayName: sub.subAccount.name), token: token)
+                               displayName: sub.subAccount.displayName,
+                               subAccountId: sub.subAccount.id,
+                               role: sub.subAccount.role,
+                               parentUserId: sub.subAccount.parentUserId), token: token)
     }
 
     // MARK: - Sign out

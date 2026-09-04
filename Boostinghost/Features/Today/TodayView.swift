@@ -450,12 +450,14 @@ private struct CleaningRow: View {
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(assignment.propertyName)
+                Text(assignment.resolvedPropertyName ?? assignment.propertyId ?? "—")
                     .font(.bhTitreLigne)
                     .foregroundStyle(Color.bhEncre)
-                Text(assignment.cleanerName)
-                    .font(.bhMeta)
-                    .foregroundStyle(Color.bhAttenue)
+                if let name = assignment.cleanerName, !name.isEmpty {
+                    Text(name)
+                        .font(.bhMeta)
+                        .foregroundStyle(Color.bhAttenue)
+                }
             }
             Spacer()
             if let s = assignment.windowStart, let e = assignment.windowEnd,

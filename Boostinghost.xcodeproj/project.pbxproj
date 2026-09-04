@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		28C468D920234C6D90E5D81E /* DiffusionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68C46651E57046E7AB257F58 /* DiffusionView.swift */; };
+		50696DC6D73042A68ED845746738E561 /* MessageTemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 538847290387444C868DC1A6B6400A51 /* MessageTemplatesView.swift */; };
 		56A0A44B30497C07001E71EE /* TimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A44A30497C06001E71EE /* TimelineView.swift */; };
 		56A0A44C30497C07001E71EE /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A44830497C06001E71EE /* CalendarViewModel.swift */; };
 		56A0A44D30497C07001E71EE /* MonthGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A44930497C06001E71EE /* MonthGridView.swift */; };
@@ -17,6 +19,22 @@
 		56A0A4573049D523001E71EE /* AccountViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A4553049D523001E71EE /* AccountViewModel.swift */; };
 		56A0A4583049D523001E71EE /* AccountModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A4543049D523001E71EE /* AccountModels.swift */; };
 		56A0A4593049D523001E71EE /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A4563049D523001E71EE /* SubscriptionView.swift */; };
+		56A0A45B3049DDDA001E71EE /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45A3049DDDA001E71EE /* ProfileView.swift */; };
+		56A0A4603049E473001E71EE /* TeamViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45F3049E473001E71EE /* TeamViewModel.swift */; };
+		56A0A4613049E473001E71EE /* TeamMemberDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45D3049E473001E71EE /* TeamMemberDetailView.swift */; };
+		56A0A4623049E473001E71EE /* TeamModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45E3049E473001E71EE /* TeamModels.swift */; };
+		56A0A4633049E473001E71EE /* TeamListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45C3049E473001E71EE /* TeamListView.swift */; };
+		56A0A466304AF702001E71EE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 56A0A465304AF702001E71EE /* GoogleService-Info.plist */; };
+		56A0A46C304B0046001E71EE /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 56A0A46B304B0046001E71EE /* FirebaseMessaging */; };
+		56A0A46E304B00F3001E71EE /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */; };
+		56A0A471304B63FC001E71EE /* CleaningModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A46F304B63FC001E71EE /* CleaningModels.swift */; };
+		65E03D63AEBA4699A0CF40F9 /* DiffusionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 519D6B78F2B444D6AFDDA223 /* DiffusionModels.swift */; };
+		7A232E876B1D48298F5DBE1B /* CleanersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD32EE0CC555482983B2C53D /* CleanersView.swift */; };
+		882BD2EA9596428DA150A33F /* DiffusionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCEFF6EA47A84ED5A7DC5BBF /* DiffusionViewModel.swift */; };
+		90DB6A4B20EF4967A542844C /* CleanersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4412B458E86403FB373BAFC /* CleanersViewModel.swift */; };
+		A3DE9B2BC79B4A6788259F427A64DF5F /* MessageTemplatesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B1909F5B2E4C3EA0CEDC5DDEC19352 /* MessageTemplatesViewModel.swift */; };
+		AA11BB22CC33DD44EE55FF67 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF66 /* NotificationsView.swift */; };
+		AA11BB22CC33DD44EE55FF69 /* NotificationsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF68 /* NotificationsViewModel.swift */; };
 		AB0000000000000000000001 /* BoostinghostApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000102 /* BoostinghostApp.swift */; };
 		AB0000000000000000000002 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000103 /* APIClient.swift */; };
 		AB0000000000000000000003 /* AuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000104 /* AuthStore.swift */; };
@@ -52,6 +70,7 @@
 		AB000000000000000000002D /* ManageHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013C /* ManageHubView.swift */; };
 		AB000000000000000000002E /* PropertiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013D /* PropertiesView.swift */; };
 		AB000000000000000000002F /* CleaningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013E /* CleaningView.swift */; };
+		56A0A481304B63FC001E71EE /* CleaningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A480304B63FC001E71EE /* CleaningViewModel.swift */; };
 		AB0000000000000000000030 /* OwnersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013F /* OwnersView.swift */; };
 		AB0000000000000000000031 /* StaysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000140 /* StaysView.swift */; };
 		AB0000000000000000000032 /* ManageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000141 /* ManageModels.swift */; };
@@ -59,9 +78,13 @@
 		AB0000000000000000000034 /* AccountSwitcherSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000143 /* AccountSwitcherSheet.swift */; };
 		AB0000000000000000000035 /* Reporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000144 /* Reporting.swift */; };
 		AB0000000000000000000036 /* RevenusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000145 /* RevenusView.swift */; };
+		B1C7E4920A3F4D5E82F6A3B1C9D02E47 /* TemplateEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		27B1909F5B2E4C3EA0CEDC5DDEC19352 /* MessageTemplatesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTemplatesViewModel.swift; sourceTree = "<group>"; };
+		519D6B78F2B444D6AFDDA223 /* DiffusionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffusionModels.swift; sourceTree = "<group>"; };
+		538847290387444C868DC1A6B6400A51 /* MessageTemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTemplatesView.swift; sourceTree = "<group>"; };
 		56A0A44630497C06001E71EE /* CalendarNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarNavBar.swift; sourceTree = "<group>"; };
 		56A0A44730497C06001E71EE /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		56A0A44830497C06001E71EE /* CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModel.swift; sourceTree = "<group>"; };
@@ -72,6 +95,19 @@
 		56A0A4543049D523001E71EE /* AccountModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountModels.swift; sourceTree = "<group>"; };
 		56A0A4553049D523001E71EE /* AccountViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountViewModel.swift; sourceTree = "<group>"; };
 		56A0A4563049D523001E71EE /* SubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionView.swift; sourceTree = "<group>"; };
+		56A0A45A3049DDDA001E71EE /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		56A0A45C3049E473001E71EE /* TeamListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamListView.swift; sourceTree = "<group>"; };
+		56A0A45D3049E473001E71EE /* TeamMemberDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamMemberDetailView.swift; sourceTree = "<group>"; };
+		56A0A45E3049E473001E71EE /* TeamModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamModels.swift; sourceTree = "<group>"; };
+		56A0A45F3049E473001E71EE /* TeamViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamViewModel.swift; sourceTree = "<group>"; };
+		56A0A464304AF6BA001E71EE /* Boostinghost.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Boostinghost.entitlements; sourceTree = "<group>"; };
+		56A0A465304AF702001E71EE /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		56A0A467304AF72A001E71EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
+		56A0A46F304B63FC001E71EE /* CleaningModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningModels.swift; sourceTree = "<group>"; };
+		68C46651E57046E7AB257F58 /* DiffusionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffusionView.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF66 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF68 /* NotificationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000101 /* Boostinghost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Boostinghost.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB0000000000000000000102 /* BoostinghostApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostinghostApp.swift; sourceTree = "<group>"; };
 		AB0000000000000000000103 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -108,6 +144,7 @@
 		AB000000000000000000013C /* ManageHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageHubView.swift; sourceTree = "<group>"; };
 		AB000000000000000000013D /* PropertiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesView.swift; sourceTree = "<group>"; };
 		AB000000000000000000013E /* CleaningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningView.swift; sourceTree = "<group>"; };
+		56A0A480304B63FC001E71EE /* CleaningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningViewModel.swift; sourceTree = "<group>"; };
 		AB000000000000000000013F /* OwnersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnersView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000140 /* StaysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaysView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000141 /* ManageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageModels.swift; sourceTree = "<group>"; };
@@ -115,6 +152,10 @@
 		AB0000000000000000000143 /* AccountSwitcherSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSwitcherSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000144 /* Reporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reporting.swift; sourceTree = "<group>"; };
 		AB0000000000000000000145 /* RevenusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenusView.swift; sourceTree = "<group>"; };
+		C4412B458E86403FB373BAFC /* CleanersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanersViewModel.swift; sourceTree = "<group>"; };
+		CD32EE0CC555482983B2C53D /* CleanersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanersView.swift; sourceTree = "<group>"; };
+		E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEditView.swift; sourceTree = "<group>"; };
+		FCEFF6EA47A84ED5A7DC5BBF /* DiffusionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffusionViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,6 +163,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				56A0A46C304B0046001E71EE /* FirebaseMessaging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,6 +181,9 @@
 		AB0000000000000000000202 /* Boostinghost */ = {
 			isa = PBXGroup;
 			children = (
+				56A0A467304AF72A001E71EE /* Info.plist */,
+				56A0A465304AF702001E71EE /* GoogleService-Info.plist */,
+				56A0A464304AF6BA001E71EE /* Boostinghost.entitlements */,
 				AB0000000000000000000102 /* BoostinghostApp.swift */,
 				AB0000000000000000000203 /* Core */,
 				AB0000000000000000000204 /* Design */,
@@ -159,6 +204,7 @@
 				AB0000000000000000000105 /* KeychainStore.swift */,
 				AB0000000000000000000106 /* Endpoints.swift */,
 				AB0000000000000000000107 /* Formatters.swift */,
+				56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -235,6 +281,7 @@
 				56A0A45030497C47001E71EE /* DayPrice.swift */,
 				56A0A45130497C47001E71EE /* Reservation.swift */,
 				AB0000000000000000000144 /* Reporting.swift */,
+				56A0A46F304B63FC001E71EE /* CleaningModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -280,9 +327,12 @@
 				AB000000000000000000013C /* ManageHubView.swift */,
 				AB000000000000000000013D /* PropertiesView.swift */,
 				AB000000000000000000013E /* CleaningView.swift */,
+				56A0A480304B63FC001E71EE /* CleaningViewModel.swift */,
 				AB000000000000000000013F /* OwnersView.swift */,
 				AB0000000000000000000140 /* StaysView.swift */,
 				AB0000000000000000000141 /* ManageModels.swift */,
+				C4412B458E86403FB373BAFC /* CleanersViewModel.swift */,
+				CD32EE0CC555482983B2C53D /* CleanersView.swift */,
 			);
 			path = Manage;
 			sourceTree = "<group>";
@@ -295,6 +345,19 @@
 				56A0A4543049D523001E71EE /* AccountModels.swift */,
 				56A0A4553049D523001E71EE /* AccountViewModel.swift */,
 				56A0A4563049D523001E71EE /* SubscriptionView.swift */,
+				56A0A45A3049DDDA001E71EE /* ProfileView.swift */,
+				56A0A45C3049E473001E71EE /* TeamListView.swift */,
+				56A0A45D3049E473001E71EE /* TeamMemberDetailView.swift */,
+				56A0A45E3049E473001E71EE /* TeamModels.swift */,
+				56A0A45F3049E473001E71EE /* TeamViewModel.swift */,
+				519D6B78F2B444D6AFDDA223 /* DiffusionModels.swift */,
+				FCEFF6EA47A84ED5A7DC5BBF /* DiffusionViewModel.swift */,
+				68C46651E57046E7AB257F58 /* DiffusionView.swift */,
+				27B1909F5B2E4C3EA0CEDC5DDEC19352 /* MessageTemplatesViewModel.swift */,
+				538847290387444C868DC1A6B6400A51 /* MessageTemplatesView.swift */,
+				E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */,
+				AA11BB22CC33DD44EE55FF66 /* NotificationsView.swift */,
+				AA11BB22CC33DD44EE55FF68 /* NotificationsViewModel.swift */,
 			);
 			path = Account;
 			sourceTree = "<group>";
@@ -344,6 +407,9 @@
 				Base,
 			);
 			mainGroup = AB0000000000000000000201;
+			packageReferences = (
+				56A0A46A304B0046001E71EE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			productRefGroup = AB0000000000000000000211 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -360,6 +426,7 @@
 			files = (
 				AB0000000000000000000008 /* Assets.xcassets in Resources */,
 				AB0000000000000000000009 /* Preview Assets.xcassets in Resources */,
+				56A0A466304AF702001E71EE /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -378,12 +445,18 @@
 				56A0A45330497C47001E71EE /* Reservation.swift in Sources */,
 				AB0000000000000000000005 /* Endpoints.swift in Sources */,
 				AB0000000000000000000006 /* Formatters.swift in Sources */,
+				56A0A471304B63FC001E71EE /* CleaningModels.swift in Sources */,
 				AB0000000000000000000007 /* Session.swift in Sources */,
 				AB0000000000000000000027 /* FlexInt.swift in Sources */,
 				56A0A44B30497C07001E71EE /* TimelineView.swift in Sources */,
 				56A0A44C30497C07001E71EE /* CalendarViewModel.swift in Sources */,
+				56A0A4603049E473001E71EE /* TeamViewModel.swift in Sources */,
+				56A0A4613049E473001E71EE /* TeamMemberDetailView.swift in Sources */,
+				56A0A4623049E473001E71EE /* TeamModels.swift in Sources */,
+				56A0A4633049E473001E71EE /* TeamListView.swift in Sources */,
 				56A0A44D30497C07001E71EE /* MonthGridView.swift in Sources */,
 				56A0A44E30497C07001E71EE /* CalendarView.swift in Sources */,
+				56A0A46E304B00F3001E71EE /* PushNotificationManager.swift in Sources */,
 				56A0A44F30497C07001E71EE /* CalendarNavBar.swift in Sources */,
 				AB0000000000000000000010 /* Palette.swift in Sources */,
 				AB0000000000000000000011 /* Materials.swift in Sources */,
@@ -410,9 +483,11 @@
 				AB000000000000000000002D /* ManageHubView.swift in Sources */,
 				AB000000000000000000002E /* PropertiesView.swift in Sources */,
 				AB000000000000000000002F /* CleaningView.swift in Sources */,
+				56A0A481304B63FC001E71EE /* CleaningViewModel.swift in Sources */,
 				AB0000000000000000000030 /* OwnersView.swift in Sources */,
 				AB0000000000000000000031 /* StaysView.swift in Sources */,
 				56A0A4573049D523001E71EE /* AccountViewModel.swift in Sources */,
+				56A0A45B3049DDDA001E71EE /* ProfileView.swift in Sources */,
 				56A0A4583049D523001E71EE /* AccountModels.swift in Sources */,
 				56A0A4593049D523001E71EE /* SubscriptionView.swift in Sources */,
 				AB0000000000000000000032 /* ManageModels.swift in Sources */,
@@ -420,6 +495,16 @@
 				AB0000000000000000000034 /* AccountSwitcherSheet.swift in Sources */,
 				AB0000000000000000000035 /* Reporting.swift in Sources */,
 				AB0000000000000000000036 /* RevenusView.swift in Sources */,
+				65E03D63AEBA4699A0CF40F9 /* DiffusionModels.swift in Sources */,
+				882BD2EA9596428DA150A33F /* DiffusionViewModel.swift in Sources */,
+				28C468D920234C6D90E5D81E /* DiffusionView.swift in Sources */,
+				90DB6A4B20EF4967A542844C /* CleanersViewModel.swift in Sources */,
+				7A232E876B1D48298F5DBE1B /* CleanersView.swift in Sources */,
+				A3DE9B2BC79B4A6788259F427A64DF5F /* MessageTemplatesViewModel.swift in Sources */,
+				50696DC6D73042A68ED845746738E561 /* MessageTemplatesView.swift in Sources */,
+				B1C7E4920A3F4D5E82F6A3B1C9D02E47 /* TemplateEditView.swift in Sources */,
+				AA11BB22CC33DD44EE55FF67 /* NotificationsView.swift in Sources */,
+				AA11BB22CC33DD44EE55FF69 /* NotificationsViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -557,10 +642,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Boostinghost/Boostinghost.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Boostinghost/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Boostinghost;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Face ID permet d'accéder à votre espace sans ressaisir votre mot de passe.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -584,10 +671,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Boostinghost/Boostinghost.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Boostinghost/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Boostinghost;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Face ID permet d'accéder à votre espace sans ressaisir votre mot de passe.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -628,6 +717,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		56A0A46A304B0046001E71EE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = exactVersion;
+				version = 12.17.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		56A0A46B304B0046001E71EE /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 56A0A46A304B0046001E71EE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AB0000000000000000000402 /* Project object */;
 }

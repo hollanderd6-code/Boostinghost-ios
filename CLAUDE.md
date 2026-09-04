@@ -31,6 +31,15 @@ iOS 26.0 minimum, Swift 6, SwiftUI. **Aucune dépendance externe** : `URLSession
 `Security` (Keychain), `LocalAuthentication`, `PDFKit`. Pas de SPM, pas de
 CocoaPods.
 
+**Exception unique et nommée : `FirebaseMessaging`, via SPM.** Le backend
+(`services/notifications-service.js`) achemine toutes les notifications push
+exclusivement via `admin.messaging().send()` du Firebase Admin SDK — il n'existe
+aucun chemin APNs direct dans le code d'envoi. Ajouter ce chemin exigerait de
+modifier chaque fonction d'envoi d'un service en production, de gérer deux formats
+de token distincts en base, et d'écrire un service HTTP/2 + JWT côté Node. La
+dépendance `FirebaseMessaging` est donc la seule entrée SPM autorisée dans ce
+projet ; ne pas l'élargir sans décision explicite documentée ici.
+
 iOS 26 est un choix arrêté, pas une valeur par défaut : Liquid Glass l'exige.
 Ne pas proposer de fallback pour iOS 18.
 
@@ -48,6 +57,8 @@ maquettes pour cause de contraste insuffisant ; ne pas les réintroduire.
 **Verre pour le chrome, opaque pour le contenu.** Barres de navigation, barres
 d'onglets, feuilles et barres d'action en verre. Cartes de liste quasi opaques.
 Une seule exception dans toute l'app : la zone de signature, blanc plein.
+
+**Ne jamais afficher de nom de prestataire de distribution** (Airbnb, Booking…) dans l'écran Plateformes connectées — ni libellé, ni message d'erreur, ni icône de marque. L'écran parle du logement et de sa diffusion uniquement. Le backend ne renvoie pas d'état par OTA individuelle.
 
 **Ne jamais inventer un nom de champ, de route ou de colonne.** Là où un fichier
 porte `À TRANCHER`, demander. Les contrats d'API ont été relevés dans le code du
@@ -86,13 +97,40 @@ Au démarrage, ne purger le jeton du Keychain **que sur un 401**. Le serveur est
 sur Render : un 404, un 5xx ou un démarrage à froid ne doit pas déconnecter une
 session valide.
 
-Les permissions d'un sous-compte arrivent sous leurs **noms de colonnes**
-(`can_view_calendar`), pas sous les alias du front (`can_view_reservations`).
-Un compte principal n'a pas d'objet de permissions : `nil` signifie tout
-autorisé, à ne pas confondre avec un objet vide.
+Les permissions d'un sous-compte arrivent sous les **alias front**, pas les
+noms de colonnes DB. `/api/sub-accounts/login` applique un `permissionMapping`
+explicite (`sub-accounts-routes.js:1055`) : `can_view_reservations` pour la
+colonne `can_view_calendar`, `can_manage_cleaning` pour `can_assign_cleaning`.
+`Session.can()` accepte les deux formes — ne pas dupliquer la logique de
+traduction dans les vues. Un compte principal n'a pas d'objet de permissions :
+`nil` signifie tout autorisé, à ne pas confondre avec un objet vide.
+
+**`JSONDecoder.convertFromSnakeCase` s'applique aussi aux clés des dictionnaires
+`[String: Bool]`.** Le décodeur transforme `can_view_reservations` en
+`canViewReservations` avant de le stocker. Le dictionnaire `permissions` est donc
+entièrement en camelCase en mémoire. `Session.can()` normalise automatiquement
+son argument via `camelCase()` avant toute recherche — les sites d'appel peuvent
+continuer à écrire `"can_view_calendar"` ou `"canViewCalendar"` indifféremment.
+Ne pas contourner cette normalisation en accédant directement au dictionnaire.
 
 Répondre à un voyageur Airbnb ou Booking passe par
 `POST /api/chat/conversations/:id/send-platform`, **pas** par `/api/chat/send`.
+
+**Les appels de données de gestion portent `?agency=all` via le paramètre
+`agencyAll: true` de l'`APIClient`.** Ne jamais construire une URL à la main ni
+appeler `.appending(queryItems:)` hors de l'`APIClient` — c'est le piège le
+plus récurrent du projet (cinq oublis). Si un appel a besoin de paramètres de
+requête supplémentaires *en plus* de `agency=all`, utiliser le paramètre
+`extraQueryItems:` des méthodes de l'`APIClient`. L'`Endpoint` ne doit contenir
+que le chemin, jamais de query items.
+
+**`trigger_offset_hours` et `trigger_offset_days` sont des `INTEGER` sans contrainte
+en base.** Le serveur les accepte négatifs mais applique `Math.abs()` dans le moteur
+d'envoi (server.js:31454 et 31758) — le signe est donc toujours ignoré à l'exécution.
+Des valeurs négatives existent en base (héritage du web). L'UI doit initialiser ces
+champs avec `abs()`, afficher uniquement des valeurs ≥ 0, et écrire toujours une valeur
+positive. Ne jamais introduire de logique de signe pour ces champs : elle n'existe pas
+côté serveur.
 
 ## Langue
 

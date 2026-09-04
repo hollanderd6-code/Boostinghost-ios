@@ -4,6 +4,12 @@ import SwiftUI
 
 enum AccountDestination: Hashable {
     case subscription
+    case profile
+    case team
+    case diffusion
+    case cleaners
+    case messageTemplates
+    case notifications
 }
 
 // MARK: - Sheet principale
@@ -45,6 +51,19 @@ struct AccountSheet: View {
                 switch dest {
                 case .subscription:
                     SubscriptionView(status: vm.subscriptionStatus)
+                case .profile:
+                    
+                    ProfileView(profile: vm.userProfile)
+                case .team:
+                    TeamListView()
+                case .diffusion:
+                    DiffusionView()
+                case .cleaners:
+                    CleanersView()
+                case .messageTemplates:
+                    MessageTemplatesView()
+                case .notifications:
+                    NotificationsView()
                 }
             }
         }
@@ -82,38 +101,61 @@ struct AccountSheet: View {
 
     // MARK: - Carte de profil
 
+    @ViewBuilder
     private var profileCard: some View {
         let name    = authStore.session?.displayName ?? ""
         let words   = name.split(separator: " ").prefix(2)
         let letters = words.compactMap { $0.first.map(String.init) }.joined().uppercased()
 
-        return ListCard {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(Color(hex: "#DCE8E1"))
-                        .frame(width: 52, height: 52)
-                    Text(letters.isEmpty ? "?" : letters)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(Color.bhVert)
-                }
-                VStack(alignment: .leading, spacing: 3) {
+        if isSubAccount {
+            // Sub-accounts: display only, no navigation
+            ListCard {
+                HStack(spacing: 14) {
+                    initialsCircle(letters: letters)
                     Text(name.isEmpty ? "Mon compte" : name)
                         .font(.system(size: 18.5, weight: .semibold))
                         .foregroundStyle(Color.bhEncre)
-                    if let line = planLine {
-                        Text(line)
-                            .font(.bhMeta)
-                            .foregroundStyle(Color.bhAttenue)
-                    }
+                    Spacer(minLength: 8)
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+        } else {
+            NavigationLink(value: AccountDestination.profile) {
+                ListCard {
+                    HStack(spacing: 14) {
+                        initialsCircle(letters: letters)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(name.isEmpty ? "Mon compte" : name)
+                                .font(.system(size: 18.5, weight: .semibold))
+                                .foregroundStyle(Color.bhEncre)
+                            if let line = planLine {
+                                Text(line)
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhAttenue)
+                            }
+                        }
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func initialsCircle(letters: String) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color(hex: "#DCE8E1"))
+                .frame(width: 52, height: 52)
+            Text(letters.isEmpty ? "?" : letters)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(Color.bhVert)
         }
     }
 
@@ -131,9 +173,12 @@ struct AccountSheet: View {
 
             // Mon équipe
             CardRow(showSeparator: true) {
-                rowContent(icon: "person.2",
-                           title: "Mon équipe et accès",
-                           value: teamLabel)
+                NavigationLink(value: AccountDestination.team) {
+                    rowContent(icon: "person.2",
+                               title: "Mon équipe et accès",
+                               value: teamLabel)
+                }
+                .buttonStyle(.plain)
             }
 
             // Comptes gérés — ouvre le sélecteur
@@ -147,13 +192,16 @@ struct AccountSheet: View {
                 .buttonStyle(.plain)
             }
 
-            // Plateformes — valeur en vert si actives
+            // Plateformes — ouvre l'écran de diffusion
             CardRow(showSeparator: false) {
-                rowContent(icon: "link",
-                           title: "Plateformes connectées",
-                           value: platformsLabel,
-                           valueColor: platformsColor,
-                           valueBold: platformsConnected > 0)
+                NavigationLink(value: AccountDestination.diffusion) {
+                    rowContent(icon: "link",
+                               title: "Plateformes connectées",
+                               value: platformsLabel,
+                               valueColor: platformsColor,
+                               valueBold: platformsConnected > 0)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -163,17 +211,26 @@ struct AccountSheet: View {
     private var group2: some View {
         ListCard {
             CardRow(showSeparator: true) {
-                rowContent(icon: "sparkles",
-                           title: "Ménage et prestataires",
-                           value: cleanersLabel)
+                NavigationLink(value: AccountDestination.cleaners) {
+                    rowContent(icon: "sparkles",
+                               title: "Ménage et prestataires",
+                               value: cleanersLabel)
+                }
+                .buttonStyle(.plain)
             }
             CardRow(showSeparator: true) {
-                rowContent(icon: "text.bubble",
-                           title: "Messages automatiques",
-                           value: templatesLabel)
+                NavigationLink(value: AccountDestination.messageTemplates) {
+                    rowContent(icon: "text.bubble",
+                               title: "Messages automatiques",
+                               value: templatesLabel)
+                }
+                .buttonStyle(.plain)
             }
             CardRow(showSeparator: false) {
-                rowContent(icon: "bell", title: "Notifications")
+                NavigationLink(value: AccountDestination.notifications) {
+                    rowContent(icon: "bell", title: "Notifications")
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -292,7 +349,7 @@ struct AccountSheet: View {
         switch vm.platformsConnected {
         case .loading:          return nil
         case .failed:           return "—"
-        case .loaded(let n):    return n > 0 ? "\(n) active\(n == 1 ? "" : "s")" : "Aucune"
+        case .loaded(let n):    return n > 0 ? "\(n) diffusé\(n == 1 ? "" : "s")" : "Aucun"
         }
     }
 

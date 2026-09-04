@@ -9,6 +9,10 @@ final class AccountViewModel {
 
     var subscriptionStatus: SubscriptionStatus? = nil
 
+    // MARK: - Profile
+
+    var userProfile: UserProfile? = nil
+
     // MARK: - Counters (nil = still loading; loaded but failed stays nil and shows "—")
 
     var teamCount:          LoadedInt = .loading
@@ -19,13 +23,18 @@ final class AccountViewModel {
     // MARK: - Load
 
     func load() async {
-        async let subTask:      SubscriptionStatus    = APIClient.shared.get(Endpoint.subscriptionStatus)
-        async let teamTask:     SubAccountsResponse   = APIClient.shared.get(Endpoint.subAccountsList)
-        async let propsTask:    PropertiesResponse    = APIClient.shared.get(Endpoint.properties)
-        async let cleanersTask: CleanersListResponse  = APIClient.shared.get(Endpoint.cleaners)
-        async let tplTask:      MessageTemplatesResponse  = APIClient.shared.get(Endpoint.messageTemplates)
+        // DEBUG — à retirer après diagnostic de la réponse subscription
+        await debugPrintSubscriptionRaw()
 
-        subscriptionStatus  = try? await subTask
+        async let subTask:       SubscriptionStatus       = APIClient.shared.get(Endpoint.subscriptionStatus)
+        async let profileTask:   UserProfile              = APIClient.shared.get(Endpoint.userProfile)
+        async let teamTask:      SubAccountsResponse      = APIClient.shared.get(Endpoint.subAccountsList, agencyAll: true)
+        async let diffusionTask: DiffusionResponse        = APIClient.shared.get(Endpoint.propertiesDiffusion, agencyAll: true)
+        async let cleanersTask:  CleanersListResponse     = APIClient.shared.get(Endpoint.cleaners, agencyAll: true)
+        async let tplTask:       MessageTemplatesResponse = APIClient.shared.get(Endpoint.messageTemplates, agencyAll: true)
+
+        subscriptionStatus = try? await subTask
+        userProfile        = try? await profileTask
 
         if let r = try? await teamTask {
             teamCount = .loaded(r.subAccounts.count)
@@ -33,9 +42,8 @@ final class AccountViewModel {
             teamCount = .failed
         }
 
-        if let r = try? await propsTask {
-            let n = (r.properties ?? []).filter { $0.hasActiveConnection }.count
-            platformsConnected = .loaded(n)
+        if let r = try? await diffusionTask {
+            platformsConnected = .loaded(r.diffuses)
         } else {
             platformsConnected = .failed
         }
@@ -52,6 +60,23 @@ final class AccountViewModel {
             templatesCount = .failed
         }
     }
+
+    // MARK: - Debug (supprimer après diagnostic)
+
+    private func debugPrintSubscriptionRaw() async {
+        guard let token = await APIClient.shared.token else {
+            print("[DEBUG-SUB] pas de token")
+            return
+        }
+        var req = URLRequest(url: Endpoint.subscriptionStatus)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req) else {
+            print("[DEBUG-SUB] réseau KO")
+            return
+        }
+        let raw = String(data: data, encoding: .utf8) ?? "(non-UTF8)"
+        print("[DEBUG-SUB] JSON brut /api/subscription/status :\n\(raw)")
+    }
 }
 
 // MARK: - LoadedInt
@@ -67,12 +92,3 @@ enum LoadedInt: Equatable {
     }
 }
 
-// MARK: - Property helper
-
-private extension Property {
-    var hasActiveConnection: Bool {
-        if channexEnabled == true { return true }
-        if let raw = icalUrlsRaw, !raw.isEmpty, raw != "[]", raw != "null" { return true }
-        return false
-    }
-}

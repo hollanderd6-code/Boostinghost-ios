@@ -17,6 +17,9 @@ final class ManageHubViewModel {
     var propertiesUsed: Int? = nil
     var propertiesLimit: Int? = nil
 
+    // Alerte diffusion — logements non prêts à la vente
+    var diffusionAlertProperties: [DiffusionProperty] = []
+
     var agencyAll: Bool = true
 
     func load() async {
@@ -30,6 +33,7 @@ final class ManageHubViewModel {
         async let cleaningTask: CleaningAssignmentsResponse = APIClient.shared.get(Endpoint.cleaningAssignments, agencyAll: agencyAll)
         async let depositsTask: [ReservationWithDeposit] = APIClient.shared.get(Endpoint.reservationsWithDeposits, agencyAll: agencyAll)
         async let subscriptionTask: SubscriptionStatus = APIClient.shared.get(Endpoint.subscriptionStatus)
+        async let diffusionTask: DiffusionResponse = APIClient.shared.get(Endpoint.propertiesDiffusion, agencyAll: true)
 
         do {
             let (props, groups) = try await (propsTask, groupsTask)
@@ -65,9 +69,14 @@ final class ManageHubViewModel {
             depositCount = deps.filter { $0.deposit?.status == "authorized" }.count
         }
 
+        // BACKEND: propertiesUsed ignore les délégations, corrigé côté serveur plus tard
         if let used = subscription?.propertiesUsed, used > 0 {
             propertiesUsed  = used
             propertiesLimit = subscription?.propertiesLimit
+        }
+
+        if let diff = try? await diffusionTask {
+            diffusionAlertProperties = diff.logements.filter { !$0.vendable }
         }
 
         loadState = .loaded

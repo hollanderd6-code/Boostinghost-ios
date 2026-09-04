@@ -266,9 +266,11 @@ final class CalendarViewModel {
         if case .single(let id) = displayMode { propertyId = id } else { propertyId = nil }
 
         do {
-            let url = Endpoint.reporting(year: year, month: month, propertyId: propertyId)
-            // Reporting is always agency-wide ("données de gestion").
-            reportingData  = try await APIClient.shared.get(url, agencyAll: true)
+            reportingData  = try await APIClient.shared.get(
+                Endpoint.reporting,
+                agencyAll: true,
+                extraQueryItems: Endpoint.reportingItems(year: year, month: month, propertyId: propertyId)
+            )
             reportingState = .loaded
         } catch is CancellationError {
             // View disappeared — reset so the next appearance retries cleanly.

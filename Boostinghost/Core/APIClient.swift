@@ -25,30 +25,46 @@ actor APIClient {
 
     // MARK: - GET
 
-    func get<T: Decodable>(_ url: URL, agencyAll: Bool = false) async throws -> T {
-        let finalURL = agencyAll ? appending(url, query: "agency", value: "all") : url
-        return try await perform(makeRequest(url: finalURL, method: "GET"))
+    func get<T: Decodable>(_ url: URL, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws -> T {
+        return try await perform(makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "GET"))
     }
 
     // MARK: - DELETE
 
-    func delete(_ url: URL) async throws {
-        let req = makeRequest(url: url, method: "DELETE")
+    func delete(_ url: URL, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws {
+        let req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "DELETE")
         let (data, response) = try await send(req)
         try validate(response: response, data: data)
     }
 
     // MARK: - POST
 
-    func post<T: Decodable, B: Encodable>(_ url: URL, body: B) async throws -> T {
-        var req = makeRequest(url: url, method: "POST")
+    func post<T: Decodable, B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws -> T {
+        var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "POST")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
         return try await perform(req)
     }
 
-    func postVoid<B: Encodable>(_ url: URL, body: B) async throws {
-        var req = makeRequest(url: url, method: "POST")
+    func postVoid<B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws {
+        var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "POST")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(body)
+        let (data, response) = try await send(req)
+        try validate(response: response, data: data)
+    }
+
+    // MARK: - PUT
+
+    func put<T: Decodable, B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws -> T {
+        var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "PUT")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(body)
+        return try await perform(req)
+    }
+
+    func putVoid<B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws {
+        var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "PUT")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
         let (data, response) = try await send(req)
@@ -106,11 +122,12 @@ actor APIClient {
         return (try? JSONDecoder().decode(ErrorEnvelope.self, from: data))?.firstMessage
     }
 
-    private func appending(_ url: URL, query: String, value: String) -> URL {
-        guard var c = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
-        var items = c.queryItems ?? []
-        items.append(URLQueryItem(name: query, value: value))
-        c.queryItems = items
+    private func buildURL(_ url: URL, agencyAll: Bool, extra: [URLQueryItem]) -> URL {
+        var items = extra
+        if agencyAll { items.append(URLQueryItem(name: "agency", value: "all")) }
+        guard !items.isEmpty,
+              var c = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
+        c.queryItems = (c.queryItems ?? []) + items
         return c.url ?? url
     }
 }

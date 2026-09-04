@@ -57,28 +57,35 @@ Un dossier par écran, avec sa `View`, son `ViewModel` (`@Observable`) et ses so
 
 Un compte principal voit les quatre onglets. Un sous-compte ne voit que ceux dont il a le droit :
 
-Les clés à tester sont les **noms de colonnes**, tels qu'ils arrivent dans `subAccount.permissions` — pas les alias du front (voir T5) :
+Les clés à tester sont les **alias front** tels qu'ils arrivent dans `subAccount.permissions` de `/api/sub-accounts/login`. Contrairement à ce que concluait T5, la route n'envoie **pas** les noms de colonnes bruts — elle applique un `permissionMapping` explicite (vérifié dans `sub-accounts-routes.js:1055`).
+
+Deux colonnes sont renommées dans la réponse login :
+
+| Clé reçue (`login`)       | Colonne DB              |
+|---------------------------|-------------------------|
+| `can_view_reservations`   | `can_view_calendar`     |
+| `can_manage_cleaning`     | `can_assign_cleaning`   |
+
+`Session.can()` accepte les deux formes via une table d'alias interne — l'appelant peut écrire indifféremment l'une ou l'autre.
 
 ```
-Aujourd'hui  can_view_calendar
+Aujourd'hui  can_view_calendar   (ou alias can_view_reservations)
 Calendrier   can_view_calendar
 Messages     can_view_messages
 Gestion      can_view_properties | can_view_cleaning | can_view_owners | can_view_invoices
 ```
 
-Le jeu complet des colonnes existantes, relevé dans `permissionMapping` :
+**13 colonnes absentes de la réponse login** (présentes dans `GET /api/sub-accounts/list`) — ticket backend ouvert :
 
 ```
-can_view_calendar        can_view_messages        can_send_messages
-can_delete_messages      can_view_cleaning        can_assign_cleaning
-can_view_properties      can_edit_properties      can_delete_properties
-can_view_deposits        can_manage_deposits      can_view_invoices
-can_manage_invoices      can_view_payments        can_manage_payments
-can_view_pricing         can_manage_pricing       can_view_reporting
-can_view_debours         can_manage_debours       can_view_smart_locks
-can_manage_smart_locks   can_view_welcome_book    can_view_templates
-can_manage_templates     can_view_contracts
+can_delete_reservations   can_view_templates       can_manage_templates
+can_manage_cleaning_staff can_edit_finances        can_view_owners
+can_view_pricing          can_manage_pricing       can_view_debours
+can_manage_debours        can_view_reporting       can_view_welcome_book
+can_access_settings
 ```
+
+`can_view_owners` est déjà testé par l'app (section Propriétaires dans Gestion) → cette section est **toujours cachée** pour les sous-comptes jusqu'à la correction backend.
 
 Un compte principal n'a **pas** d'objet de permissions : `permissions == nil` signifie tout autorisé. Ne pas confondre avec un objet vide, qui signifierait l'inverse.
 

@@ -85,6 +85,7 @@ struct SubscriptionView: View {
             }
 
             // Quota — affiché uniquement si propertiesUsed > 0 (compte agence = 0, c'est juste)
+            // BACKEND: propertiesUsed ignore les délégations, corrigé côté serveur plus tard
             if let used = status.propertiesUsed, used > 0 {
                 let limit = status.propertiesLimit
                 let quotaText = limit.map { "\(used) / \($0)" } ?? "\(used)"
@@ -93,12 +94,10 @@ struct SubscriptionView: View {
                         separator: hasRenewal(status))
             }
 
-            // Date de renouvellement
-            if let raw = status.currentPeriodEnd {
-                infoRow(label: "Renouvellement",
-                        value: Formatters.dayWithYear(raw),
-                        separator: false)
-            }
+            // Renouvellement — null en base si abonnement créé hors Stripe ; affiche "—" dans ce cas
+            infoRow(label: "Renouvellement",
+                    value: status.currentPeriodEnd.map { Formatters.dayWithYear($0) } ?? "—",
+                    separator: false)
         }
     }
 
@@ -135,6 +134,6 @@ struct SubscriptionView: View {
     }
 
     private func hasRenewal(_ s: SubscriptionStatus) -> Bool {
-        s.currentPeriodEnd != nil
+        true // toujours affiché, même avec "—" si les colonnes Stripe sont vides
     }
 }

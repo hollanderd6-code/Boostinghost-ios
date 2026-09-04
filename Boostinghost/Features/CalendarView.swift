@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CalendarView: View {
     @Environment(AuthStore.self) private var authStore
-    @State private var vm  = CalendarViewModel()
+    @Environment(CalendarViewModel.self) private var vm
     @State private var tab = CalendarTab.planning
 
     var body: some View {

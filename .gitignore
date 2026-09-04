@@ -35,3 +35,4 @@ Carthage/Build/
 # Secrets — ne jamais committer de jeton ni de clé
 *.xcconfig.local
 Secrets.plist
+GoogleService-Info.plist

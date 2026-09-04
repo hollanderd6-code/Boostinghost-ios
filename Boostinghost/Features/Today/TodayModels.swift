@@ -123,16 +123,23 @@ struct CleaningAssignmentsResponse: Decodable {
 struct CleaningAssignment: Decodable, Identifiable {
     // UUID stable généré localement — non issu du JSON
     var id: UUID = UUID()
-    let reservationKey: String?
-    let propertyName: String
-    let cleanerName: String
+    let propertyId: String?
+    let reservationKey: String?  // "<propertyId>_<startDate>_<endDate>" — sert à filtrer les ménages du jour
+    let cleanerName: String?
     let cleanerPhone: String?
-    let windowStart: String?
-    let windowEnd: String?
-    let status: String?
+    let cleanerEmail: String?
+    var windowStart: String?     // calculé post-décodage depuis property.departureTime
+    var windowEnd: String?       // calculé post-décodage : arrivalTime si même-jour, sinon nil
+    let status: String?          // "pending", "in_progress", "completed"
+    let groupName: String?
+    let propertyName: String?    // joint par le serveur ; priorité à resolvedPropertyName
+    let isDefault: Bool?         // true = assignation virtuelle (non persistée)
+
+    // Résolu post-décodage à partir de la liste des logements.
+    var resolvedPropertyName: String?
 
     enum CodingKeys: String, CodingKey {
-        case reservationKey, propertyName, cleanerName, cleanerPhone
-        case windowStart, windowEnd, status
+        case propertyId, reservationKey, cleanerName, cleanerPhone, cleanerEmail
+        case windowStart, windowEnd, status, groupName, propertyName, isDefault
     }
 }
