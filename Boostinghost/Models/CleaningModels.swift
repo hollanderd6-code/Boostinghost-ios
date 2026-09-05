@@ -22,6 +22,7 @@ struct CleaningChecklistsResponse: Decodable {
 struct CleaningChecklist: Decodable, Identifiable {
     let id: String
     let propertyId: String?
+    let reservationKey: String?  // croisement avec les assignations pour l'Historique
     let cleanerName: String?
     let status: String?         // "completed", "validated", "rejected"
     let completedAt: String?    // ISO8601
@@ -32,19 +33,45 @@ struct CleaningChecklist: Decodable, Identifiable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id          = c.flexString(forKey: ._id) ?? c.flexString(forKey: .id) ?? UUID().uuidString
-        propertyId  = try? c.decodeIfPresent(String.self, forKey: .propertyId)
-        cleanerName = try? c.decodeIfPresent(String.self, forKey: .cleanerName)
-        status      = try? c.decodeIfPresent(String.self, forKey: .status)
-        completedAt = try? c.decodeIfPresent(String.self, forKey: .completedAt)
-        photos      = try? c.decodeIfPresent([String].self, forKey: .photos)
+        id             = c.flexString(forKey: ._id) ?? c.flexString(forKey: .id) ?? UUID().uuidString
+        propertyId     = try? c.decodeIfPresent(String.self, forKey: .propertyId)
+        reservationKey = try? c.decodeIfPresent(String.self, forKey: .reservationKey)
+        cleanerName    = try? c.decodeIfPresent(String.self, forKey: .cleanerName)
+        status         = try? c.decodeIfPresent(String.self, forKey: .status)
+        completedAt    = try? c.decodeIfPresent(String.self, forKey: .completedAt)
+        photos         = try? c.decodeIfPresent([String].self, forKey: .photos)
         resolvedPropertyName = nil
     }
 
     private enum CodingKeys: String, CodingKey {
         case _id = "_id", id
-        case propertyId, cleanerName, status, completedAt, photos
+        case propertyId, reservationKey, cleanerName, status, completedAt, photos
     }
+}
+
+// MARK: - Semaine : groupes par jour
+
+struct CleaningDayGroup: Identifiable {
+    var id: String { dateStr }
+    let dateStr: String              // "YYYY-MM-DD"
+    let tight: [CleaningAssignment]
+    let wide:  [CleaningAssignment]
+}
+
+// MARK: - Historique : ligne et groupe
+
+struct CleaningHistoryItem: Identifiable {
+    var id: UUID = UUID()
+    let dateStr: String          // "YYYY-MM-DD" (date du ménage = départ)
+    let propertyName: String?
+    let cleanerName: String?
+    let checklistStatus: String? // "validated", "rejected", "completed" (à valider), nil = pas de retour
+}
+
+struct CleaningHistoryGroup: Identifiable {
+    var id: String { dateStr }
+    let dateStr: String
+    let items: [CleaningHistoryItem]
 }
 
 // MARK: - Utilitaire de créneau partagé entre ViewModel et View

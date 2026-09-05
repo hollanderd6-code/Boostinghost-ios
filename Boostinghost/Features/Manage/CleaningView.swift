@@ -11,9 +11,9 @@ private enum CleaningPeriod: String, CaseIterable {
 // MARK: - Écran Ménage
 
 struct CleaningView: View {
-    @Environment(AuthStore.self) private var authStore
+    @Environment(AuthStore.self)       private var authStore
     @Environment(CalendarViewModel.self) private var calendarVM
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss)            private var dismiss
     @State private var vm     = CleaningViewModel()
     @State private var period: CleaningPeriod = .today
 
@@ -21,16 +21,27 @@ struct CleaningView: View {
     private var isSubAccount: Bool     { session?.isSubAccount == true }
     private var canManage:    Bool     { session?.can("can_manage_cleaning") ?? true }
 
+    private var displaySuperTitle: String {
+        switch period {
+        case .today:
+            return vm.superTitle
+        case .week:
+            let n = vm.weekCount
+            return n > 0 ? "\(n) cette semaine" : " "
+        case .history:
+            return " "
+        }
+    }
+
     var body: some View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
                 navBar
                 switch period {
-                case .today:
-                    todayContent
-                case .week, .history:
-                    placeholderContent(period.rawValue)
+                case .today:   todayContent
+                case .week:    weekContent
+                case .history: historyContent
                 }
             }
         }
@@ -44,7 +55,6 @@ struct CleaningView: View {
     private var navBar: some View {
         VStack(spacing: 0) {
             HStack(alignment: .bottom, spacing: 0) {
-                // Bouton retour — masqué pour les sous-comptes (arrivée directe)
                 if !isSubAccount {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
@@ -58,7 +68,7 @@ struct CleaningView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(vm.superTitle)
+                    Text(displaySuperTitle)
                         .font(.bhSurTitre)
                         .foregroundStyle(Color.bhAttenue)
                     Text("Ménage")
@@ -81,7 +91,12 @@ struct CleaningView: View {
                 selection: $period
             )
             .padding(.horizontal, 18)
-            .padding(.bottom, 14)
+            .padding(.bottom, period == .history && !vm.historyCleanerNames.isEmpty ? 8 : 14)
+
+            if period == .history && !vm.historyCleanerNames.isEmpty {
+                cleanerFilterBar
+                    .padding(.bottom, 10)
+            }
         }
         .background {
             Rectangle()
@@ -92,6 +107,47 @@ struct CleaningView: View {
         }
     }
 
+    // MARK: - Filtre intervenantes (onglet Historique)
+
+    private var cleanerFilterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                cleanerChip("Tous", selected: vm.historyCleanerFilter == nil) {
+                    vm.historyCleanerFilter = nil
+                }
+                ForEach(vm.historyCleanerNames, id: \.self) { name in
+                    cleanerChip(name, selected: vm.historyCleanerFilter == name) {
+                        vm.historyCleanerFilter = (vm.historyCleanerFilter == name) ? nil : name
+                    }
+                }
+            }
+            .padding(.horizontal, 18)
+        }
+    }
+
+    @ViewBuilder
+    private func cleanerChip(_ label: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            if selected {
+                Text(label)
+                    .font(.system(size: 13.5, weight: .semibold))
+                    .foregroundStyle(Color.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.bhVert, in: Capsule())
+            } else {
+                Text(label)
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(Color.bhEncre)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .glassEffect(in: .rect(cornerRadius: 16))
+            }
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: selected)
+    }
+
     // MARK: - Contenu Aujourd'hui
 
     @ViewBuilder
@@ -100,29 +156,11 @@ struct CleaningView: View {
             VStack(alignment: .leading, spacing: 14) {
                 switch vm.loadState {
                 case .idle, .loading:
-                    HStack { Spacer(); ProgressView().tint(Color.bhAttenue); Spacer() }
-                        .padding(.top, 48)
-
+                    loadingIndicator
                 case .error(let msg):
-                    VStack(spacing: 12) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 36))
-                            .foregroundStyle(Color.bhAttenue)
-                        Text(msg)
-                            .font(.bhCorps)
-                            .foregroundStyle(Color.bhAttenue)
-                            .multilineTextAlignment(.center)
-                        Button("Réessayer") {
-                            Task { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
-                        }
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Color.bhVert)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 48)
-
+                    errorContent(msg)
                 case .loaded:
-                    loadedContent
+                    todayLoadedContent
                 }
             }
             .padding(.horizontal, 18)
@@ -133,18 +171,14 @@ struct CleaningView: View {
     }
 
     @ViewBuilder
-    private var loadedContent: some View {
-        // Ménages serrés (prochaine arrivée définie)
+    private var todayLoadedContent: some View {
         ForEach(vm.tightAssignments) { a in
             AssignmentCard(assignment: a, isTight: true, canManage: canManage)
         }
-
-        // Ménages larges (aucune arrivée avant demain)
         ForEach(vm.wideAssignments) { a in
             AssignmentCard(assignment: a, isTight: false, canManage: canManage)
         }
 
-        // À VALIDER
         if !vm.checklistsToValidate.isEmpty {
             SectionLabel(text: "À VALIDER").padding(.top, 4)
             ForEach(vm.checklistsToValidate) { cl in
@@ -153,15 +187,14 @@ struct CleaningView: View {
                     canManage: canManage,
                     onValidate: { Task { await vm.validate(checklist: cl) } },
                     onReject: {
-                        vm.rejectTargetId = cl.id
-                        vm.rejectNotes    = ""
+                        vm.rejectTargetId  = cl.id
+                        vm.rejectNotes     = ""
                         vm.showRejectSheet = true
                     }
                 )
             }
         }
 
-        // INTERVENANTS — compte principal uniquement
         if !isSubAccount && !vm.cleaners.isEmpty {
             SectionLabel(text: "INTERVENANTS").padding(.top, 4)
             ListCard {
@@ -173,37 +206,145 @@ struct CleaningView: View {
             }
         }
 
-        if case .loaded = vm.loadState,
-           vm.tightAssignments.isEmpty && vm.wideAssignments.isEmpty
-             && vm.checklistsToValidate.isEmpty {
-            emptyState
+        if vm.tightAssignments.isEmpty && vm.wideAssignments.isEmpty && vm.checklistsToValidate.isEmpty {
+            emptyState(label: "Aucun ménage aujourd'hui")
         }
     }
 
-    // MARK: - État vide
+    // MARK: - Contenu Semaine
 
-    private var emptyState: some View {
+    @ViewBuilder
+    private var weekContent: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                switch vm.loadState {
+                case .idle, .loading:
+                    loadingIndicator
+                case .error(let msg):
+                    errorContent(msg)
+                case .loaded:
+                    if vm.weekGroups.isEmpty {
+                        emptyState(label: "Aucun ménage cette semaine")
+                    } else {
+                        ForEach(vm.weekGroups) { group in
+                            Text(Formatters.day(group.dateStr))
+                                .bhIntertitre()
+                                .padding(.top, 4)
+                            ForEach(group.tight) { a in
+                                AssignmentCard(assignment: a, isTight: true,  canManage: false, isFuture: true)
+                            }
+                            ForEach(group.wide) { a in
+                                AssignmentCard(assignment: a, isTight: false, canManage: false, isFuture: true)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 16)
+            .padding(.bottom, 40)
+        }
+        .refreshable { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
+    }
+
+    // MARK: - Contenu Historique
+
+    @ViewBuilder
+    private var historyContent: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                switch vm.loadState {
+                case .idle, .loading:
+                    loadingIndicator
+                case .error(let msg):
+                    errorContent(msg)
+                case .loaded:
+                    historyLoadedContent
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 16)
+            .padding(.bottom, 40)
+        }
+        .refreshable { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
+    }
+
+    @ViewBuilder
+    private var historyLoadedContent: some View {
+        if vm.historyTotalCount == 0 {
+            emptyState(label: "Aucun ménage sur 30 jours")
+        } else {
+            historyBody
+        }
+    }
+
+    @ViewBuilder
+    private var historyBody: some View {
+        let n = vm.historyTotalCount
+        Text("\(n) ménage\(n == 1 ? "" : "s") sur 30 jours")
+            .font(.bhCorps)
+            .foregroundStyle(Color.bhAttenue)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+        if vm.filteredHistoryGroups.isEmpty {
+            Text("Aucun résultat pour ce filtre")
+                .font(.bhCorps)
+                .foregroundStyle(Color.bhAttenue)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 8)
+        } else {
+            ForEach(vm.filteredHistoryGroups) { group in
+                Text(Formatters.day(group.dateStr))
+                    .bhIntertitre()
+                    .padding(.top, 4)
+                ListCard {
+                    ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, item in
+                        CardRow(showSeparator: idx < group.items.count - 1) {
+                            HistoryItemRow(item: item)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - États communs
+
+    private var loadingIndicator: some View {
+        HStack { Spacer(); ProgressView().tint(Color.bhAttenue); Spacer() }
+            .padding(.top, 48)
+    }
+
+    private func errorContent(_ msg: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 36))
+                .foregroundStyle(Color.bhAttenue)
+            Text(msg)
+                .font(.bhCorps)
+                .foregroundStyle(Color.bhAttenue)
+                .multilineTextAlignment(.center)
+            Button("Réessayer") {
+                Task { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(Color.bhVert)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 48)
+    }
+
+    private func emptyState(label: String) -> some View {
         VStack(spacing: 8) {
             Image(systemName: "sparkles")
                 .font(.system(size: 36))
                 .foregroundStyle(Color.bhAttenue)
-            Text("Aucun ménage aujourd'hui")
+            Text(label)
                 .font(.bhCorps)
                 .foregroundStyle(Color.bhAttenue)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 40)
-    }
-
-    // MARK: - Placeholder Semaine / Historique
-
-    private func placeholderContent(_ label: String) -> some View {
-        VStack(spacing: 8) {
-            Text("Bientôt disponible")
-                .font(.bhCorps)
-                .foregroundStyle(Color.bhAttenue)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Feuille de rejet
@@ -246,12 +387,13 @@ struct CleaningView: View {
     }
 }
 
-// MARK: - Carte d'assignment
+// MARK: - Carte assignation (Aujourd'hui et Semaine)
 
 private struct AssignmentCard: View {
     let assignment: CleaningAssignment
     let isTight:    Bool
     let canManage:  Bool
+    var isFuture:   Bool = false
 
     @Environment(\.openURL) private var openURL
 
@@ -259,7 +401,6 @@ private struct AssignmentCard: View {
         if isTight { tightCard } else { wideCard }
     }
 
-    // Carte SERRÉ : fond terracotta + filet gauche 4 px
     private var tightCard: some View {
         HStack(spacing: 0) {
             Rectangle()
@@ -276,15 +417,12 @@ private struct AssignmentCard: View {
         .background(Color.bhTerracottaBd, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
-    // Carte LARGE : ListCard standard
     private var wideCard: some View {
         ListCard { cardContent(accentColor: Color.bhOccupe) }
     }
 
-    // Contenu partagé
     private func cardContent(accentColor: Color) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            // En-tête : nom du logement + badge
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(assignment.resolvedPropertyName ?? assignment.propertyId ?? "—")
@@ -303,21 +441,19 @@ private struct AssignmentCard: View {
                 )
             }
 
-            // Jauge de créneau
             SlotGauge(
                 windowStart: assignment.windowStart,
                 windowEnd:   assignment.windowEnd,
-                isTight:     isTight
+                isTight:     isTight,
+                isFuture:    isFuture
             )
 
-            // Ligne d'état
-            if let line = stateLine {
+            if !isFuture, let line = stateLine {
                 Text(line)
                     .font(.system(size: 13.5, weight: isTight ? .semibold : .regular))
                     .foregroundStyle(isTight ? accentColor : Color.bhAttenue)
             }
 
-            // Boutons d'action
             if canManage,
                let phone = assignment.cleanerPhone, !phone.isEmpty,
                let name  = assignment.cleanerName,  !name.isEmpty {
@@ -329,8 +465,6 @@ private struct AssignmentCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: Ligne d'état
-
     private var stateLine: String? {
         let statusText: String
         switch assignment.status ?? "pending" {
@@ -338,25 +472,19 @@ private struct AssignmentCard: View {
         case "completed":   statusText = "Terminé"
         default:            statusText = "Pas commencé"
         }
-
         if let d = slotDuration {
-            let h = Int(d / 3600)
-            let m = Int((d.truncatingRemainder(dividingBy: 3600)) / 60)
+            let h   = Int(d / 3600)
+            let m   = Int((d.truncatingRemainder(dividingBy: 3600)) / 60)
             let dur = m == 0 ? "\(h)\u{00A0}h de créneau" : "\(h)\u{00A0}h \(m) de créneau"
             return "\(statusText) · \(dur)"
         }
-
-        if !isTight {
-            return "\(statusText) · aucune arrivée avant demain"
-        }
+        if !isTight { return "\(statusText) · aucune arrivée avant demain" }
         return statusText
     }
 
     private var slotDuration: TimeInterval? {
         CleaningAssignment.slotDuration(start: assignment.windowStart, end: assignment.windowEnd)
     }
-
-    // MARK: Boutons
 
     private func callButton(name: String, phone: String) -> some View {
         Button {
@@ -377,7 +505,6 @@ private struct AssignmentCard: View {
         }
         .buttonStyle(.plain)
     }
-
 }
 
 // MARK: - Jauge de créneau
@@ -386,6 +513,7 @@ private struct SlotGauge: View {
     let windowStart: String?
     let windowEnd:   String?
     let isTight:     Bool
+    var isFuture:    Bool = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -413,7 +541,8 @@ private struct SlotGauge: View {
     }
 
     private var progress: Double {
-        guard let s = CleaningAssignment.parseWindowTime(windowStart),
+        guard !isFuture,
+              let s = CleaningAssignment.parseWindowTime(windowStart),
               let e = CleaningAssignment.parseWindowTime(windowEnd),
               e > s else { return 0 }
         let p = Date().timeIntervalSince(s) / e.timeIntervalSince(s)
@@ -422,13 +551,46 @@ private struct SlotGauge: View {
 
     private func formatted(_ raw: String?) -> String? {
         guard let raw else { return nil }
-        // Extraire "HH:mm" depuis ISO8601 ou utiliser tel quel
         let hhmm = raw.contains("T")
             ? String(raw.components(separatedBy: "T").last?.prefix(5) ?? "")
             : raw
         return Formatters.time(hhmm)
     }
+}
 
+// MARK: - Ligne Historique
+
+private struct HistoryItemRow: View {
+    let item: CleaningHistoryItem
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.propertyName ?? "—")
+                    .font(.system(size: 15.5, weight: .medium))
+                    .foregroundStyle(Color.bhEncre)
+                if let name = item.cleanerName, !name.isEmpty {
+                    Text(name)
+                        .font(.bhMeta)
+                        .foregroundStyle(Color.bhAttenue)
+                }
+            }
+            Spacer(minLength: 8)
+            statusPill
+        }
+    }
+
+    private var statusPill: some View {
+        let (text, style, icon): (String, PillStyle, String?) = {
+            switch item.checklistStatus {
+            case "validated": return ("Validé",        .vert,       "checkmark.circle.fill")
+            case "rejected":  return ("Rejeté",        .terracotta, "xmark.circle.fill")
+            case "completed": return ("À valider",     .or,         "clock.fill")
+            default:          return ("Pas de retour", .neutre,     nil)
+            }
+        }()
+        return StatusPill(text: text, style: style, icon: icon)
+    }
 }
 
 // MARK: - Carte À VALIDER
@@ -486,12 +648,11 @@ private struct ValidateCard: View {
     }
 
     private var completionLabel: String {
-        let n          = checklist.photoCount
-        let photoPart  = n > 0 ? " · \(n) photo\(n == 1 ? "" : "s")" : ""
+        let n         = checklist.photoCount
+        let photoPart = n > 0 ? " · \(n) photo\(n == 1 ? "" : "s")" : ""
 
-        guard let iso = checklist.completedAt else { return "Terminé\(photoPart)" }
-
-        guard let date = Self.parseISO(iso) else { return "Terminé\(photoPart)" }
+        guard let iso  = checklist.completedAt else { return "Terminé\(photoPart)" }
+        guard let date = Self.parseISO(iso)    else { return "Terminé\(photoPart)" }
 
         let cal = Calendar.current
         let h   = cal.component(.hour,   from: date)
