@@ -26,4 +26,28 @@ extension KeyedDecodingContainer {
         if let i = try? decodeIfPresent(Int.self,    forKey: key) { return String(i) }
         return nil
     }
+
+    // [String: Double-or-String] → [String: Double]?  (JSONB nightly breakdown)
+    func flexDoubleDict(forKey key: Key) -> [String: Double]? {
+        if let d = try? decodeIfPresent([String: Double].self, forKey: key) { return d }
+        if let s = try? decodeIfPresent([String: String].self, forKey: key) {
+            let converted = s.compactMapValues { Double($0) }
+            return converted.isEmpty ? nil : converted
+        }
+        return nil
+    }
+
+    // Object-or-JSON-string → T?
+    // amenities/houseRules/practicalInfo arrive as inline object or a JSON-encoded string.
+    // The nested decoder applies convertFromSnakeCase so snake_case keys inside the string work.
+    func flexDecodeJSON<T: Decodable>(_ type: T.Type, forKey key: Key) -> T? {
+        if let value = try? decodeIfPresent(T.self, forKey: key) { return value }
+        if let str = try? decodeIfPresent(String.self, forKey: key),
+           let data = str.data(using: .utf8) {
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            return try? decoder.decode(T.self, from: data)
+        }
+        return nil
+    }
 }

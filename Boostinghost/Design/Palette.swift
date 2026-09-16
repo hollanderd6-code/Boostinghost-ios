@@ -13,6 +13,15 @@ extension Color {
         let b = Double(raw          & 0xFF) / 255
         self.init(red: r, green: g, blue: b)
     }
+
+    var hexString: String {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0
+        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: nil)
+        return String(format: "#%02X%02X%02X",
+                      Int((r * 255).rounded()),
+                      Int((g * 255).rounded()),
+                      Int((b * 255).rounded()))
+    }
 }
 
 // MARK: - Fond
@@ -56,6 +65,15 @@ extension Color {
     static let bhDepart       = Color(hex: "#E8B48A")
 }
 
+// MARK: - Connexion logement
+
+extension Color {
+    static let bhBleu        = Color(hex: "#2563EB")
+    static let bhBleuFond    = Color(red: 219/255, green: 234/255, blue: 254/255).opacity(0.72)
+    static let bhGrisCnx     = Color(hex: "#64748B")
+    static let bhGrisCnxFond = Color(red: 226/255, green: 232/255, blue: 240/255).opacity(0.72)
+}
+
 // MARK: - Plateformes
 
 extension Color {
@@ -78,10 +96,12 @@ extension Color {
         let k = norm(name)
         if k.contains("bhguest") || k.contains("guestapp") { return .bhTerracotta }
         switch k {
-        case "airbnb":                          return .platformAirbnb
-        case "booking", "booking.com":          return .platformBooking
-        case "expedia":                         return .platformExpedia
-        case "vrbo":                            return .platformVrbo
+        case "airbnb":                                    return .platformAirbnb
+        // "bookingcom" = valeur Channex (BookingCom → norm → bookingcom)
+        case "booking", "booking.com", "bookingcom":      return .platformBooking
+        // "expediacom" = variante Channex prudentielle
+        case "expedia", "expediacom":                     return .platformExpedia
+        case "vrbo":                                      return .platformVrbo
         case "direct", "manuel", "manual":      return .platformDirect
         case "block", "blocked", "bloque":      return .platformBloque
         default:                                return .platformBloque
@@ -93,10 +113,10 @@ extension Color {
         let k = norm(name)
         if k.contains("bhguest") || k.contains("guestapp") { return "BH Guest" }
         switch k {
-        case "airbnb":                          return "Airbnb"
-        case "booking", "booking.com":          return "Booking.com"
-        case "expedia":                         return "Expedia"
-        case "vrbo":                            return "Vrbo"
+        case "airbnb":                                    return "Airbnb"
+        case "booking", "booking.com", "bookingcom":      return "Booking.com"
+        case "expedia", "expediacom":                     return "Expedia"
+        case "vrbo":                                      return "Vrbo"
         case "direct", "manuel", "manual":      return "Direct"
         case "block", "blocked", "bloque":      return "Bloqué"
         default:                                return name?.capitalized ?? "—"

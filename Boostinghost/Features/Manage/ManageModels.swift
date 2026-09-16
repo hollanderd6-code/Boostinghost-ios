@@ -1,13 +1,39 @@
 import Foundation
 
-// MARK: - GET /api/reservations-with-deposits (tableau nu, pas enveloppé)
+// MARK: - PATCH /api/properties/:id  { icalUrls: [...] }
 
-struct ReservationWithDeposit: Decodable {
-    let deposit: Deposit?
+struct ICalPatchResponse: Decodable {
+    let property: Property?
+    let avertissement: String?  // avertissement renvoyé par le serveur (même clé que Channex)
 
-    struct Deposit: Decodable {
-        let status: String?
+    init(from decoder: Decoder) throws {
+        let c         = try decoder.container(keyedBy: CodingKeys.self)
+        property      = try? c.decodeIfPresent(Property.self,   forKey: .property)
+        avertissement = try? c.decodeIfPresent(String.self, forKey: .avertissement)
     }
+
+    private enum CodingKeys: CodingKey { case property, avertissement }
+}
+
+// MARK: - POST /api/sync/ical
+
+struct SyncIcalResponse: Decodable {
+    let success: Bool?
+    let message: String?
+}
+
+// MARK: - POST /api/diffusion/sync-all
+
+struct SyncDiffusionResponse: Decodable {
+    let message: String?
+    let count: Int?
+}
+
+// MARK: - POST /api/properties → { success, message, property: { id } }
+
+struct PropertyCreateResponse: Decodable {
+    let success: Bool?
+    let message: String?
 }
 
 // MARK: - GET /api/subscription/status (périmètre compte propre, sans agency=all)

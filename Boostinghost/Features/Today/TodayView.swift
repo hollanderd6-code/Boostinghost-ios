@@ -8,6 +8,9 @@ struct TodayView: View {
 
     @State private var vm = TodayViewModel()
     @State private var showAccount = false
+    @State private var showSearch = false
+
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -31,8 +34,18 @@ struct TodayView: View {
         .refreshable { await reload() }
         .task { await reload() }
         .onChange(of: authStore.agencyContext) { Task { await reload() } }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await reload() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("NSCalendarDayChanged"))) { _ in
+            Task { await reload() }
+        }
         .sheet(isPresented: $showAccount) {
             AccountSheet()
+        }
+        .sheet(isPresented: $showSearch) {
+            GlobalSearchSheet()
         }
     }
 
@@ -44,7 +57,7 @@ struct TodayView: View {
             title: "Aujourd'hui"
         ) {
             HStack(spacing: 10) {
-                GlassCircleButton(icon: "magnifyingglass") { }
+                GlassCircleButton(icon: "magnifyingglass") { showSearch = true }
                 InitialsButton {
                     showAccount = true
                 }
@@ -63,7 +76,9 @@ struct TodayView: View {
         if !vm.urgentArrivees.isEmpty {
             SectionLabel(text: "À traiter maintenant")
             ForEach(vm.urgentArrivees) { a in
-                UrgentArrivalCard(arrivee: a)
+                UrgentArrivalCard(arrivee: a) {
+                    Task { await vm.load() }
+                }
             }
         }
 
@@ -188,9 +203,9 @@ struct TodayView: View {
     }
 
     private func legendItem(color: Color, label: String) -> some View {
-        HStack(spacing: 4) {
-            CalendarDot(color: color)
-            Text(label).font(.system(size: 11)).foregroundStyle(Color.bhAttenue)
+        HStack(spacing: 5) {
+            CalendarDot(color: color, size: 8)
+            Text(label).font(.system(size: 12, weight: .medium)).foregroundStyle(Color.bhCorps)
         }
     }
 
@@ -332,18 +347,27 @@ private struct DayCell: View {
 
 private struct UrgentArrivalCard: View {
     let arrivee: Arrivee
+    var onWriteDismissed: () -> Void = {}
+    @Environment(AuthStore.self) private var authStore
+    @State private var writeConversation: Conversation? = nil
+    @State private var showDetail = false
 
     var body: some View {
         UrgentCard {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top) {
-                    Text(arrivee.guestName)
-                        .font(.bhTitreLigneL)
+            VStack(alignment: .leading, spacing: 8) {
+                // Ligne 1 : nom + badges de blocage + plateforme
+                HStack(alignment: .center, spacing: 6) {
+                    Text(arrivee.guestName ?? "Voyageur")
+                        .font(.bhTitreLigne)
                         .foregroundStyle(Color.bhEncre)
-                    Spacer()
+                        .lineLimit(1)
+                    let labels = arrivee.blocking.compactMap(blockingLabel)
+                    ForEach(labels.prefix(2), id: \.self) { StatusPill(text: $0, style: .terracotta) }
+                    Spacer(minLength: 4)
                     PlatformBadge(platform: arrivee.platform)
                 }
 
+                // Ligne 2 : logement · heure · durée
                 HStack(spacing: 4) {
                     Text(arrivee.propertyName)
                     if let t = Formatters.time(arrivee.arrivalTime) { Text("·"); Text(t) }
@@ -352,23 +376,40 @@ private struct UrgentArrivalCard: View {
                 .font(.bhMeta)
                 .foregroundStyle(Color.bhAttenue)
 
-                // Pastilles de blocage (motifs connus uniquement)
-                let labels = arrivee.blocking.compactMap(blockingLabel)
-                if !labels.isEmpty {
-                    HStack(spacing: 6) {
-                        ForEach(labels, id: \.self) { StatusPill(text: $0, style: .terracotta) }
+                // Ligne 3 : deux boutons compacts côte à côte
+                HStack(spacing: 8) {
+                    PrimaryButton(title: primaryAction(for: arrivee)) {
+                        if primaryAction(for: arrivee) == "Voir la réservation" {
+                            showDetail = true
+                        }
                     }
-                }
-
-                // Actions
-                VStack(spacing: 8) {
-                    PrimaryButton(title: primaryAction(for: arrivee)) { }
-                    GlassButton(title: "Écrire", icon: "bubble.left") { }
+                    if let convId = arrivee.conversationId {
+                        GlassButton(title: "Écrire", icon: "bubble.left") {
+                            writeConversation = Conversation(
+                                arriveeId: convId,
+                                guestName: arrivee.guestName ?? "Voyageur",
+                                platform: arrivee.platform,
+                                propertyName: arrivee.propertyName,
+                                escalated: arrivee.blocking.contains("ia_a_passe_la_main"),
+                                aiDisabled: arrivee.aiDisabled
+                            )
+                        }
+                        .frame(maxWidth: 110)
+                    }
                 }
                 .padding(.top, 2)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
+        }
+        .sheet(isPresented: $showDetail) {
+            ReservationDetailView(arrivee: arrivee)
+        }
+        .sheet(item: $writeConversation, onDismiss: { onWriteDismissed() }) { conv in
+            ConversationDetailView(
+                conversation: conv,
+                ownerName: authStore.session?.displayName ?? ""
+            )
         }
     }
 }
@@ -377,38 +418,45 @@ private struct UrgentArrivalCard: View {
 
 private struct ArrivalCard: View {
     let arrivee: Arrivee
+    @State private var showDetail = false
 
     var body: some View {
-        ListCard {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(arrivee.guestName)
-                            .font(.bhTitreLigne)
-                            .foregroundStyle(Color.bhEncre)
-                        HStack(spacing: 4) {
-                            Text(arrivee.propertyName)
-                            if let t = Formatters.time(arrivee.arrivalTime) { Text("·"); Text(t) }
-                            if let n = nightsLabel(arrivee.nights) { Text("·"); Text(n) }
+        Button { showDetail = true } label: {
+            ListCard {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(arrivee.guestName ?? "Voyageur")
+                                .font(.bhTitreLigne)
+                                .foregroundStyle(Color.bhEncre)
+                            HStack(spacing: 4) {
+                                Text(arrivee.propertyName)
+                                if let t = Formatters.time(arrivee.arrivalTime) { Text("·"); Text(t) }
+                                if let n = nightsLabel(arrivee.nights) { Text("·"); Text(n) }
+                            }
+                            .font(.bhMeta)
+                            .foregroundStyle(Color.bhAttenue)
                         }
-                        .font(.bhMeta)
-                        .foregroundStyle(Color.bhAttenue)
+                        Spacer()
+                        PlatformBadge(platform: arrivee.platform)
                     }
-                    Spacer()
-                    PlatformBadge(platform: arrivee.platform)
-                }
 
-                HStack(spacing: 6) {
-                    if arrivee.policeFormSigned == true {
-                        StatusPill(text: "Fiche signée",   style: .vert, icon: "checkmark.circle")
-                    }
-                    if arrivee.codesSent == true {
-                        StatusPill(text: "Codes envoyés",  style: .vert, icon: "key.fill")
+                    HStack(spacing: 6) {
+                        if arrivee.policeFormSigned == true {
+                            StatusPill(text: "Fiche signée",   style: .vert, icon: "checkmark.circle")
+                        }
+                        if arrivee.codesSent == true {
+                            StatusPill(text: "Codes envoyés",  style: .vert, icon: "key.fill")
+                        }
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showDetail) {
+            ReservationDetailView(arrivee: arrivee)
         }
     }
 }
@@ -417,27 +465,34 @@ private struct ArrivalCard: View {
 
 private struct DepartCard: View {
     let depart: Depart
+    @State private var showDetail = false
 
     var body: some View {
-        ListCard {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(depart.guestName)
-                        .font(.bhTitreLigne)
-                        .foregroundStyle(Color.bhEncre)
-                    HStack(spacing: 4) {
-                        Text(depart.propertyName)
-                        if let t = Formatters.time(depart.departureTime) { Text("·"); Text(t) }
-                        if let n = nightsLabel(depart.nights) { Text("·"); Text(n) }
+        Button { showDetail = true } label: {
+            ListCard {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(depart.guestName ?? "Voyageur")
+                            .font(.bhTitreLigne)
+                            .foregroundStyle(Color.bhEncre)
+                        HStack(spacing: 4) {
+                            Text(depart.propertyName)
+                            if let t = Formatters.time(depart.departureTime) { Text("·"); Text(t) }
+                            if let n = nightsLabel(depart.nights) { Text("·"); Text(n) }
+                        }
+                        .font(.bhMeta)
+                        .foregroundStyle(Color.bhAttenue)
                     }
-                    .font(.bhMeta)
-                    .foregroundStyle(Color.bhAttenue)
+                    Spacer()
+                    PlatformBadge(platform: depart.platform)
                 }
-                Spacer()
-                PlatformBadge(platform: depart.platform)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showDetail) {
+            ReservationDetailView(arrivee: Arrivee(fromDepart: depart))
         }
     }
 }
@@ -450,7 +505,7 @@ private struct CleaningRow: View {
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(assignment.resolvedPropertyName ?? assignment.propertyId ?? "—")
+                Text(assignment.resolvedPropertyName ?? assignment.propertyName ?? "—")
                     .font(.bhTitreLigne)
                     .foregroundStyle(Color.bhEncre)
                 if let name = assignment.cleanerName, !name.isEmpty {
@@ -466,9 +521,6 @@ private struct CleaningRow: View {
                     .font(.bhMeta)
                     .foregroundStyle(Color.bhAttenue)
             }
-            Image(systemName: "chevron.right")
-                .imageScale(.small)
-                .foregroundStyle(Color.bhAttenue)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

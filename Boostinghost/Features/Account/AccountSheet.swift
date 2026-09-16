@@ -10,21 +10,37 @@ enum AccountDestination: Hashable {
     case cleaners
     case messageTemplates
     case notifications
+    case help
+    case support
 }
 
 // MARK: - Sheet principale
 
 struct AccountSheet: View {
+    var initialDestination: AccountDestination? = nil
+
     @Environment(AuthStore.self) var authStore
     @Environment(\.dismiss) private var dismiss
 
+    @State private var path: NavigationPath
     @State private var vm = AccountViewModel()
     @State private var showSwitcher = false
+
+    init(initialDestination: AccountDestination? = nil) {
+        self.initialDestination = initialDestination
+        if let dest = initialDestination {
+            var p = NavigationPath()
+            p.append(dest)
+            _path = State(initialValue: p)
+        } else {
+            _path = State(initialValue: NavigationPath())
+        }
+    }
 
     private var isSubAccount: Bool { authStore.session?.isSubAccount == true }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 AppBackground()
                 VStack(spacing: 0) {
@@ -52,8 +68,9 @@ struct AccountSheet: View {
                 case .subscription:
                     SubscriptionView(status: vm.subscriptionStatus)
                 case .profile:
-                    
-                    ProfileView(profile: vm.userProfile)
+                    ProfileView(initialProfile: vm.userProfile) { updated in
+                        vm.userProfile = updated
+                    }
                 case .team:
                     TeamListView()
                 case .diffusion:
@@ -64,6 +81,10 @@ struct AccountSheet: View {
                     MessageTemplatesView()
                 case .notifications:
                     NotificationsView()
+                case .help:
+                    HelpView()
+                case .support:
+                    SupportView()
                 }
             }
         }
@@ -79,10 +100,8 @@ struct AccountSheet: View {
     // MARK: - En-tête en verre
 
     private var sheetHeader: some View {
-        VStack(spacing: 14) {
-            Capsule()
-                .fill(Color.bhAttenue.opacity(0.3))
-                .frame(width: 38, height: 5)
+        VStack(spacing: 0) {
+            SheetHandle()
             HStack {
                 Text("Mon compte")
                     .font(.system(size: 30, weight: .bold))
@@ -93,25 +112,33 @@ struct AccountSheet: View {
                     .font(.system(size: 16.5, weight: .semibold))
                     .foregroundStyle(Color.bhVert)
             }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 8)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 12)
-        .padding(.bottom, 8)
     }
 
     // MARK: - Carte de profil
 
     @ViewBuilder
     private var profileCard: some View {
-        let name    = authStore.session?.displayName ?? ""
-        let words   = name.split(separator: " ").prefix(2)
-        let letters = words.compactMap { $0.first.map(String.init) }.joined().uppercased()
+        let first = vm.userProfile?.firstName ?? ""
+        let last  = vm.userProfile?.lastName  ?? ""
+        let joined = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+        let name   = joined.isEmpty ? (authStore.session?.displayName ?? "") : joined
 
         if isSubAccount {
-            // Sub-accounts: display only, no navigation
+            // Derive initials from session.displayName when /api/user/profile returns nothing
+            // for sub-accounts (main-account endpoint → 403 → userProfile stays nil).
+            let displayWords = name.split(separator: " ").map(String.init)
             ListCard {
                 HStack(spacing: 14) {
-                    initialsCircle(letters: letters)
+                    ProfileAvatarView(
+                        logoUrl:   vm.userProfile?.logoUrl,
+                        firstName: vm.userProfile?.firstName ?? displayWords.first,
+                        lastName:  vm.userProfile?.lastName  ?? (displayWords.count > 1 ? displayWords.last : nil),
+                        company:   vm.userProfile?.company,
+                        size:      52
+                    )
                     Text(name.isEmpty ? "Mon compte" : name)
                         .font(.system(size: 18.5, weight: .semibold))
                         .foregroundStyle(Color.bhEncre)
@@ -124,7 +151,13 @@ struct AccountSheet: View {
             NavigationLink(value: AccountDestination.profile) {
                 ListCard {
                     HStack(spacing: 14) {
-                        initialsCircle(letters: letters)
+                        ProfileAvatarView(
+                            logoUrl:   vm.userProfile?.logoUrl,
+                            firstName: vm.userProfile?.firstName,
+                            lastName:  vm.userProfile?.lastName,
+                            company:   vm.userProfile?.company,
+                            size:      52
+                        )
                         VStack(alignment: .leading, spacing: 3) {
                             Text(name.isEmpty ? "Mon compte" : name)
                                 .font(.system(size: 18.5, weight: .semibold))
@@ -148,17 +181,6 @@ struct AccountSheet: View {
         }
     }
 
-    private func initialsCircle(letters: String) -> some View {
-        ZStack {
-            Circle()
-                .fill(Color(hex: "#DCE8E1"))
-                .frame(width: 52, height: 52)
-            Text(letters.isEmpty ? "?" : letters)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Color.bhVert)
-        }
-    }
-
     // MARK: - Groupe 1 — Organisation
 
     private var group1: some View {
@@ -166,7 +188,8 @@ struct AccountSheet: View {
             // Abonnement — sous-écran push
             CardRow(showSeparator: true) {
                 NavigationLink(value: AccountDestination.subscription) {
-                    rowContent(icon: "creditcard", title: "Abonnement et factures")
+                    rowContent(icon: "creditcard", title: "Abonnement et factures",
+                               value: planName)
                 }
                 .buttonStyle(.plain)
             }
@@ -197,9 +220,7 @@ struct AccountSheet: View {
                 NavigationLink(value: AccountDestination.diffusion) {
                     rowContent(icon: "link",
                                title: "Plateformes connectées",
-                               value: platformsLabel,
-                               valueColor: platformsColor,
-                               valueBold: platformsConnected > 0)
+                               value: platformsLabel)
                 }
                 .buttonStyle(.plain)
             }
@@ -228,7 +249,8 @@ struct AccountSheet: View {
             }
             CardRow(showSeparator: false) {
                 NavigationLink(value: AccountDestination.notifications) {
-                    rowContent(icon: "bell", title: "Notifications")
+                    rowContent(icon: "bell", title: "Notifications",
+                               value: notificationsLabel)
                 }
                 .buttonStyle(.plain)
             }
@@ -240,12 +262,19 @@ struct AccountSheet: View {
     private var group3: some View {
         ListCard {
             CardRow(showSeparator: true) {
-                rowContent(icon: "questionmark.circle", title: "Aide et tutoriels")
+                NavigationLink(value: AccountDestination.help) {
+                    rowContent(icon: "questionmark.circle", title: "Aide et tutoriels",
+                               value: "FAQ · Guides")
+                }
+                .buttonStyle(.plain)
             }
             CardRow(showSeparator: false) {
-                rowContent(icon: "envelope",
-                           title: "Nous écrire",
-                           value: "Réponse sous 2 h")
+                NavigationLink(value: AccountDestination.support) {
+                    rowContent(icon: "envelope",
+                               title: "Nous écrire",
+                               value: "Réponse sous 2 h")
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -309,7 +338,7 @@ struct AccountSheet: View {
         guard let type = vm.subscriptionStatus?.planType,
               let plan = formattedPlan(type) else { return nil }
         var parts = ["Formule \(plan)"]
-        if let n = vm.subscriptionStatus?.propertiesUsed, n > 0 {
+        if case .loaded(let n) = vm.managedPropertiesCount, n > 0 {
             parts.append("\(n) logement\(n == 1 ? "" : "s")")
         }
         return parts.joined(separator: " · ")
@@ -325,6 +354,21 @@ struct AccountSheet: View {
         }
     }
 
+    private var planName: String? {
+        guard let type = vm.subscriptionStatus?.planType else { return nil }
+        return formattedPlan(type)
+    }
+
+    private var notificationsLabel: String? {
+        guard let s = vm.notificationSettings else { return nil }
+        let flags = [s.notifNewReservation, s.notifReservationCancelled, s.notifNewMessage,
+                     s.notifDailySummary, s.notifReminderJ1, s.notifCleaningAlert,
+                     s.notifChecklistDone, s.notifNewInvoice, s.notifTemplateFailed]
+        let active = flags.filter { $0 }.count
+        let total  = flags.count
+        return "\(active) sur \(total) active\(active == 1 ? "" : "s")"
+    }
+
     private var teamLabel: String? {
         switch vm.teamCount {
         case .loading:          return nil
@@ -334,12 +378,11 @@ struct AccountSheet: View {
     }
 
     private var delegationsLabel: String? {
+        let delegations = authStore.delegations.count
+        let total = delegations + 1  // +1 for the user's own account
         switch authStore.agencyContext {
-        case .own:
-            let n = authStore.delegations.filter(\.isAccepted).count
-            return n > 0 ? "\(n) délégation\(n == 1 ? "" : "s")" : nil
-        case .allAccounts:
-            return "Vue globale"
+        case .own, .allAccounts:
+            return "\(total) compte\(total == 1 ? "" : "s")"
         case .delegating(_, let name, _):
             return name
         }
@@ -351,16 +394,6 @@ struct AccountSheet: View {
         case .failed:           return "—"
         case .loaded(let n):    return n > 0 ? "\(n) diffusé\(n == 1 ? "" : "s")" : "Aucun"
         }
-    }
-
-    private var platformsColor: Color {
-        if case .loaded(let n) = vm.platformsConnected, n > 0 { return .bhVert }
-        return .bhAttenue
-    }
-
-    private var platformsConnected: Int {
-        if case .loaded(let n) = vm.platformsConnected { return n }
-        return 0
     }
 
     private var cleanersLabel: String? {

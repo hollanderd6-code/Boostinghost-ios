@@ -42,5 +42,5 @@ private enum FlexPrice: Decodable {
 struct PriceOverrideBody: Encodable {
     let property_id: String   // snake_case — matches server expectation
     let date:        String   // "YYYY-MM-DD"
-    let price:       Double
+    let price:       Double?  // nil = null → supprime la surcharge, revient au prix calculé
 }

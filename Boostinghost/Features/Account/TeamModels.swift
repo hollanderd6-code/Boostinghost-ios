@@ -28,6 +28,8 @@ struct SubAccount: Decodable, Identifiable, Hashable {
     let isActive: Bool
     let createdAt: String?
     let lastLogin: String?
+    let parentUserId: String?   // non nil en mode agence
+    let parentUserName: String? // nom lisible du compte propriétaire
 
     // MARK: Calendrier
 
@@ -96,14 +98,16 @@ struct SubAccount: Decodable, Identifiable, Hashable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
 
-        id        = (try? c.decodeIfPresent(Int.self,    forKey: .id))        ?? 0
-        email     = try? c.decodeIfPresent(String.self,  forKey: .email)
-        firstName = try? c.decodeIfPresent(String.self,  forKey: .firstName)
-        lastName  = try? c.decodeIfPresent(String.self,  forKey: .lastName)
-        role      = try? c.decodeIfPresent(String.self,  forKey: .role)
-        isActive  = (try? c.decodeIfPresent(Bool.self,   forKey: .isActive)) ?? true
-        createdAt = try? c.decodeIfPresent(String.self,  forKey: .createdAt)
-        lastLogin = try? c.decodeIfPresent(String.self,  forKey: .lastLogin)
+        id             = (try? c.decodeIfPresent(Int.self,    forKey: .id))        ?? 0
+        email          = try? c.decodeIfPresent(String.self,  forKey: .email)
+        firstName      = try? c.decodeIfPresent(String.self,  forKey: .firstName)
+        lastName       = try? c.decodeIfPresent(String.self,  forKey: .lastName)
+        role           = try? c.decodeIfPresent(String.self,  forKey: .role)
+        isActive       = (try? c.decodeIfPresent(Bool.self,   forKey: .isActive)) ?? true
+        createdAt      = try? c.decodeIfPresent(String.self,  forKey: .createdAt)
+        lastLogin      = try? c.decodeIfPresent(String.self,  forKey: .lastLogin)
+        parentUserId   = try? c.decodeIfPresent(String.self,  forKey: .parentUserId)
+        parentUserName = try? c.decodeIfPresent(String.self,  forKey: .parentUserName)
 
         func b(_ k: CodingKeys) -> Bool { (try? c.decodeIfPresent(Bool.self, forKey: k)) ?? false }
 
@@ -159,6 +163,7 @@ struct SubAccount: Decodable, Identifiable, Hashable {
     // convertFromSnakeCase du décodeur gère la conversion snake_case → camelCase.
     private enum CodingKeys: CodingKey {
         case id, email, firstName, lastName, role, isActive, createdAt, lastLogin
+        case parentUserId, parentUserName
         case canViewCalendar, canEditReservations, canCreateReservations, canDeleteReservations
         case canViewMessages, canSendMessages, canViewTemplates, canManageTemplates
         case canViewCleaning, canAssignCleaning, canManageCleaningStaff

@@ -7,8 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		062CDA77C7934997B6F8CF89 /* ChecklistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53C467BCC7C64349A05A718E /* ChecklistDetailView.swift */; };
 		28C468D920234C6D90E5D81E /* DiffusionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68C46651E57046E7AB257F58 /* DiffusionView.swift */; };
+		3C48744412034350B45A1ADA /* ChecklistDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6744F57DA7DD430688F37DA8 /* ChecklistDetailViewModel.swift */; };
 		50696DC6D73042A68ED845746738E561 /* MessageTemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 538847290387444C868DC1A6B6400A51 /* MessageTemplatesView.swift */; };
+		5620B4B2304C93B00011B15C /* FirebaseInAppMessaging-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = 5620B4B1304C93B00011B15C /* FirebaseInAppMessaging-Beta */; };
+		5620B4B5304C9C8F0011B15C /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 5620B4B4304C9C8E0011B15C /* FirebaseMessaging */; };
 		56A0A44B30497C07001E71EE /* TimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A44A30497C06001E71EE /* TimelineView.swift */; };
 		56A0A44C30497C07001E71EE /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A44830497C06001E71EE /* CalendarViewModel.swift */; };
 		56A0A44D30497C07001E71EE /* MonthGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A44930497C06001E71EE /* MonthGridView.swift */; };
@@ -25,13 +29,24 @@
 		56A0A4623049E473001E71EE /* TeamModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45E3049E473001E71EE /* TeamModels.swift */; };
 		56A0A4633049E473001E71EE /* TeamListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A45C3049E473001E71EE /* TeamListView.swift */; };
 		56A0A466304AF702001E71EE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 56A0A465304AF702001E71EE /* GoogleService-Info.plist */; };
-		56A0A46C304B0046001E71EE /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 56A0A46B304B0046001E71EE /* FirebaseMessaging */; };
 		56A0A46E304B00F3001E71EE /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */; };
 		56A0A471304B63FC001E71EE /* CleaningModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A46F304B63FC001E71EE /* CleaningModels.swift */; };
+		56A0A481304B63FC001E71EE /* CleaningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A480304B63FC001E71EE /* CleaningViewModel.swift */; };
+		56D2B85C304FECFF00F5B146 /* MandatCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B859304FECFF00F5B146 /* MandatCreationView.swift */; };
+		56D2B85D304FECFF00F5B146 /* MandatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B85A304FECFF00F5B146 /* MandatModels.swift */; };
+		56D2B85E304FECFF00F5B146 /* MandatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B85B304FECFF00F5B146 /* MandatViewModel.swift */; };
+		56D2B8623050585F00F5B146 /* DebourModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B85F3050585F00F5B146 /* DebourModels.swift */; };
+		56D2B8633050585F00F5B146 /* DebourViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B8613050585F00F5B146 /* DebourViewModel.swift */; };
+		56D2B8643050585F00F5B146 /* DebourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B8603050585F00F5B146 /* DebourView.swift */; };
+		56D2B8663052D04500F5B146 /* ReservationInvoiceSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B8653052D04500F5B146 /* ReservationInvoiceSheet.swift */; };
+		56FB78EE3059402A00B9D1E0 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 56FB78ED3059402A00B9D1E0 /* GoogleSignIn */; };
+		56FB78F03059402A00B9D1E0 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 56FB78EF3059402A00B9D1E0 /* GoogleSignInSwift */; };
 		65E03D63AEBA4699A0CF40F9 /* DiffusionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 519D6B78F2B444D6AFDDA223 /* DiffusionModels.swift */; };
+		78E6F370DA37491B9364A98D /* ChecklistDetailModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F221BDC31B4E17BBEAF77E /* ChecklistDetailModels.swift */; };
 		7A232E876B1D48298F5DBE1B /* CleanersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD32EE0CC555482983B2C53D /* CleanersView.swift */; };
 		882BD2EA9596428DA150A33F /* DiffusionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCEFF6EA47A84ED5A7DC5BBF /* DiffusionViewModel.swift */; };
 		90DB6A4B20EF4967A542844C /* CleanersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4412B458E86403FB373BAFC /* CleanersViewModel.swift */; };
+		99CCDFF251434211B79139E6 /* ReservationEditSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4D7291B8EFF4179AC8D6D7E /* ReservationEditSheet.swift */; };
 		A3DE9B2BC79B4A6788259F427A64DF5F /* MessageTemplatesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B1909F5B2E4C3EA0CEDC5DDEC19352 /* MessageTemplatesViewModel.swift */; };
 		AA11BB22CC33DD44EE55FF67 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF66 /* NotificationsView.swift */; };
 		AA11BB22CC33DD44EE55FF69 /* NotificationsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF68 /* NotificationsViewModel.swift */; };
@@ -50,8 +65,9 @@
 		AB0000000000000000000013 /* SectionLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000123 /* SectionLabel.swift */; };
 		AB0000000000000000000014 /* StatusPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000124 /* StatusPill.swift */; };
 		AB0000000000000000000015 /* ListCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000125 /* ListCard.swift */; };
-		AB0000000000000000000016 /* SegmentedGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000126 /* SegmentedGlass.swift */; };
+		AB0000000000000000000016 /* SheetHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000126 /* SheetHandle.swift */; };
 		AB0000000000000000000017 /* GlassNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000127 /* GlassNavBar.swift */; };
+		AB0000000000000000000F05 /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F06 /* BrandMark.swift */; };
 		AB0000000000000000000018 /* GlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000128 /* GlassTabBar.swift */; };
 		AB0000000000000000000019 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000129 /* LoginViewModel.swift */; };
 		AB0000000000000000000020 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000130 /* LoginView.swift */; };
@@ -70,7 +86,6 @@
 		AB000000000000000000002D /* ManageHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013C /* ManageHubView.swift */; };
 		AB000000000000000000002E /* PropertiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013D /* PropertiesView.swift */; };
 		AB000000000000000000002F /* CleaningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013E /* CleaningView.swift */; };
-		56A0A481304B63FC001E71EE /* CleaningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A480304B63FC001E71EE /* CleaningViewModel.swift */; };
 		AB0000000000000000000030 /* OwnersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013F /* OwnersView.swift */; };
 		AB0000000000000000000031 /* StaysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000140 /* StaysView.swift */; };
 		AB0000000000000000000032 /* ManageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000141 /* ManageModels.swift */; };
@@ -78,13 +93,92 @@
 		AB0000000000000000000034 /* AccountSwitcherSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000143 /* AccountSwitcherSheet.swift */; };
 		AB0000000000000000000035 /* Reporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000144 /* Reporting.swift */; };
 		AB0000000000000000000036 /* RevenusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000145 /* RevenusView.swift */; };
+		AB0000000000000000000037 /* PropertiesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000146 /* PropertiesViewModel.swift */; };
+		AB0000000000000000000038 /* PropertyDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000147 /* PropertyDetailView.swift */; };
+		AB0000000000000000000039 /* QuartierBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000148 /* QuartierBlockView.swift */; };
+		AB000000000000000000003A /* IdentiteBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000149 /* IdentiteBlockView.swift */; };
+		AB000000000000000000003B /* SejourBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000014A /* SejourBlockView.swift */; };
+		AB000000000000000000003C /* ArgentBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000014B /* ArgentBlockView.swift */; };
+		AB000000000000000000003D /* PrestationsBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000014C /* PrestationsBlockView.swift */; };
+		AB000000000000000000003E /* AccesBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000014D /* AccesBlockView.swift */; };
+		AB000000000000000000003F /* EquipementsBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000014E /* EquipementsBlockView.swift */; };
+		AB0000000000000000000040 /* AssistantIABlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000014F /* AssistantIABlockView.swift */; };
+		AB0000000000000000000041 /* PlateformesBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000150 /* PlateformesBlockView.swift */; };
+		AB0000000000000000000042 /* NumericKeyboardModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000151 /* NumericKeyboardModifier.swift */; };
+		AB0000000000000000000043 /* DepositsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000152 /* DepositsModels.swift */; };
+		AB0000000000000000000044 /* DepositsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000153 /* DepositsViewModel.swift */; };
+		AB0000000000000000000045 /* InvoiceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000154 /* InvoiceModels.swift */; };
+		AB0000000000000000000046 /* InvoicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000155 /* InvoicesViewModel.swift */; };
+		AB0000000000000000000047 /* OwnersModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000156 /* OwnersModels.swift */; };
+		AB0000000000000000000048 /* OwnersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000157 /* OwnersViewModel.swift */; };
+		AB0000000000000000000051 /* DuplicatePropertySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000160 /* DuplicatePropertySheet.swift */; };
+		AB0000000000000000000052 /* PropertyChannexSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000161 /* PropertyChannexSheet.swift */; };
+		AB0000000000000000000053 /* PropertyDiffusionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000162 /* PropertyDiffusionSheet.swift */; };
+		AB0000000000000000000409 /* ProfileAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000040A /* ProfileAvatarView.swift */; };
+		AB000000000000000000040B /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000040C /* ProfileViewModel.swift */; };
+		AB000000000000000000040D /* ContractsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000040E /* ContractsModels.swift */; };
+		AB000000000000000000040F /* ContractsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000410 /* ContractsViewModel.swift */; };
+		AB0000000000000000000411 /* ContractsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000412 /* ContractsView.swift */; };
+		AB0000000000000000000413 /* ContractDetailModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000414 /* ContractDetailModels.swift */; };
+		AB0000000000000000000415 /* ContractDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000416 /* ContractDetailViewModel.swift */; };
+		AB0000000000000000000417 /* ContractDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000418 /* ContractDetailView.swift */; };
+		AB0000000000000000000419 /* OwnerInvoicesModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000041A /* OwnerInvoicesModels.swift */; };
+		AB000000000000000000041B /* OwnerInvoicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000041C /* OwnerInvoicesViewModel.swift */; };
+		AB000000000000000000041D /* OwnerInvoicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000041E /* OwnerInvoicesView.swift */; };
+		AB000000000000000000041F /* OwnerInvoiceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000420 /* OwnerInvoiceDetailViewModel.swift */; };
+		AB0000000000000000000421 /* OwnerInvoiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000422 /* OwnerInvoiceDetailView.swift */; };
+		AB0000000000000000000423 /* OwnerClientDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000424 /* OwnerClientDetailViewModel.swift */; };
+		AB0000000000000000000425 /* OwnerClientDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000426 /* OwnerClientDetailView.swift */; };
+		AB0000000000000000000428 /* NewPropertySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000427 /* NewPropertySheet.swift */; };
+		AB000000000000000000042A /* ReservationDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000429 /* ReservationDetailViewModel.swift */; };
+		AB000000000000000000042C /* ReservationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000042B /* ReservationDetailView.swift */; };
+		AB000000000000000000042D /* HosterzzModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000042E /* HosterzzModels.swift */; };
+		AB000000000000000000042F /* HosterzzMissionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000430 /* HosterzzMissionSheet.swift */; };
+		AB0000000000000000000432 /* HostQuestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000431 /* HostQuestion.swift */; };
+		AB0000000000000000000434 /* HostQuestionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000433 /* HostQuestionManager.swift */; };
+		AB0000000000000000000436 /* HostQuestionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000435 /* HostQuestionSheet.swift */; };
+		AB0000000000000000000454 /* DepositDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000453 /* DepositDetailSheet.swift */; };
+		AB0000000000000000000501 /* SearchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000500 /* SearchModels.swift */; };
+		AB0000000000000000000503 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000502 /* SearchViewModel.swift */; };
+		AB0000000000000000000505 /* GlobalSearchSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000504 /* GlobalSearchSheet.swift */; };
+		AB0000000000000000000601 /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000600 /* CalendarModels.swift */; };
+		AB0000000000000000000603 /* JourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000602 /* JourView.swift */; };
+		AB0000000000000000000605 /* SemaineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000604 /* SemaineView.swift */; };
+		AB0000000000000000000701 /* DayCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000700 /* DayCellActionSheet.swift */; };
+		AB0000000000000000000703 /* CreateReservationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000702 /* CreateReservationView.swift */; };
+		AB0000000000000000000705 /* CalendarBarLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000704 /* CalendarBarLayout.swift */; };
+		AB0000000000000000000707 /* BHGuestHoldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000706 /* BHGuestHoldView.swift */; };
+		AB0000000000000000000709 /* BulkActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000708 /* BulkActionSheet.swift */; };
+		AB000000000000000000070B /* ScrollableFilterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070A /* ScrollableFilterBar.swift */; };
+		AB000000000000000000070C /* InvoiceDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070D /* InvoiceDetailSheet.swift */; };
+		AB000000000000000000070E /* InvoiceCreationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070F /* InvoiceCreationSheet.swift */; };
+		AB0000000000000000000711 /* UpsellSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000710 /* UpsellSheet.swift */; };
+		AB0000000000000000000F01 /* TemplatePickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F02 /* TemplatePickerSheet.swift */; };
+		AB0000000000000000000F03 /* NoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F04 /* NoteSheet.swift */; };
 		B1C7E4920A3F4D5E82F6A3B1C9D02E47 /* TemplateEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */; };
+		BF11223344556677889900BA /* SupportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AA /* SupportModels.swift */; };
+		BF11223344556677889900BB /* SupportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AB /* SupportViewModel.swift */; };
+		BF11223344556677889900BC /* SupportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AC /* SupportView.swift */; };
+		BF22334455667788990011BB /* NotificationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF22334455667788990011AA /* NotificationRouter.swift */; };
+		BF33445566778899001122BA /* HelpModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF33445566778899001122AA /* HelpModels.swift */; };
+		BF33445566778899001122BB /* HelpViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF33445566778899001122AB /* HelpViewModel.swift */; };
+		BF33445566778899001122BC /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF33445566778899001122AC /* HelpView.swift */; };
+		BF44556677889900112233BB /* SignatureSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF44556677889900112233AA /* SignatureSheet.swift */; };
+		BF55667788990011223344BB /* AttestationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF55667788990011223344AA /* AttestationModels.swift */; };
+		BF66778899001122334455BB /* AttestationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF66778899001122334455AA /* AttestationViewModel.swift */; };
+		BF77889900112233445566BB /* AttestationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF77889900112233445566AA /* AttestationView.swift */; };
+		BHLNCH000000000000000002 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BHLNCH000000000000000001 /* LaunchScreen.storyboard */; };
+		BHSPL000000000000000002 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BHSPL000000000000000001 /* SplashView.swift */; };
+		CF000000000000000000AA01 /* PropertyICalSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF000000000000000000AA00 /* PropertyICalSectionView.swift */; };
+		CF000000000000000000AA11 /* ICalFluxSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF000000000000000000AA10 /* ICalFluxSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		25F221BDC31B4E17BBEAF77E /* ChecklistDetailModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistDetailModels.swift; sourceTree = "<group>"; };
 		27B1909F5B2E4C3EA0CEDC5DDEC19352 /* MessageTemplatesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTemplatesViewModel.swift; sourceTree = "<group>"; };
 		519D6B78F2B444D6AFDDA223 /* DiffusionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffusionModels.swift; sourceTree = "<group>"; };
 		538847290387444C868DC1A6B6400A51 /* MessageTemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTemplatesView.swift; sourceTree = "<group>"; };
+		53C467BCC7C64349A05A718E /* ChecklistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistDetailView.swift; sourceTree = "<group>"; };
 		56A0A44630497C06001E71EE /* CalendarNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarNavBar.swift; sourceTree = "<group>"; };
 		56A0A44730497C06001E71EE /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		56A0A44830497C06001E71EE /* CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModel.swift; sourceTree = "<group>"; };
@@ -105,6 +199,15 @@
 		56A0A467304AF72A001E71EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
 		56A0A46F304B63FC001E71EE /* CleaningModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningModels.swift; sourceTree = "<group>"; };
+		56A0A480304B63FC001E71EE /* CleaningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningViewModel.swift; sourceTree = "<group>"; };
+		56D2B859304FECFF00F5B146 /* MandatCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MandatCreationView.swift; sourceTree = "<group>"; };
+		56D2B85A304FECFF00F5B146 /* MandatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MandatModels.swift; sourceTree = "<group>"; };
+		56D2B85B304FECFF00F5B146 /* MandatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MandatViewModel.swift; sourceTree = "<group>"; };
+		56D2B85F3050585F00F5B146 /* DebourModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebourModels.swift; sourceTree = "<group>"; };
+		56D2B8603050585F00F5B146 /* DebourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebourView.swift; sourceTree = "<group>"; };
+		56D2B8613050585F00F5B146 /* DebourViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebourViewModel.swift; sourceTree = "<group>"; };
+		56D2B8653052D04500F5B146 /* ReservationInvoiceSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationInvoiceSheet.swift; sourceTree = "<group>"; };
+		6744F57DA7DD430688F37DA8 /* ChecklistDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistDetailViewModel.swift; sourceTree = "<group>"; };
 		68C46651E57046E7AB257F58 /* DiffusionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffusionView.swift; sourceTree = "<group>"; };
 		AA11BB22CC33DD44EE55FF66 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		AA11BB22CC33DD44EE55FF68 /* NotificationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsViewModel.swift; sourceTree = "<group>"; };
@@ -125,8 +228,9 @@
 		AB0000000000000000000123 /* SectionLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionLabel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000124 /* StatusPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPill.swift; sourceTree = "<group>"; };
 		AB0000000000000000000125 /* ListCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListCard.swift; sourceTree = "<group>"; };
-		AB0000000000000000000126 /* SegmentedGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedGlass.swift; sourceTree = "<group>"; };
+		AB0000000000000000000126 /* SheetHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetHandle.swift; sourceTree = "<group>"; };
 		AB0000000000000000000127 /* GlassNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassNavBar.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F06 /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
 		AB0000000000000000000128 /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
 		AB0000000000000000000129 /* LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000130 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -144,7 +248,6 @@
 		AB000000000000000000013C /* ManageHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageHubView.swift; sourceTree = "<group>"; };
 		AB000000000000000000013D /* PropertiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesView.swift; sourceTree = "<group>"; };
 		AB000000000000000000013E /* CleaningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningView.swift; sourceTree = "<group>"; };
-		56A0A480304B63FC001E71EE /* CleaningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningViewModel.swift; sourceTree = "<group>"; };
 		AB000000000000000000013F /* OwnersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnersView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000140 /* StaysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaysView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000141 /* ManageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageModels.swift; sourceTree = "<group>"; };
@@ -152,8 +255,86 @@
 		AB0000000000000000000143 /* AccountSwitcherSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSwitcherSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000144 /* Reporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reporting.swift; sourceTree = "<group>"; };
 		AB0000000000000000000145 /* RevenusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenusView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000146 /* PropertiesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000147 /* PropertyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyDetailView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000148 /* QuartierBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuartierBlockView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000149 /* IdentiteBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentiteBlockView.swift; sourceTree = "<group>"; };
+		AB000000000000000000014A /* SejourBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SejourBlockView.swift; sourceTree = "<group>"; };
+		AB000000000000000000014B /* ArgentBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArgentBlockView.swift; sourceTree = "<group>"; };
+		AB000000000000000000014C /* PrestationsBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrestationsBlockView.swift; sourceTree = "<group>"; };
+		AB000000000000000000014D /* AccesBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccesBlockView.swift; sourceTree = "<group>"; };
+		AB000000000000000000014E /* EquipementsBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquipementsBlockView.swift; sourceTree = "<group>"; };
+		AB000000000000000000014F /* AssistantIABlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantIABlockView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000150 /* PlateformesBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateformesBlockView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000151 /* NumericKeyboardModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumericKeyboardModifier.swift; sourceTree = "<group>"; };
+		AB0000000000000000000152 /* DepositsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositsModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000153 /* DepositsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositsViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000154 /* InvoiceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000155 /* InvoicesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoicesViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000156 /* OwnersModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnersModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000157 /* OwnersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnersViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000160 /* DuplicatePropertySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatePropertySheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000161 /* PropertyChannexSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyChannexSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000162 /* PropertyDiffusionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyDiffusionSheet.swift; sourceTree = "<group>"; };
+		AB000000000000000000040A /* ProfileAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileAvatarView.swift; sourceTree = "<group>"; };
+		AB000000000000000000040C /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
+		AB000000000000000000040E /* ContractsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractsModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000410 /* ContractsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractsViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000412 /* ContractsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractsView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000414 /* ContractDetailModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDetailModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000416 /* ContractDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDetailViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000418 /* ContractDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDetailView.swift; sourceTree = "<group>"; };
+		AB000000000000000000041A /* OwnerInvoicesModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoicesModels.swift; sourceTree = "<group>"; };
+		AB000000000000000000041C /* OwnerInvoicesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoicesViewModel.swift; sourceTree = "<group>"; };
+		AB000000000000000000041E /* OwnerInvoicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoicesView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000420 /* OwnerInvoiceDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoiceDetailViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000422 /* OwnerInvoiceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoiceDetailView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000424 /* OwnerClientDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerClientDetailViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000426 /* OwnerClientDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerClientDetailView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000427 /* NewPropertySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPropertySheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000429 /* ReservationDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationDetailViewModel.swift; sourceTree = "<group>"; };
+		AB000000000000000000042B /* ReservationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationDetailView.swift; sourceTree = "<group>"; };
+		AB000000000000000000042E /* HosterzzModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HosterzzModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000430 /* HosterzzMissionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HosterzzMissionSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000431 /* HostQuestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestion.swift; sourceTree = "<group>"; };
+		AB0000000000000000000433 /* HostQuestionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionManager.swift; sourceTree = "<group>"; };
+		AB0000000000000000000435 /* HostQuestionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000453 /* DepositDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositDetailSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000500 /* SearchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000502 /* SearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000504 /* GlobalSearchSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalSearchSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000600 /* CalendarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000602 /* JourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000604 /* SemaineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemaineView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000700 /* DayCellActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayCellActionSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000702 /* CreateReservationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateReservationView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000704 /* CalendarBarLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarBarLayout.swift; sourceTree = "<group>"; };
+		AB0000000000000000000706 /* BHGuestHoldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BHGuestHoldView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000708 /* BulkActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkActionSheet.swift; sourceTree = "<group>"; };
+		AB000000000000000000070A /* ScrollableFilterBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollableFilterBar.swift; sourceTree = "<group>"; };
+		AB000000000000000000070D /* InvoiceDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceDetailSheet.swift; sourceTree = "<group>"; };
+		AB000000000000000000070F /* InvoiceCreationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceCreationSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000710 /* UpsellSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpsellSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F02 /* TemplatePickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePickerSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F04 /* NoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSheet.swift; sourceTree = "<group>"; };
+		B4D7291B8EFF4179AC8D6D7E /* ReservationEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationEditSheet.swift; sourceTree = "<group>"; };
+		BF11223344556677889900AA /* SupportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportModels.swift; sourceTree = "<group>"; };
+		BF11223344556677889900AB /* SupportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportViewModel.swift; sourceTree = "<group>"; };
+		BF11223344556677889900AC /* SupportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportView.swift; sourceTree = "<group>"; };
+		BF22334455667788990011AA /* NotificationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationRouter.swift; sourceTree = "<group>"; };
+		BF33445566778899001122AA /* HelpModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpModels.swift; sourceTree = "<group>"; };
+		BF33445566778899001122AB /* HelpViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpViewModel.swift; sourceTree = "<group>"; };
+		BF33445566778899001122AC /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
+		BF44556677889900112233AA /* SignatureSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignatureSheet.swift; sourceTree = "<group>"; };
+		BF55667788990011223344AA /* AttestationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttestationModels.swift; sourceTree = "<group>"; };
+		BF66778899001122334455AA /* AttestationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttestationViewModel.swift; sourceTree = "<group>"; };
+		BF77889900112233445566AA /* AttestationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttestationView.swift; sourceTree = "<group>"; };
+		BHLNCH000000000000000001 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		BHSPL000000000000000001 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		C4412B458E86403FB373BAFC /* CleanersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanersViewModel.swift; sourceTree = "<group>"; };
 		CD32EE0CC555482983B2C53D /* CleanersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanersView.swift; sourceTree = "<group>"; };
+		CF000000000000000000AA00 /* PropertyICalSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyICalSectionView.swift; sourceTree = "<group>"; };
+		CF000000000000000000AA10 /* ICalFluxSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICalFluxSheet.swift; sourceTree = "<group>"; };
 		E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEditView.swift; sourceTree = "<group>"; };
 		FCEFF6EA47A84ED5A7DC5BBF /* DiffusionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffusionViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -163,17 +344,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				56A0A46C304B0046001E71EE /* FirebaseMessaging in Frameworks */,
+				5620B4B5304C9C8F0011B15C /* FirebaseMessaging in Frameworks */,
+				5620B4B2304C93B00011B15C /* FirebaseInAppMessaging-Beta in Frameworks */,
+				56FB78EE3059402A00B9D1E0 /* GoogleSignIn in Frameworks */,
+				56FB78F03059402A00B9D1E0 /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		56574ACD304C923D00B05D3D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		AB0000000000000000000201 = {
 			isa = PBXGroup;
 			children = (
 				AB0000000000000000000202 /* Boostinghost */,
+				56574ACD304C923D00B05D3D /* Frameworks */,
 				AB0000000000000000000211 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -182,6 +374,7 @@
 			isa = PBXGroup;
 			children = (
 				56A0A467304AF72A001E71EE /* Info.plist */,
+				BHLNCH000000000000000001 /* LaunchScreen.storyboard */,
 				56A0A465304AF702001E71EE /* GoogleService-Info.plist */,
 				56A0A464304AF6BA001E71EE /* Boostinghost.entitlements */,
 				AB0000000000000000000102 /* BoostinghostApp.swift */,
@@ -204,7 +397,9 @@
 				AB0000000000000000000105 /* KeychainStore.swift */,
 				AB0000000000000000000106 /* Endpoints.swift */,
 				AB0000000000000000000107 /* Formatters.swift */,
+				AB0000000000000000000151 /* NumericKeyboardModifier.swift */,
 				56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */,
+				BF22334455667788990011AA /* NotificationRouter.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -226,9 +421,12 @@
 				AB0000000000000000000123 /* SectionLabel.swift */,
 				AB0000000000000000000124 /* StatusPill.swift */,
 				AB0000000000000000000125 /* ListCard.swift */,
-				AB0000000000000000000126 /* SegmentedGlass.swift */,
+				AB0000000000000000000126 /* SheetHandle.swift */,
+				AB000000000000000000070A /* ScrollableFilterBar.swift */,
 				AB0000000000000000000127 /* GlassNavBar.swift */,
+				AB0000000000000000000F06 /* BrandMark.swift */,
 				AB0000000000000000000128 /* GlassTabBar.swift */,
+				AB000000000000000000040A /* ProfileAvatarView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -242,12 +440,24 @@
 				AB0000000000000000000213 /* Messages */,
 				AB0000000000000000000214 /* Manage */,
 				AB0000000000000000000215 /* Account */,
+				AB0000000000000000000437 /* HostQuestions */,
+				AB0000000000000000000506 /* Search */,
+				AB0000000000000000000712 /* Upsell */,
 				56A0A44630497C06001E71EE /* CalendarNavBar.swift */,
 				56A0A44730497C06001E71EE /* CalendarView.swift */,
 				56A0A44830497C06001E71EE /* CalendarViewModel.swift */,
 				56A0A44930497C06001E71EE /* MonthGridView.swift */,
 				56A0A44A30497C06001E71EE /* TimelineView.swift */,
+				AB0000000000000000000700 /* DayCellActionSheet.swift */,
+				AB0000000000000000000702 /* CreateReservationView.swift */,
+				AB0000000000000000000704 /* CalendarBarLayout.swift */,
+				AB0000000000000000000706 /* BHGuestHoldView.swift */,
+				AB0000000000000000000708 /* BulkActionSheet.swift */,
 				AB0000000000000000000145 /* RevenusView.swift */,
+				AB0000000000000000000600 /* CalendarModels.swift */,
+				AB0000000000000000000602 /* JourView.swift */,
+				AB0000000000000000000604 /* SemaineView.swift */,
+				BHSPL000000000000000001 /* SplashView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -267,6 +477,13 @@
 				AB0000000000000000000131 /* TodayModels.swift */,
 				AB0000000000000000000132 /* TodayViewModel.swift */,
 				AB0000000000000000000133 /* TodayView.swift */,
+				AB0000000000000000000429 /* ReservationDetailViewModel.swift */,
+				AB000000000000000000042B /* ReservationDetailView.swift */,
+				AB000000000000000000042E /* HosterzzModels.swift */,
+				AB0000000000000000000430 /* HosterzzMissionSheet.swift */,
+				56D2B8653052D04500F5B146 /* ReservationInvoiceSheet.swift */,
+				AB000000000000000000070F /* InvoiceCreationSheet.swift */,
+				B4D7291B8EFF4179AC8D6D7E /* ReservationEditSheet.swift */,
 			);
 			path = Today;
 			sourceTree = "<group>";
@@ -282,6 +499,7 @@
 				56A0A45130497C47001E71EE /* Reservation.swift */,
 				AB0000000000000000000144 /* Reporting.swift */,
 				56A0A46F304B63FC001E71EE /* CleaningModels.swift */,
+				AB0000000000000000000431 /* HostQuestion.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -316,6 +534,8 @@
 				AB0000000000000000000136 /* MessagesView.swift */,
 				AB0000000000000000000138 /* ConversationDetailViewModel.swift */,
 				AB0000000000000000000139 /* ConversationDetailView.swift */,
+				AB0000000000000000000F02 /* TemplatePickerSheet.swift */,
+				AB0000000000000000000F04 /* NoteSheet.swift */,
 			);
 			path = Messages;
 			sourceTree = "<group>";
@@ -326,13 +546,64 @@
 				AB000000000000000000013B /* ManageHubViewModel.swift */,
 				AB000000000000000000013C /* ManageHubView.swift */,
 				AB000000000000000000013D /* PropertiesView.swift */,
+				AB0000000000000000000146 /* PropertiesViewModel.swift */,
+				AB0000000000000000000147 /* PropertyDetailView.swift */,
+				AB0000000000000000000148 /* QuartierBlockView.swift */,
+				AB0000000000000000000149 /* IdentiteBlockView.swift */,
+				AB000000000000000000014A /* SejourBlockView.swift */,
+				AB000000000000000000014B /* ArgentBlockView.swift */,
+				AB000000000000000000014C /* PrestationsBlockView.swift */,
+				AB000000000000000000014D /* AccesBlockView.swift */,
+				AB000000000000000000014E /* EquipementsBlockView.swift */,
+				AB000000000000000000014F /* AssistantIABlockView.swift */,
+				AB0000000000000000000150 /* PlateformesBlockView.swift */,
+				AB0000000000000000000427 /* NewPropertySheet.swift */,
+				AB0000000000000000000160 /* DuplicatePropertySheet.swift */,
+				AB0000000000000000000161 /* PropertyChannexSheet.swift */,
+				AB0000000000000000000162 /* PropertyDiffusionSheet.swift */,
+				CF000000000000000000AA00 /* PropertyICalSectionView.swift */,
+				CF000000000000000000AA10 /* ICalFluxSheet.swift */,
 				AB000000000000000000013E /* CleaningView.swift */,
 				56A0A480304B63FC001E71EE /* CleaningViewModel.swift */,
+				25F221BDC31B4E17BBEAF77E /* ChecklistDetailModels.swift */,
+				53C467BCC7C64349A05A718E /* ChecklistDetailView.swift */,
+				6744F57DA7DD430688F37DA8 /* ChecklistDetailViewModel.swift */,
 				AB000000000000000000013F /* OwnersView.swift */,
+				AB0000000000000000000156 /* OwnersModels.swift */,
+				AB0000000000000000000157 /* OwnersViewModel.swift */,
+				AB000000000000000000040E /* ContractsModels.swift */,
+				AB0000000000000000000410 /* ContractsViewModel.swift */,
+				AB0000000000000000000412 /* ContractsView.swift */,
+				AB0000000000000000000414 /* ContractDetailModels.swift */,
+				AB0000000000000000000416 /* ContractDetailViewModel.swift */,
+				AB0000000000000000000418 /* ContractDetailView.swift */,
+				AB000000000000000000041A /* OwnerInvoicesModels.swift */,
+				AB000000000000000000041C /* OwnerInvoicesViewModel.swift */,
+				AB000000000000000000041E /* OwnerInvoicesView.swift */,
+				AB0000000000000000000420 /* OwnerInvoiceDetailViewModel.swift */,
+				AB0000000000000000000422 /* OwnerInvoiceDetailView.swift */,
+				AB0000000000000000000424 /* OwnerClientDetailViewModel.swift */,
+				AB0000000000000000000426 /* OwnerClientDetailView.swift */,
 				AB0000000000000000000140 /* StaysView.swift */,
 				AB0000000000000000000141 /* ManageModels.swift */,
+				AB0000000000000000000152 /* DepositsModels.swift */,
+				AB0000000000000000000153 /* DepositsViewModel.swift */,
+				AB0000000000000000000453 /* DepositDetailSheet.swift */,
+				AB0000000000000000000154 /* InvoiceModels.swift */,
+				AB000000000000000000070D /* InvoiceDetailSheet.swift */,
+				AB0000000000000000000155 /* InvoicesViewModel.swift */,
 				C4412B458E86403FB373BAFC /* CleanersViewModel.swift */,
 				CD32EE0CC555482983B2C53D /* CleanersView.swift */,
+				56D2B859304FECFF00F5B146 /* MandatCreationView.swift */,
+				56D2B85A304FECFF00F5B146 /* MandatModels.swift */,
+				56D2B85B304FECFF00F5B146 /* MandatViewModel.swift */,
+				BF44556677889900112233AA /* SignatureSheet.swift */,
+				56D2B85F3050585F00F5B146 /* DebourModels.swift */,
+				56D2B8603050585F00F5B146 /* DebourView.swift */,
+				56D2B8613050585F00F5B146 /* DebourViewModel.swift */,
+				BF55667788990011223344AA /* AttestationModels.swift */,
+				BF66778899001122334455AA /* AttestationViewModel.swift */,
+				BF77889900112233445566AA /* AttestationView.swift */,
 			);
 			path = Manage;
 			sourceTree = "<group>";
@@ -358,8 +629,42 @@
 				E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */,
 				AA11BB22CC33DD44EE55FF66 /* NotificationsView.swift */,
 				AA11BB22CC33DD44EE55FF68 /* NotificationsViewModel.swift */,
+				BF11223344556677889900AA /* SupportModels.swift */,
+				BF11223344556677889900AB /* SupportViewModel.swift */,
+				BF11223344556677889900AC /* SupportView.swift */,
+				BF33445566778899001122AA /* HelpModels.swift */,
+				BF33445566778899001122AB /* HelpViewModel.swift */,
+				BF33445566778899001122AC /* HelpView.swift */,
+				AB000000000000000000040C /* ProfileViewModel.swift */,
 			);
 			path = Account;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000437 /* HostQuestions */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000000433 /* HostQuestionManager.swift */,
+				AB0000000000000000000435 /* HostQuestionSheet.swift */,
+			);
+			path = HostQuestions;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000506 /* Search */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000000500 /* SearchModels.swift */,
+				AB0000000000000000000502 /* SearchViewModel.swift */,
+				AB0000000000000000000504 /* GlobalSearchSheet.swift */,
+			);
+			path = Search;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000712 /* Upsell */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000000710 /* UpsellSheet.swift */,
+			);
+			path = Upsell;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -378,6 +683,10 @@
 			dependencies = (
 			);
 			name = Boostinghost;
+			packageProductDependencies = (
+				56FB78ED3059402A00B9D1E0 /* GoogleSignIn */,
+				56FB78EF3059402A00B9D1E0 /* GoogleSignInSwift */,
+			);
 			productName = Boostinghost;
 			productReference = AB0000000000000000000101 /* Boostinghost.app */;
 			productType = "com.apple.product-type.application";
@@ -408,7 +717,8 @@
 			);
 			mainGroup = AB0000000000000000000201;
 			packageReferences = (
-				56A0A46A304B0046001E71EE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				5620B4B3304C9C8E0011B15C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				56FB78EC3059402A00B9D1E0 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			productRefGroup = AB0000000000000000000211 /* Products */;
 			projectDirPath = "";
@@ -427,6 +737,7 @@
 				AB0000000000000000000008 /* Assets.xcassets in Resources */,
 				AB0000000000000000000009 /* Preview Assets.xcassets in Resources */,
 				56A0A466304AF702001E71EE /* GoogleService-Info.plist in Resources */,
+				BHLNCH000000000000000002 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -449,41 +760,107 @@
 				AB0000000000000000000007 /* Session.swift in Sources */,
 				AB0000000000000000000027 /* FlexInt.swift in Sources */,
 				56A0A44B30497C07001E71EE /* TimelineView.swift in Sources */,
+				AB0000000000000000000701 /* DayCellActionSheet.swift in Sources */,
+				AB0000000000000000000703 /* CreateReservationView.swift in Sources */,
+				AB0000000000000000000705 /* CalendarBarLayout.swift in Sources */,
+				AB0000000000000000000707 /* BHGuestHoldView.swift in Sources */,
+				AB0000000000000000000709 /* BulkActionSheet.swift in Sources */,
 				56A0A44C30497C07001E71EE /* CalendarViewModel.swift in Sources */,
 				56A0A4603049E473001E71EE /* TeamViewModel.swift in Sources */,
 				56A0A4613049E473001E71EE /* TeamMemberDetailView.swift in Sources */,
 				56A0A4623049E473001E71EE /* TeamModels.swift in Sources */,
 				56A0A4633049E473001E71EE /* TeamListView.swift in Sources */,
+				56D2B8623050585F00F5B146 /* DebourModels.swift in Sources */,
+				56D2B8633050585F00F5B146 /* DebourViewModel.swift in Sources */,
+				56D2B8643050585F00F5B146 /* DebourView.swift in Sources */,
+				BF44556677889900112233BB /* SignatureSheet.swift in Sources */,
+				BF55667788990011223344BB /* AttestationModels.swift in Sources */,
+				BF66778899001122334455BB /* AttestationViewModel.swift in Sources */,
+				BF77889900112233445566BB /* AttestationView.swift in Sources */,
 				56A0A44D30497C07001E71EE /* MonthGridView.swift in Sources */,
 				56A0A44E30497C07001E71EE /* CalendarView.swift in Sources */,
 				56A0A46E304B00F3001E71EE /* PushNotificationManager.swift in Sources */,
+				BF22334455667788990011BB /* NotificationRouter.swift in Sources */,
 				56A0A44F30497C07001E71EE /* CalendarNavBar.swift in Sources */,
+				AB0000000000000000000601 /* CalendarModels.swift in Sources */,
+				AB0000000000000000000603 /* JourView.swift in Sources */,
+				AB0000000000000000000605 /* SemaineView.swift in Sources */,
+				BHSPL000000000000000002 /* SplashView.swift in Sources */,
 				AB0000000000000000000010 /* Palette.swift in Sources */,
 				AB0000000000000000000011 /* Materials.swift in Sources */,
 				AB0000000000000000000012 /* Typography.swift in Sources */,
 				AB0000000000000000000013 /* SectionLabel.swift in Sources */,
 				AB0000000000000000000014 /* StatusPill.swift in Sources */,
 				AB0000000000000000000015 /* ListCard.swift in Sources */,
-				AB0000000000000000000016 /* SegmentedGlass.swift in Sources */,
+				AB0000000000000000000016 /* SheetHandle.swift in Sources */,
+				AB000000000000000000070B /* ScrollableFilterBar.swift in Sources */,
+				56D2B85C304FECFF00F5B146 /* MandatCreationView.swift in Sources */,
+				56D2B85D304FECFF00F5B146 /* MandatModels.swift in Sources */,
+				56D2B85E304FECFF00F5B146 /* MandatViewModel.swift in Sources */,
 				AB0000000000000000000017 /* GlassNavBar.swift in Sources */,
+				AB0000000000000000000F05 /* BrandMark.swift in Sources */,
 				AB0000000000000000000018 /* GlassTabBar.swift in Sources */,
 				AB0000000000000000000019 /* LoginViewModel.swift in Sources */,
 				AB0000000000000000000020 /* LoginView.swift in Sources */,
 				AB0000000000000000000021 /* TodayModels.swift in Sources */,
 				AB0000000000000000000022 /* TodayViewModel.swift in Sources */,
 				AB0000000000000000000023 /* TodayView.swift in Sources */,
+				AB000000000000000000042A /* ReservationDetailViewModel.swift in Sources */,
+				AB000000000000000000042C /* ReservationDetailView.swift in Sources */,
+				AB000000000000000000042D /* HosterzzModels.swift in Sources */,
+				AB000000000000000000042F /* HosterzzMissionSheet.swift in Sources */,
+				AB0000000000000000000501 /* SearchModels.swift in Sources */,
+				AB0000000000000000000503 /* SearchViewModel.swift in Sources */,
+				AB0000000000000000000505 /* GlobalSearchSheet.swift in Sources */,
 				AB0000000000000000000024 /* Conversation.swift in Sources */,
 				AB0000000000000000000025 /* MessagesViewModel.swift in Sources */,
 				AB0000000000000000000026 /* MessagesView.swift in Sources */,
 				AB0000000000000000000028 /* Message.swift in Sources */,
 				AB0000000000000000000029 /* ConversationDetailViewModel.swift in Sources */,
 				AB000000000000000000002A /* ConversationDetailView.swift in Sources */,
+				AB0000000000000000000F01 /* TemplatePickerSheet.swift in Sources */,
+				AB0000000000000000000F03 /* NoteSheet.swift in Sources */,
 				AB000000000000000000002B /* Property.swift in Sources */,
 				AB000000000000000000002C /* ManageHubViewModel.swift in Sources */,
 				AB000000000000000000002D /* ManageHubView.swift in Sources */,
 				AB000000000000000000002E /* PropertiesView.swift in Sources */,
+				AB0000000000000000000037 /* PropertiesViewModel.swift in Sources */,
+				AB0000000000000000000038 /* PropertyDetailView.swift in Sources */,
+				AB0000000000000000000039 /* QuartierBlockView.swift in Sources */,
+				AB000000000000000000003A /* IdentiteBlockView.swift in Sources */,
+				AB000000000000000000003B /* SejourBlockView.swift in Sources */,
+				AB000000000000000000003C /* ArgentBlockView.swift in Sources */,
+				AB000000000000000000003D /* PrestationsBlockView.swift in Sources */,
+				AB000000000000000000003E /* AccesBlockView.swift in Sources */,
+				AB000000000000000000003F /* EquipementsBlockView.swift in Sources */,
+				AB0000000000000000000040 /* AssistantIABlockView.swift in Sources */,
+				AB0000000000000000000041 /* PlateformesBlockView.swift in Sources */,
+				AB0000000000000000000428 /* NewPropertySheet.swift in Sources */,
+				56D2B8663052D04500F5B146 /* ReservationInvoiceSheet.swift in Sources */,
+				99CCDFF251434211B79139E6 /* ReservationEditSheet.swift in Sources */,
+				AB0000000000000000000051 /* DuplicatePropertySheet.swift in Sources */,
+				AB0000000000000000000052 /* PropertyChannexSheet.swift in Sources */,
+				AB0000000000000000000053 /* PropertyDiffusionSheet.swift in Sources */,
+				CF000000000000000000AA01 /* PropertyICalSectionView.swift in Sources */,
+				CF000000000000000000AA11 /* ICalFluxSheet.swift in Sources */,
+				AB0000000000000000000432 /* HostQuestion.swift in Sources */,
+				AB0000000000000000000434 /* HostQuestionManager.swift in Sources */,
+				AB0000000000000000000436 /* HostQuestionSheet.swift in Sources */,
+				AB0000000000000000000042 /* NumericKeyboardModifier.swift in Sources */,
+				AB0000000000000000000043 /* DepositsModels.swift in Sources */,
+				AB0000000000000000000044 /* DepositsViewModel.swift in Sources */,
+				AB0000000000000000000454 /* DepositDetailSheet.swift in Sources */,
+				AB0000000000000000000045 /* InvoiceModels.swift in Sources */,
+				AB000000000000000000070C /* InvoiceDetailSheet.swift in Sources */,
+				AB000000000000000000070E /* InvoiceCreationSheet.swift in Sources */,
+				AB0000000000000000000046 /* InvoicesViewModel.swift in Sources */,
+				AB0000000000000000000047 /* OwnersModels.swift in Sources */,
+				AB0000000000000000000048 /* OwnersViewModel.swift in Sources */,
 				AB000000000000000000002F /* CleaningView.swift in Sources */,
 				56A0A481304B63FC001E71EE /* CleaningViewModel.swift in Sources */,
+				78E6F370DA37491B9364A98D /* ChecklistDetailModels.swift in Sources */,
+				062CDA77C7934997B6F8CF89 /* ChecklistDetailView.swift in Sources */,
+				3C48744412034350B45A1ADA /* ChecklistDetailViewModel.swift in Sources */,
 				AB0000000000000000000030 /* OwnersView.swift in Sources */,
 				AB0000000000000000000031 /* StaysView.swift in Sources */,
 				56A0A4573049D523001E71EE /* AccountViewModel.swift in Sources */,
@@ -505,6 +882,28 @@
 				B1C7E4920A3F4D5E82F6A3B1C9D02E47 /* TemplateEditView.swift in Sources */,
 				AA11BB22CC33DD44EE55FF67 /* NotificationsView.swift in Sources */,
 				AA11BB22CC33DD44EE55FF69 /* NotificationsViewModel.swift in Sources */,
+				BF11223344556677889900BA /* SupportModels.swift in Sources */,
+				BF11223344556677889900BB /* SupportViewModel.swift in Sources */,
+				BF11223344556677889900BC /* SupportView.swift in Sources */,
+				BF33445566778899001122BA /* HelpModels.swift in Sources */,
+				BF33445566778899001122BB /* HelpViewModel.swift in Sources */,
+				BF33445566778899001122BC /* HelpView.swift in Sources */,
+				AB0000000000000000000409 /* ProfileAvatarView.swift in Sources */,
+				AB000000000000000000040B /* ProfileViewModel.swift in Sources */,
+				AB000000000000000000040D /* ContractsModels.swift in Sources */,
+				AB000000000000000000040F /* ContractsViewModel.swift in Sources */,
+				AB0000000000000000000411 /* ContractsView.swift in Sources */,
+				AB0000000000000000000413 /* ContractDetailModels.swift in Sources */,
+				AB0000000000000000000415 /* ContractDetailViewModel.swift in Sources */,
+				AB0000000000000000000417 /* ContractDetailView.swift in Sources */,
+				AB0000000000000000000419 /* OwnerInvoicesModels.swift in Sources */,
+				AB000000000000000000041B /* OwnerInvoicesViewModel.swift in Sources */,
+				AB000000000000000000041D /* OwnerInvoicesView.swift in Sources */,
+				AB000000000000000000041F /* OwnerInvoiceDetailViewModel.swift in Sources */,
+				AB0000000000000000000421 /* OwnerInvoiceDetailView.swift in Sources */,
+				AB0000000000000000000423 /* OwnerClientDetailViewModel.swift in Sources */,
+				AB0000000000000000000425 /* OwnerClientDetailView.swift in Sources */,
+				AB0000000000000000000711 /* UpsellSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -649,20 +1048,26 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Boostinghost/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Boostinghost;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Utilisé pour photographier les justificatifs de débours.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Face ID permet d'accéder à votre espace sans ressaisir votre mot de passe.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Utilisé pour joindre une photo ou un document à un débours.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.boostinghost.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -678,20 +1083,26 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Boostinghost/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Boostinghost;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Utilisé pour photographier les justificatifs de débours.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Face ID permet d'accéder à votre espace sans ressaisir votre mot de passe.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Utilisé pour joindre une photo ou un document à un débours.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.boostinghost.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -719,21 +1130,52 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		56A0A46A304B0046001E71EE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+		5620B4B0304C93B00011B15C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
-				kind = exactVersion;
-				version = 12.17.0;
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.17.0;
+			};
+		};
+		5620B4B3304C9C8E0011B15C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.18.0;
+			};
+		};
+		56FB78EC3059402A00B9D1E0 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		56A0A46B304B0046001E71EE /* FirebaseMessaging */ = {
+		5620B4B1304C93B00011B15C /* FirebaseInAppMessaging-Beta */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 56A0A46A304B0046001E71EE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = 5620B4B0304C93B00011B15C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseInAppMessaging-Beta";
+		};
+		5620B4B4304C9C8E0011B15C /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5620B4B3304C9C8E0011B15C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		56FB78ED3059402A00B9D1E0 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 56FB78EC3059402A00B9D1E0 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		56FB78EF3059402A00B9D1E0 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 56FB78EC3059402A00B9D1E0 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

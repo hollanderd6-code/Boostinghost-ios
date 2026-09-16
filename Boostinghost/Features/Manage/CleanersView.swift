@@ -168,6 +168,12 @@ struct CleanersView: View {
                         .foregroundStyle(Color(hex: "#5E6B63"))
                         .lineLimit(1)
                 }
+                if vm.isAgencyMode, let ownerName = cleaner.userName, !ownerName.isEmpty {
+                    Text(ownerName)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Color(hex: "#5E6B63"))
+                        .lineLimit(1)
+                }
             }
 
             Spacer(minLength: 8)
@@ -346,6 +352,9 @@ private struct CleanerDetailView: View {
     private var readContent: some View {
         cleanerHeader
         infoSection
+        if listVM.isAgencyMode, let ownerName = cleaner.userName, !ownerName.isEmpty {
+            cleanerParentAccountSection(name: ownerName)
+        }
         accessSection
         smsSection
         linkSection
@@ -407,6 +416,31 @@ private struct CleanerDetailView: View {
                 .foregroundStyle(value?.isEmpty == false ? Color.bhEncre : Color.bhAttenue)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func cleanerParentAccountSection(name: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionLabel(text: "Appartenance")
+            ListCard {
+                CardRow(showSeparator: false) {
+                    HStack {
+                        Text("Compte de rattachement")
+                            .font(.system(size: 14.5, weight: .medium))
+                            .foregroundStyle(Color.bhEncre)
+                        Spacer()
+                        Text(name)
+                            .font(.system(size: 14.5))
+                            .foregroundStyle(Color.bhAttenue)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                }
+            }
+            Text("Le rattachement ne peut pas être modifié.")
+                .font(.system(size: 13))
+                .foregroundStyle(Color(hex: "#5E6B63"))
+                .padding(.horizontal, 4)
         }
     }
 
@@ -774,15 +808,23 @@ private struct CleanerDetailView: View {
 
 private struct CleanerCreateSheet: View {
     let vm: CleanersViewModel
-    @State private var name     = ""
-    @State private var email    = ""
-    @State private var phone    = ""
-    @State private var notes    = ""
-    @State private var isActive = true
-    @State private var isSaving = false
+    @State private var name             = ""
+    @State private var email            = ""
+    @State private var phone            = ""
+    @State private var notes            = ""
+    @State private var isActive         = true
+    @State private var selectedTargetId = ""
+    @State private var isLoadingTargets = true
+    @State private var isSaving         = false
     @State private var error: String?
 
-    private var nameIsValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
+    private var showSelector: Bool { !isLoadingTargets && vm.targetAccounts.count > 1 }
+    private var nameIsValid: Bool  { !name.trimmingCharacters(in: .whitespaces).isEmpty }
+    private var isFormValid: Bool  {
+        !isLoadingTargets
+        && (!showSelector || !selectedTargetId.isEmpty)
+        && nameIsValid
+    }
 
     var body: some View {
         ZStack {
@@ -801,10 +843,11 @@ private struct CleanerCreateSheet: View {
                                 .background(Color.red.opacity(0.85),
                                             in: RoundedRectangle(cornerRadius: 10))
                         }
+                        targetSection
                         formFields
                         PrimaryButton(title: "Ajouter") { Task { await save() } }
-                            .disabled(!nameIsValid || isSaving)
-                            .opacity(nameIsValid && !isSaving ? 1 : 0.5)
+                            .disabled(!isFormValid || isSaving)
+                            .opacity(isFormValid && !isSaving ? 1 : 0.5)
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 16)
@@ -812,25 +855,72 @@ private struct CleanerCreateSheet: View {
                 }
             }
         }
+        .task {
+            await vm.loadTargetAccounts()
+            isLoadingTargets = false
+            if vm.targetAccounts.count == 1 {
+                selectedTargetId = vm.targetAccounts[0].userId
+            }
+        }
+    }
+
+    // MARK: - Sélecteur de compte de rattachement
+
+    @ViewBuilder
+    private var targetSection: some View {
+        // Affiché pendant le chargement (spinner) et après si plusieurs comptes.
+        if isLoadingTargets || vm.targetAccounts.count > 1 {
+            VStack(alignment: .leading, spacing: 8) {
+                ListCard {
+                    CardRow(showSeparator: false) {
+                        HStack {
+                            Text("Compte de rattachement")
+                                .font(.system(size: 14.5, weight: .medium))
+                                .foregroundStyle(Color.bhEncre)
+                            Spacer()
+                            if isLoadingTargets {
+                                ProgressView().tint(Color.bhAttenue).scaleEffect(0.85)
+                            } else {
+                                Picker("", selection: $selectedTargetId) {
+                                    Text("Sélectionner…").tag("")
+                                    ForEach(vm.targetAccounts) { account in
+                                        Text(account.name).tag(account.userId)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .tint(selectedTargetId.isEmpty ? Color.bhAttenue : Color.bhVert)
+                            }
+                        }
+                    }
+                }
+                Text("Le rattachement ne pourra pas être modifié après création.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(hex: "#5E6B63"))
+                    .padding(.horizontal, 4)
+            }
+        }
     }
 
     private var createNavBar: some View {
-        ZStack {
-            Text("Nouvel intervenant")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color.bhEncre)
-            HStack {
-                Button("Annuler") { vm.showCreateSheet = false }
-                    .font(.system(size: 16))
-                    .foregroundStyle(Color.bhAttenue)
-                    .buttonStyle(.plain)
-                    .disabled(isSaving)
-                Spacer()
-                if isSaving { ProgressView().tint(Color.bhAttenue) }
+        VStack(spacing: 0) {
+            SheetHandle()
+            ZStack {
+                Text("Nouvel intervenant")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Color.bhEncre)
+                HStack {
+                    Button("Annuler") { vm.showCreateSheet = false }
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color.bhAttenue)
+                        .buttonStyle(.plain)
+                        .disabled(isSaving)
+                    Spacer()
+                    if isSaving { ProgressView().tint(Color.bhAttenue) }
+                }
             }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 14)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
         .background {
             Rectangle()
                 .glassEffect(in: .rect)
@@ -878,16 +968,18 @@ private struct CleanerCreateSheet: View {
     }
 
     private func save() async {
-        guard !isSaving, nameIsValid else { return }
+        guard !isSaving, isFormValid else { return }
         isSaving = true
         error    = nil
+        let target = showSelector ? (selectedTargetId.isEmpty ? nil : selectedTargetId) : nil
         do {
             _ = try await vm.create(
-                name:     name.trimmingCharacters(in: .whitespaces),
-                email:    email.isEmpty ? nil : email,
-                phone:    phone.isEmpty ? nil : phone,
-                notes:    notes.isEmpty ? nil : notes,
-                isActive: isActive
+                name:         name.trimmingCharacters(in: .whitespaces),
+                email:        email.isEmpty ? nil : email,
+                phone:        phone.isEmpty ? nil : phone,
+                notes:        notes.isEmpty ? nil : notes,
+                isActive:     isActive,
+                targetUserId: target
             )
             vm.showCreateSheet = false
         } catch {

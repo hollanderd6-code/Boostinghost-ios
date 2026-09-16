@@ -66,6 +66,68 @@ extension PushNotificationManager: MessagingDelegate {
     }
 }
 
+// MARK: - UNUserNotificationCenterDelegate
+
+extension PushNotificationManager: UNUserNotificationCenterDelegate {
+
+    // Display banner + sound even when the app is in the foreground.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
+    }
+
+    // Route the tap to the appropriate tab or screen.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        // Extract Sendable values before crossing the actor boundary.
+        let type    = userInfo["type"] as? String ?? ""
+        let convRaw = (userInfo["conversation_id"] as? String)
+                   ?? (userInfo["conversationId"]  as? String)
+        Task { @MainActor in
+            let router = NotificationRouter.shared
+            switch type {
+
+            case "new_message", "new_guest_message",
+                 "escalation", "negative_sentiment",
+                 "upsell_paid":
+                if let convId = convRaw.flatMap({ Int($0) }) {
+                    router.pendingConversationId = convId
+                }
+                router.pendingTab = .messages
+
+            case "host_question":
+                await HostQuestionManager.shared.fetchPending()
+
+            case "new_cleaning", "cleaning_reminder", "cleaning_alert",
+                 "new_invoice",
+                 "contract_signed",
+                 "deposit_expiry_alert":
+                router.pendingTab = .manage
+
+            case "support":
+                router.openSupport = true
+
+            case "new_reservation", "new_booking", "new_booking_guest",
+                 "cancelled_reservation", "arrivals", "departures",
+                 "daily_arrivals", "daily_summary":
+                router.pendingTab = .today
+                NotificationCenter.default.post(name: .calendarShouldRefresh, object: nil)
+
+            default:
+                router.pendingTab = .today
+            }
+        }
+        completionHandler()
+    }
+}
+
 // MARK: - Private
 
 private struct SaveTokenBody: Encodable {

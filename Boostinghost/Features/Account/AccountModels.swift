@@ -1,48 +1,75 @@
 import Foundation
 
-// MARK: - User profile (GET /api/user/profile)
-// Relevé dans docs/releves/mon-compte.md §1 — réponse plate, use_bh_stripe en snake_case.
+// MARK: - Account type
 
-struct UserProfile: Decodable {
-    let email:         String?
-    let firstName:     String?
-    let lastName:      String?
-    let company:       String?
-    let accountType:   String?
-    let address:       String?
-    let postalCode:    String?
-    let city:          String?
-    let siret:         String?
-    let phone:         String?
-    let invoiceEmail:  String?
-    let website:       String?
-    let vatRegime:     String?
-    let vatNumber:     String?
-    let legalForm:     String?
+enum AccountType: String, Codable {
+    case individual
+    case business
+
+    var label: String {
+        switch self {
+        case .individual: return "Particulier"
+        case .business:   return "Professionnel"
+        }
+    }
+}
+
+// MARK: - User profile (GET /api/user/profile)
+// Relevé server.js — réponse plate, use_bh_stripe seul en snake_case (→ useBhStripe via convertFromSnakeCase).
+// ⚠️ PUT ne renvoie pas useBhStripe ni createdAt : les conserver depuis l'état précédent côté client.
+
+struct UserProfile: Codable {
+    let id:           String
+    let email:        String
+    var logoUrl:      String?
+    var firstName:    String?
+    var lastName:     String?
+    var company:      String?
+    var accountType:  AccountType?
+    var address:      String?
+    var postalCode:   String?
+    var city:         String?
+    var siret:        String?
+    var phone:        String?
+    var invoiceEmail: String?
+    var website:      String?
+    var vatRegime:    String?
+    var vatNumber:    String?
+    var legalForm:    String?
+    var useBhStripe:  Bool
+    var createdAt:    String?
 
     init(from decoder: Decoder) throws {
-        let c         = try decoder.container(keyedBy: CodingKeys.self)
-        email         = try? c.decodeIfPresent(String.self, forKey: .email)
-        firstName     = try? c.decodeIfPresent(String.self, forKey: .firstName)
-        lastName      = try? c.decodeIfPresent(String.self, forKey: .lastName)
-        company       = try? c.decodeIfPresent(String.self, forKey: .company)
-        accountType   = try? c.decodeIfPresent(String.self, forKey: .accountType)
-        address       = try? c.decodeIfPresent(String.self, forKey: .address)
-        postalCode    = try? c.decodeIfPresent(String.self, forKey: .postalCode)
-        city          = try? c.decodeIfPresent(String.self, forKey: .city)
-        siret         = try? c.decodeIfPresent(String.self, forKey: .siret)
-        phone         = try? c.decodeIfPresent(String.self, forKey: .phone)
-        invoiceEmail  = try? c.decodeIfPresent(String.self, forKey: .invoiceEmail)
-        website       = try? c.decodeIfPresent(String.self, forKey: .website)
-        vatRegime     = try? c.decodeIfPresent(String.self, forKey: .vatRegime)
-        vatNumber     = try? c.decodeIfPresent(String.self, forKey: .vatNumber)
-        legalForm     = try? c.decodeIfPresent(String.self, forKey: .legalForm)
+        let c        = try decoder.container(keyedBy: CodingKeys.self)
+        id           = (try? c.decodeIfPresent(String.self,      forKey: .id))          ?? ""
+        email        = (try? c.decodeIfPresent(String.self,      forKey: .email))        ?? ""
+        logoUrl      = try? c.decodeIfPresent(String.self,        forKey: .logoUrl)
+        firstName    = try? c.decodeIfPresent(String.self,        forKey: .firstName)
+        lastName     = try? c.decodeIfPresent(String.self,        forKey: .lastName)
+        company      = try? c.decodeIfPresent(String.self,        forKey: .company)
+        accountType  = try? c.decodeIfPresent(AccountType.self,   forKey: .accountType)
+        address      = try? c.decodeIfPresent(String.self,        forKey: .address)
+        postalCode   = try? c.decodeIfPresent(String.self,        forKey: .postalCode)
+        city         = try? c.decodeIfPresent(String.self,        forKey: .city)
+        siret        = try? c.decodeIfPresent(String.self,        forKey: .siret)
+        phone        = try? c.decodeIfPresent(String.self,        forKey: .phone)
+        invoiceEmail = try? c.decodeIfPresent(String.self,        forKey: .invoiceEmail)
+        website      = try? c.decodeIfPresent(String.self,        forKey: .website)
+        vatRegime    = try? c.decodeIfPresent(String.self,        forKey: .vatRegime)
+        vatNumber    = try? c.decodeIfPresent(String.self,        forKey: .vatNumber)
+        legalForm    = try? c.decodeIfPresent(String.self,        forKey: .legalForm)
+        useBhStripe  = (try? c.decodeIfPresent(Bool.self,         forKey: .useBhStripe)) ?? false
+        createdAt    = try? c.decodeIfPresent(String.self,        forKey: .createdAt)
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case email, firstName, lastName, company, accountType
+    // Pas de raw value snake_case — convertFromSnakeCase fait la correspondance automatiquement.
+    // useBhStripe ← "use_bh_stripe" via convertFromSnakeCase.
+    private enum CodingKeys: CodingKey {
+        case id, email, logoUrl, firstName, lastName, company, accountType
         case address, postalCode, city, siret, phone
         case invoiceEmail, website, vatRegime, vatNumber, legalForm
+        case useBhStripe
+        case createdAt
     }
 }
 
@@ -110,6 +137,8 @@ struct CleanerItem: Decodable, Identifiable, Hashable {
     var smsRecapEnabled: Bool
     var accessToken:     String    // masqué — ne pas afficher ; mis à jour par regenerate-link
     let createdAt:       String?
+    let userId:          String?   // compte propriétaire — non nil en mode agence
+    let userName:        String?   // nom lisible du compte propriétaire
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -125,6 +154,8 @@ struct CleanerItem: Decodable, Identifiable, Hashable {
         smsRecapEnabled = (try? c.decodeIfPresent(Bool.self,   forKey: .smsRecapEnabled)) ?? false
         accessToken     = (try? c.decodeIfPresent(String.self, forKey: .accessToken))     ?? ""
         createdAt       = try? c.decodeIfPresent(String.self,  forKey: .createdAt)
+        userId          = try? c.decodeIfPresent(String.self,  forKey: .userId)
+        userName        = try? c.decodeIfPresent(String.self,  forKey: .userName)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -137,6 +168,8 @@ struct CleanerItem: Decodable, Identifiable, Hashable {
         case subAccountId    // "sub_account_id"    → "subAccountId"
         case smsRecapEnabled // "sms_recap_enabled" → "smsRecapEnabled"
         case accessToken     // "access_token"      → "accessToken"
+        case userId          // "user_id"           → "userId"
+        case userName        // "user_name"         → "userName"
     }
 }
 
@@ -144,6 +177,7 @@ struct CleanerItem: Decodable, Identifiable, Hashable {
 
 // Corps POST /api/cleaners et PUT /api/cleaners/:id.
 // subAccountId préservé depuis l'objet local sur PUT ; nil sur création.
+// targetUserId intercepté par le middleware agency-target.js avant la route (nil → omis du JSON).
 struct CleanerWriteBody: Encodable {
     let name:         String
     let email:        String?
@@ -151,6 +185,7 @@ struct CleanerWriteBody: Encodable {
     let notes:        String?
     let isActive:     Bool
     let subAccountId: Int?
+    let targetUserId: String?
 }
 
 // Réponse 201 POST /api/cleaners : { message, cleaner }
@@ -204,6 +239,62 @@ struct DefaultCleanerBody: Encodable {
     }
 
     private enum CodingKeys: String, CodingKey { case cleanerId }
+}
+
+// MARK: - Target accounts (GET /api/agency/target-accounts)
+// Relevé dans docs/releves/creation-comptes-agence.md §3.
+// Contient le compte de l'appelant (isSelf = true) + les délégants acceptés.
+// Envoyé sans agency=all — le token suffit ; pas de middleware d'auth Express standard.
+
+struct TargetAccountsResponse: Decodable {
+    let accounts: [TargetAccount]
+
+    init(from decoder: Decoder) throws {
+        let c    = try decoder.container(keyedBy: CodingKeys.self)
+        accounts = (try? c.decodeIfPresent([TargetAccount].self, forKey: .accounts)) ?? []
+    }
+    private enum CodingKeys: CodingKey { case accounts }
+}
+
+struct TargetAccount: Decodable, Identifiable, Equatable {
+    let userId: String
+    let name:   String
+    let email:  String
+    let isSelf: Bool
+
+    var id: String { userId }
+
+    init(from decoder: Decoder) throws {
+        let c  = try decoder.container(keyedBy: CodingKeys.self)
+        userId = (try? c.decodeIfPresent(String.self, forKey: .userId)) ?? ""
+        name   = (try? c.decodeIfPresent(String.self, forKey: .name))   ?? ""
+        email  = (try? c.decodeIfPresent(String.self, forKey: .email))  ?? ""
+        isSelf = (try? c.decodeIfPresent(Bool.self,   forKey: .isSelf)) ?? false
+    }
+    private enum CodingKeys: CodingKey { case userId, name, email, isSelf }
+}
+
+// MARK: - Sub-account creation (POST /api/sub-accounts/create)
+// targetUserId intercepté par le middleware agency-target.js avant la route (nil → omis).
+
+struct SubAccountCreateBody: Encodable {
+    let email:        String
+    let password:     String
+    let firstName:    String
+    let lastName:     String
+    let role:         String
+    let targetUserId: String?
+}
+
+// Réponse 201 : le champ exact varie ; on lit juste success pour confirmer.
+struct SubAccountCreateResponse: Decodable {
+    let success: Bool
+
+    init(from decoder: Decoder) throws {
+        let c   = try decoder.container(keyedBy: CodingKeys.self)
+        success = (try? c.decodeIfPresent(Bool.self, forKey: .success)) ?? true
+    }
+    private enum CodingKeys: CodingKey { case success }
 }
 
 // MARK: - Message templates (GET /api/message-templates) — "Messages automatiques"
@@ -500,15 +591,15 @@ struct NotificationSettings: Decodable {
         notifTemplateFailed       = (try? c.decodeIfPresent(Bool.self, forKey: .notifTemplateFailed))       ?? false
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case notifNewReservation       = "notif_new_reservation"
-        case notifReservationCancelled = "notif_reservation_cancelled"
-        case notifNewMessage           = "notif_new_message"
-        case notifDailySummary         = "notif_daily_summary"
-        case notifReminderJ1           = "notif_reminder_j1"
-        case notifCleaningAlert        = "notif_cleaning_alert"
-        case notifChecklistDone        = "notif_checklist_done"
-        case notifNewInvoice           = "notif_new_invoice"
-        case notifTemplateFailed       = "notif_template_failed"
+    private enum CodingKeys: CodingKey {
+        case notifNewReservation
+        case notifReservationCancelled
+        case notifNewMessage
+        case notifDailySummary
+        case notifReminderJ1
+        case notifCleaningAlert
+        case notifChecklistDone
+        case notifNewInvoice
+        case notifTemplateFailed
     }
 }

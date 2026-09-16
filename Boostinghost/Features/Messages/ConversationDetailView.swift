@@ -4,9 +4,13 @@ import SwiftUI
 
 struct ConversationDetailView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.tabBarHidden) private var tabBarHidden
+    @Environment(MessagesViewModel.self) private var messagesVM
 
     @State private var vm: ConversationDetailViewModel
+    @State private var showUpsellSheet    = false
+    @State private var showTemplateSheet  = false
+    @State private var showNoteSheet      = false
+    @State private var showHandBackAlert  = false
 
     init(conversation: Conversation, ownerName: String) {
         _vm = State(wrappedValue: ConversationDetailViewModel(
@@ -22,9 +26,11 @@ struct ConversationDetailView: View {
         .safeAreaInset(edge: .top, spacing: 0) { navBar }
         .safeAreaInset(edge: .bottom, spacing: 0) { inputBar }
         .toolbar(.hidden, for: .navigationBar)
-        .task { await vm.load() }
-        .onAppear  { withAnimation(.easeInOut(duration: 0.2)) { tabBarHidden.wrappedValue = true  } }
-        .onDisappear { withAnimation(.easeInOut(duration: 0.2)) { tabBarHidden.wrappedValue = false } }
+        .toolbar(.hidden, for: .tabBar)
+        .task {
+            await messagesVM.markConversationRead(vm.conversation.id)
+            await vm.load()
+        }
         .alert("Erreur", isPresented: Binding(
             get: { vm.sendError != nil },
             set: { if !$0 { vm.sendError = nil } }
@@ -32,6 +38,44 @@ struct ConversationDetailView: View {
             Button("OK") { vm.sendError = nil }
         } message: {
             Text(vm.sendError ?? "")
+        }
+        .sheet(isPresented: $showUpsellSheet) {
+            UpsellSheet(conversationId: vm.conversation.id)
+        }
+        .sheet(isPresented: $showTemplateSheet) {
+            TemplatePickerSheet(conversation: vm.conversation, vm: vm)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showNoteSheet) {
+            NoteSheet(vm: vm)
+                .presentationDetents([.medium, .large])
+        }
+        .alert("Aucune caution", isPresented: Binding(
+            get: { vm.depositUnavailable },
+            set: { if !$0 { vm.clearDepositUnavailable() } }
+        )) {
+            Button("OK") { vm.clearDepositUnavailable() }
+        } message: {
+            Text("Aucune caution configurée pour ce logement.")
+        }
+        .alert("Lien de caution", isPresented: Binding(
+            get: { vm.depositLink != nil },
+            set: { if !$0 { vm.clearDepositLink() } }
+        )) {
+            Button("Coller dans le message") { vm.confirmPasteDepositLink() }
+            Button("Annuler", role: .cancel) { vm.clearDepositLink() }
+        } message: {
+            if let cents = vm.depositAmountCents {
+                Text("Caution de \(Formatters.amount(Double(cents) / 100.0)). Coller le lien dans le message ?")
+            } else {
+                Text("Coller le lien de caution dans le message ?")
+            }
+        }
+        .alert("Rendre la conversation à l'IA ?", isPresented: $showHandBackAlert) {
+            Button("Rendre à l'IA") { Task { await takeOverAndSync() } }
+            Button("Annuler", role: .cancel) { }
+        } message: {
+            Text("L'IA répondra de nouveau automatiquement.")
         }
     }
 
@@ -68,10 +112,23 @@ struct ConversationDetailView: View {
 
             Spacer(minLength: 8)
 
-            if vm.conversation.aiDisabled == true {
-                StatusPill(text: "IA en pause", style: .neutre)
+            Menu {
+                Button {
+                    showUpsellSheet = true
+                } label: {
+                    Label("Prestation payante", systemImage: "creditcard")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.bhVert)
+                    .frame(width: 36, height: 36)
+                    .glassEffect(in: .circle)
+                    .specularEdge(cornerRadius: 18)
             }
-            if vm.conversation.escalated == true {
+            .buttonStyle(.plain)
+
+            if vm.isEscalated {
                 StatusPill(text: "À reprendre", style: .or, icon: "sparkles")
             }
         }
@@ -113,7 +170,8 @@ struct ConversationDetailView: View {
     }
 
     private var loadedList: some View {
-        ScrollViewReader { proxy in
+        let lastSentId = vm.messages.last(where: { $0.isOutgoing })?.id
+        return ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 0) {
                     if vm.messages.isEmpty {
@@ -129,22 +187,30 @@ struct ConversationDetailView: View {
                             .padding(.top, 16)
                             .padding(.bottom, 8)
                         ForEach(group.messages) { msg in
-                            MessageBubbleView(message: msg)
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, 6)
-                                .id(msg.id)
+                            MessageBubbleView(
+                                message: msg,
+                                isLastSent: msg.id == lastSentId,
+                                onRetry: (msg.isOutgoing && msg.delivered == false && msg.deliveryError?.isEmpty == false)
+                                    ? { vm.retryMessage(msg) } : nil
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 6)
+                            .id(msg.id)
                         }
                     }
                 }
                 .padding(.top, 12)
                 .padding(.bottom, 16)
             }
+            .defaultScrollAnchor(.bottom)
             .onChange(of: vm.messages.count) { old, new in
-                guard let lastId = vm.messages.last?.id else { return }
+                guard new > 0, let lastId = vm.messages.last?.id else { return }
                 if old == 0 {
-                    // Laisse un cycle au safe area pour se stabiliser avant le scroll initial.
-                    Task { @MainActor in proxy.scrollTo(lastId, anchor: .bottom) }
-                } else {
+                    // Initial load: defaultScrollAnchor may not anchor correctly when
+                    // LazyVStack content appears after the ScrollView was already created
+                    // (messages loaded asynchronously). Scroll explicitly without animation.
+                    proxy.scrollTo(lastId, anchor: .bottom)
+                } else if new > old {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         proxy.scrollTo(lastId, anchor: .bottom)
                     }
@@ -225,6 +291,11 @@ struct ConversationDetailView: View {
         VStack(spacing: 0) {
             if vm.suggestionActive {
                 suggestionChip
+            } else {
+                if let resumeDate = vm.aiResumeDate {
+                    aiPauseBanner(resumeDate: resumeDate)
+                }
+                actionBar
             }
             HStack(alignment: .bottom, spacing: 10) {
                 TextField("Saisir un message…", text: $vm.draftText, axis: .vertical)
@@ -241,7 +312,7 @@ struct ConversationDetailView: View {
                             }
                     )
 
-                Button { Task { await vm.send() } } label: {
+                Button { Task { await sendAndSync() } } label: {
                     if vm.isSending {
                         ProgressView()
                             .frame(width: 36, height: 36)
@@ -271,6 +342,8 @@ struct ConversationDetailView: View {
         }
     }
 
+    // MARK: - Suggestion chip (brouillon IA)
+
     private var suggestionChip: some View {
         HStack(spacing: 6) {
             Image(systemName: "sparkles")
@@ -278,7 +351,7 @@ struct ConversationDetailView: View {
             Text("Brouillon IA")
                 .font(.system(size: 12, weight: .semibold))
             Spacer()
-            Button { vm.dismissSuggestion() } label: {
+            Button { vm.dismissSuggestion(); syncSuggestionDismissed() } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color.bhAttenue)
@@ -292,6 +365,174 @@ struct ConversationDetailView: View {
         .padding(.vertical, 8)
         .background(Color.bhOrFond)
         .overlay(alignment: .bottom) { Divider().opacity(0.3) }
+    }
+
+    // MARK: - Barre d'actions (Reprendre · Template · Note)
+
+    private var actionBar: some View {
+        HStack(spacing: 0) {
+            actionButton(
+                icon: "hand.raised.fill",
+                label: vm.isAiDisabled ? "Vous gérez" : "Reprendre",
+                color: vm.isAiDisabled ? Color.bhVert : (vm.isEscalated ? Color.bhOr : Color.bhAttenue),
+                disabled: false
+            ) {
+                if vm.isAiDisabled {
+                    showHandBackAlert = true
+                } else {
+                    Task { await takeOverAndSync() }
+                }
+            }
+
+            Divider()
+                .frame(height: 28)
+                .opacity(0.4)
+
+            actionButton(
+                icon: "bolt.fill",
+                label: "Template",
+                color: Color.bhVert,
+                disabled: vm.conversation.propertyId == nil
+            ) {
+                showTemplateSheet = true
+            }
+
+            Divider()
+                .frame(height: 28)
+                .opacity(0.4)
+
+            actionButton(
+                icon: "note.text",
+                label: "Note",
+                color: Color.bhVert,
+                disabled: vm.noteUid == nil,
+                badge: vm.currentNote != nil
+            ) {
+                showNoteSheet = true
+            }
+
+            if !vm.isAirbnb {
+                Divider()
+                    .frame(height: 28)
+                    .opacity(0.4)
+
+                actionButton(
+                    icon: "lock.fill",
+                    label: "Caution",
+                    color: Color.bhVert,
+                    disabled: false,
+                    loading: vm.isDepositLoading
+                ) {
+                    Task { await vm.fetchDepositLink() }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(Color.white.opacity(0.18))
+        .overlay(alignment: .bottom) { Divider().opacity(0.4) }
+    }
+
+    @ViewBuilder
+    private func actionButton(
+        icon: String,
+        label: String,
+        color: Color,
+        disabled: Bool,
+        badge: Bool = false,
+        loading: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                ZStack(alignment: .topTrailing) {
+                    if loading {
+                        ProgressView()
+                            .frame(width: 18, height: 18)
+                            .tint(color)
+                    } else {
+                        Image(systemName: icon)
+                            .font(.system(size: 18))
+                        if badge {
+                            Circle()
+                                .fill(Color.bhOr)
+                                .frame(width: 7, height: 7)
+                                .offset(x: 4, y: -2)
+                        }
+                    }
+                }
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(color)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled || loading)
+        .opacity(disabled ? 0.35 : 1)
+    }
+    // MARK: - Sync vers la liste Messages
+
+    private func sendAndSync() async {
+        let wasSuggestionActive = vm.suggestionActive
+        await vm.send()
+        // send() clears draftText on success; use that as the success signal
+        if vm.sendError == nil {
+            if wasSuggestionActive {
+                messagesVM.updateConversation(vm.conversation.id) { $0.hasSuggestion = false }
+            }
+            // After a manual reply while escalated+paused, AI is re-enabled by send()
+            messagesVM.updateConversation(vm.conversation.id) {
+                $0.escalated  = vm.isEscalated
+                $0.aiDisabled = vm.isAiDisabled
+            }
+        }
+    }
+
+    private func takeOverAndSync() async {
+        await vm.takeOver()
+        messagesVM.updateConversation(vm.conversation.id) {
+            $0.escalated  = vm.isEscalated
+            $0.aiDisabled = vm.isAiDisabled
+        }
+    }
+
+    private func syncSuggestionDismissed() {
+        messagesVM.updateConversation(vm.conversation.id) { $0.hasSuggestion = false }
+    }
+
+    // MARK: - Décompte pause IA
+
+    @ViewBuilder
+    private func aiPauseBanner(resumeDate: Date) -> some View {
+        SwiftUI.TimelineView(.periodic(from: Date(), by: 60)) { ctx in
+            let remaining = resumeDate.timeIntervalSince(ctx.date)
+            if remaining > 0 {
+                HStack(spacing: 5) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 11))
+                    Text(formatAiPauseRemaining(remaining))
+                        .font(.system(size: 12))
+                }
+                .foregroundStyle(Color.bhAttenue)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .overlay(alignment: .bottom) { Divider().opacity(0.4) }
+            }
+        }
+    }
+
+    private func formatAiPauseRemaining(_ interval: TimeInterval) -> String {
+        let total = max(0, Int(interval))
+        let h = total / 3600
+        let m = (total % 3600) / 60
+        if h > 0 {
+            return "L'IA reprend dans \(h) h \(String(format: "%02d", m))"
+        }
+        return "L'IA reprend dans \(m) min"
     }
 }
 
@@ -312,26 +553,25 @@ private struct DateSeparatorView: View {
 
 private struct MessageBubbleView: View {
     let message: Message
+    let isLastSent: Bool
+    let onRetry: (() -> Void)?
 
-    private var isOwner: Bool { message.isFromOwner }
+    @State private var showErrorAlert = false
+    private var isOwner: Bool { message.isOutgoing }
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 0) {
             if isOwner { Spacer(minLength: 0) }
 
             VStack(alignment: isOwner ? .trailing : .leading, spacing: 3) {
-                if message.isBot {
-                    Label("Réponse IA", systemImage: "sparkles")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Color.bhAttenue)
-                        .padding(.horizontal, 2)
-                }
-
                 if message.isSystem {
                     systemMessage
                 } else {
                     bubble
                 }
+
+                originCapsule
+                deliveryStatus
 
                 Text(formattedTime)
                     .font(.system(size: 11))
@@ -343,16 +583,113 @@ private struct MessageBubbleView: View {
 
             if !isOwner { Spacer(minLength: 0) }
         }
+        .alert("Erreur de transmission", isPresented: $showErrorAlert) {
+            Button("OK") { }
+        } message: {
+            Text(message.deliveryError ?? "")
+        }
+    }
+
+    // MARK: - Marqueur de livraison
+
+    @ViewBuilder
+    private var deliveryStatus: some View {
+        if isOwner, !message.isSystem {
+            if message.delivered == false, message.deliveryError?.isEmpty == false {
+                HStack(spacing: 8) {
+                    Button { showErrorAlert = true } label: {
+                        Text("Non transmis")
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(Color.bhTerracotta)
+                    }
+                    .buttonStyle(.plain)
+                    if let retry = onRetry {
+                        Button("Réessayer", action: retry)
+                            .font(.system(size: 11.5, weight: .medium))
+                            .foregroundStyle(Color.bhTerracotta)
+                    }
+                }
+                .padding(.horizontal, 4)
+            } else if message.delivered == true, isLastSent {
+                Text("Délivré")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Color.bhAttenue)
+                    .padding(.horizontal, 4)
+            }
+        }
+    }
+
+    // MARK: - Marqueur d'origine (sortants automatiques uniquement)
+
+    @ViewBuilder
+    private var originCapsule: some View {
+        if message.isBot {
+            automationLabel(icon: "sparkles", text: "Répondu par l'IA")
+        } else if message.isTemplate {
+            automationLabel(icon: "bolt.fill", text: "Réponse automatique")
+        }
+    }
+
+    private func automationLabel(icon: String, text: String) -> some View {
+        Label(text, systemImage: icon)
+            .font(.system(size: 12.5, weight: .medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(Color.bhVert.opacity(0.82)))
     }
 
     private var bubble: some View {
-        Text(message.message)
+        Text(linkifiedText)
             .multilineTextAlignment(.leading)
             .font(.system(size: 15))
             .foregroundStyle(Color.bhEncre)
+            .textSelection(.enabled)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .background(bubbleBackground)
+            .contextMenu {
+                Button {
+                    UIPasteboard.general.string = message.message
+                } label: {
+                    Label("Copier le message", systemImage: "doc.on.doc")
+                }
+            }
+    }
+
+    // Détection des URLs, emails et numéros de téléphone via NSDataDetector.
+    // Le static évite de réinstancier le détecteur à chaque rendu.
+    private static let linkDetector: NSDataDetector? = try? NSDataDetector(
+        types: NSTextCheckingResult.CheckingType.link.rawValue
+             | NSTextCheckingResult.CheckingType.phoneNumber.rawValue
+    )
+
+    private var linkifiedText: AttributedString {
+        let plain = message.message
+        var result = AttributedString(plain)
+        guard let detector = Self.linkDetector else { return result }
+
+        let matches = detector.matches(in: plain, options: [],
+                                        range: NSRange(plain.startIndex..., in: plain))
+        for match in matches {
+            // NSRange (UTF-16) → Swift String.Index range → grapheme-cluster counts
+            guard let stringRange = Range(match.range, in: plain) else { continue }
+            let prefixCount = plain[plain.startIndex..<stringRange.lowerBound].count
+            let matchCount  = plain[stringRange].count
+            let lower = result.index(result.startIndex, offsetByCharacters: prefixCount)
+            let upper = result.index(lower,             offsetByCharacters: matchCount)
+            let attrRange = lower..<upper
+
+            if let url = match.url {
+                result[attrRange].link = url
+            } else if let phone = match.phoneNumber {
+                result[attrRange].link = URL(string: "tel:\(phone)")
+            }
+            // bhOccupe (#2E8B62) : ~3,86:1 sur blanc, ~3,10:1 sur #DCE8E1 — soulignement requis.
+            result[attrRange].foregroundColor = Color.bhOccupe
+            result[attrRange].underlineStyle  = Text.LineStyle(pattern: .solid, color: Color.bhOccupe)
+        }
+        return result
     }
 
     private var bubbleBackground: some View {

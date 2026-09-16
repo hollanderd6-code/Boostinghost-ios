@@ -1,11 +1,13 @@
 import SwiftUI
 
 // Barre de navigation spécifique au Calendrier :
-// supertitle (menu logement) + grand titre (mois) + chevrons + segmenté Planning/Revenus.
+// supertitle (menu logement) + grand titre (mois) + chevrons + segmenté 4 onglets.
 
 struct CalendarNavBar: View {
-    var vm: CalendarViewModel      // @Observable — les lectures sont tracées par SwiftUI
+    var vm: CalendarViewModel
     @Binding var tab: CalendarTab
+
+    @State private var showBulkAction = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,9 +16,6 @@ struct CalendarNavBar: View {
                     // Sur-titre tappable → menu logement
                     Menu {
                         Button("Tous les logements") {
-                            vm.displayMode = .allGrid
-                        }
-                        Button("Tous les logements — en lignes") {
                             vm.displayMode = .allLines
                         }
                         if !vm.properties.isEmpty {
@@ -46,24 +45,36 @@ struct CalendarNavBar: View {
 
                 Spacer(minLength: 12)
 
-                // Chevrons de mois — 34×34 en verre
+                // Boutons droite — modification en masse + chevrons de mois
                 HStack(spacing: 8) {
-                    monthButton(icon: "chevron.left",  action: vm.previousMonth)
-                    monthButton(icon: "chevron.right", action: vm.nextMonth)
+                    Button {
+                        showBulkAction = true
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                            .imageScale(.medium)
+                            .foregroundStyle(Color.bhEncre)
+                            .frame(width: 38, height: 38)
+                            .glassEffect(in: .circle)
+                            .specularEdge(cornerRadius: 19)
+                    }
+                    .buttonStyle(.plain)
+
+                    monthButton(icon: "chevron.left",  action: { tab == .semaine ? vm.previousWeek() : vm.previousMonth() })
+                    monthButton(icon: "chevron.right", action: { tab == .semaine ? vm.nextWeek()     : vm.nextMonth()     })
                 }
             }
             .padding(.horizontal, 18)
             .padding(.top, 8)
             .padding(.bottom, 12)
 
-            // Sélecteur segmenté Planning / Revenus
-            SegmentedGlass(
-                options: [
-                    ("Planning", CalendarTab.planning),
-                    ("Revenus",  CalendarTab.revenus),
-                ],
-                selection: $tab
-            )
+            // Sélecteur natif iOS 26 — Liquid Glass système
+            Picker("Vue calendrier", selection: $tab) {
+                Text("Jour").tag(CalendarTab.jour)
+                Text("Semaine").tag(CalendarTab.semaine)
+                Text("Mensuel").tag(CalendarTab.mensuel)
+                Text("Revenus").tag(CalendarTab.revenus)
+            }
+            .pickerStyle(.segmented)
             .padding(.horizontal, 18)
             .padding(.bottom, 14)
         }
@@ -74,6 +85,9 @@ struct CalendarNavBar: View {
                 .chromeShadow()
                 .ignoresSafeArea(edges: .top)
         }
+        .sheet(isPresented: $showBulkAction) {
+            BulkActionSheet(vm: vm)
+        }
     }
 
     private func monthButton(icon: String, action: @escaping () -> Void) -> some View {
@@ -81,9 +95,9 @@ struct CalendarNavBar: View {
             Image(systemName: icon)
                 .imageScale(.medium)
                 .foregroundStyle(Color.bhEncre)
-                .frame(width: 34, height: 34)
+                .frame(width: 38, height: 38)
                 .glassEffect(in: .circle)
-                .specularEdge(cornerRadius: 17)
+                .specularEdge(cornerRadius: 19)
         }
         .buttonStyle(.plain)
     }

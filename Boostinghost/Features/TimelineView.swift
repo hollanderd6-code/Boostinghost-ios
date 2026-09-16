@@ -2,12 +2,12 @@ import SwiftUI
 
 // MARK: - Layout constants (design tokens)
 
-private let colWidth:   CGFloat = 46
-private let rowHeight:  CGFloat = 52
+private let colWidth:   CGFloat = 64
+private let rowHeight:  CGFloat = CalBarLayout.rowH
 private let labelWidth: CGFloat = 88
 private let dayHeaderH: CGFloat = 44
-private let barHeight:  CGFloat = 36
-private let barRadius:  CGFloat = 11
+private let barHeight:  CGFloat = CalBarLayout.barH
+private let barRadius:  CGFloat = CalBarLayout.barR
 
 // MARK: - File-scope formatters and calendar
 // Never re-instantiated inside View bodies — one allocation for the lifetime of the app.
@@ -37,10 +37,10 @@ private let tlCal: Calendar = {
 // rgba(20,32,27,.07) — fond de mise en évidence (ligne ou colonne)
 private let tlHighlight = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.07)
 
-// rgba(20,32,27,.05) — filet vertical entre colonnes de jour
-private let tlColSep    = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.05)
-// rgba(20,32,27,.08) — filet vertical dim→lun (frontière de semaine)
-private let tlWeekSep   = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.08)
+// rgba(20,32,27,.10) — filet vertical entre colonnes de jour
+private let tlColSep    = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.10)
+// rgba(20,32,27,.18) — filet vertical dim→lun (frontière de semaine, plus marqué)
+private let tlWeekSep   = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.18)
 // rgba(20,32,27,.06) — filet horizontal entre lignes de logements
 private let tlRowSep    = Color(red: 20/255, green: 32/255, blue: 27/255).opacity(0.06)
 // rgba(201,161,91,.07) — fond weekend
@@ -59,7 +59,9 @@ private enum TimelineHighlight: Equatable {
 struct TimelineView: View {
     var vm: CalendarViewModel
 
-    @State private var highlight: TimelineHighlight = .none
+    @State private var highlight:       TimelineHighlight = .none
+    @State private var selectedArrivee: Arrivee?
+    @State private var cellTap:         CellTap?
 
     private var visibleProperties: [PropertySummary] {
         switch vm.displayMode {
@@ -76,14 +78,10 @@ struct TimelineView: View {
             }
             .padding(.top, 16)
 
-            BlockDateRow()
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 16)
-
-            // Reserve for the floating tab bar (same pattern as other screens)
             Color.clear.frame(height: 80)
         }
+        .sheet(item: $selectedArrivee) { ReservationDetailView(arrivee: $0) }
+        .sheet(item: $cellTap)         { DayCellActionSheet(tap: $0, vm: vm) }
     }
 
     // MARK: Colonne gauche fixe
@@ -146,8 +144,19 @@ struct TimelineView: View {
                             reservations:      vm.monthReservations.filter { $0.propertyId == prop.id },
                             daysInMonth:       vm.daysInMonth,
                             firstDay:          vm.firstDayOfMonth,
+                            propData:          vm.calendarData?.properties?[prop.id],
                             isRowHighlighted:  highlight == .row(prop.id),
-                            highlightedColumn: { if case .col(let c) = highlight { return c }; return nil }()
+                            highlightedColumn: { if case .col(let c) = highlight { return c }; return nil }(),
+                            onTapReservation:  { r in
+                                if r.isBlock {
+                                    cellTap = .blocked(property: prop, reservation: r)
+                                } else {
+                                    selectedArrivee = Arrivee(reservation: r, properties: vm.properties)
+                                }
+                            },
+                            onTapFreeCell: { date in
+                                cellTap = .free(property: prop, date: date)
+                            }
                         )
                     }
                 }
@@ -208,7 +217,7 @@ private struct DayColumnHeader: View {
         .overlay(alignment: .trailing) {
             Rectangle()
                 .fill(isSunday ? tlWeekSep : tlColSep)
-                .frame(width: isSunday ? 1.0 : 0.5)
+                .frame(width: isSunday ? 1.5 : 1.0)
         }
     }
 }
@@ -219,26 +228,72 @@ private struct TimelineRow: View {
     let reservations:      [Reservation]
     let daysInMonth:       Int
     let firstDay:          Date
+    let propData:          PricingCalendarProperty?
     let isRowHighlighted:  Bool
     let highlightedColumn: Int?
+    let onTapReservation:  (Reservation) -> Void
+    let onTapFreeCell:     (Date) -> Void
+
+    @Environment(AuthStore.self) private var authStore
+    private var canViewPricing: Bool { authStore.session?.can("can_view_pricing") ?? true }
 
     private var totalWidth: CGFloat { CGFloat(daysInMonth) * colWidth }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // Fond : teinte weekend + mise en évidence de colonne + séparateurs
+            // Fond : teinte weekend + prix + mise en évidence de colonne + séparateurs
             HStack(spacing: 0) {
                 ForEach(0..<daysInMonth, id: \.self) { offset in
-                    Rectangle()
-                        .fill(isWeekend(offset: offset) ? tlWeekend : Color.clear)
-                        .frame(width: colWidth)
-                        .overlay { if highlightedColumn == offset { tlHighlight } }
-                        .overlay(alignment: .trailing) {
-                            let sun = isSunday(offset: offset)
-                            Rectangle()
-                                .fill(sun ? tlWeekSep : tlColSep)
-                                .frame(width: sun ? 1.0 : 0.5)
+                    let date    = tlCal.date(byAdding: .day, value: offset, to: firstDay) ?? firstDay
+                    let dayKey  = CalendarViewModel.dayKey(for: date)
+                    let weekend = isWeekend(offset: offset)
+                    let price   = propData?.price(for: dayKey, isWeekend: weekend)
+                    let isOccupied = reservations.contains { r in
+                        guard let s = r.startDayDate, let e = r.endDayDate else { return false }
+                        return s <= date && date < e
+                    }
+                    let isCheckin  = reservations.contains { $0.startDayDate == date }
+                    let isCheckout = reservations.contains { $0.endDayDate   == date }
+                    let isMidStay  = isOccupied && !isCheckin
+                    let showPrice  = canViewPricing && !isMidStay && !(isCheckin && isCheckout)
+
+                    ZStack {
+                        if let p = price, showPrice {
+                            if isCheckout && !isCheckin {
+                                Text("\(Int(p.rounded()))€")
+                                    .font(.system(size: CalBarLayout.priceSize, weight: .medium))
+                                    .foregroundStyle(Color.bhAttenue)
+                                    .lineLimit(1)
+                                    .frame(width: colWidth / 2)
+                                    .frame(width: colWidth, alignment: .trailing)
+                            } else if isCheckin {
+                                Text("\(Int(p.rounded()))€")
+                                    .font(.system(size: CalBarLayout.priceSize, weight: .medium))
+                                    .foregroundStyle(Color.bhAttenue)
+                                    .lineLimit(1)
+                                    .frame(width: colWidth / 2)
+                                    .frame(width: colWidth, alignment: .leading)
+                            } else {
+                                Text("\(Int(p.rounded()))€")
+                                    .font(.system(size: CalBarLayout.priceSize, weight: .medium))
+                                    .foregroundStyle(Color.bhAttenue)
+                                    .lineLimit(1)
+                            }
                         }
+                    }
+                    .frame(width: colWidth, height: rowHeight)
+                    .background(weekend ? tlWeekend : Color.clear)
+                    .overlay { if highlightedColumn == offset { tlHighlight } }
+                    .overlay(alignment: .trailing) {
+                        let sun = isSunday(offset: offset)
+                        Rectangle()
+                            .fill(sun ? tlWeekSep : tlColSep)
+                            .frame(width: sun ? 1.5 : 1.0)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if !isOccupied { onTapFreeCell(date) }
+                    }
                 }
             }
 
@@ -252,8 +307,10 @@ private struct TimelineRow: View {
             // Barres de séjour et de blocage
             ForEach(reservations) { r in
                 if let geo = barGeometry(for: r) {
-                    ReservationBar(reservation: r, width: geo.width, barHeight: barHeight)
-                        .offset(x: geo.x, y: (rowHeight - barHeight) / 2)
+                    ReservationBar(reservation: r, width: geo.width, barHeight: barHeight) {
+                        onTapReservation(r)
+                    }
+                    .offset(x: geo.x, y: CalBarLayout.tlBarTop)
                 }
             }
         }
@@ -293,6 +350,7 @@ private struct ReservationBar: View {
     let reservation: Reservation
     let width:       CGFloat
     let barHeight:   CGFloat
+    let onTap:       () -> Void
 
     var body: some View {
         Group {
@@ -305,7 +363,7 @@ private struct ReservationBar: View {
                 )
             } else if reservation.isBhGuest {
                 RoundedRectangle(cornerRadius: barRadius, style: .continuous)
-                    .fill(Color.bhTerracottaFond)
+                    .fill(Color.bhTerracotta)
                     .overlay(alignment: .leading) { guestLabel }
             } else {
                 RoundedRectangle(cornerRadius: barRadius, style: .continuous)
@@ -313,7 +371,10 @@ private struct ReservationBar: View {
                     .overlay(alignment: .leading) { guestLabel }
             }
         }
+        .opacity(reservation.isBhGuest && reservation.isPending ? 0.50 : 1.0)
         .frame(width: width, height: barHeight)
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
     }
 
     @ViewBuilder
@@ -328,7 +389,7 @@ private struct ReservationBar: View {
             if let name = reservation.guestName, width > 52 {
                 Text(name)
                     .font(.system(size: 12.5, weight: .semibold))
-                    .foregroundStyle(reservation.isBhGuest ? Color.bhTerracotta : .white)
+                    .foregroundStyle(.white)
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
@@ -339,7 +400,7 @@ private struct ReservationBar: View {
 
 // MARK: - Pastille BHGuest 16×16
 
-private struct BhGuestChip: View {
+struct BhGuestChip: View {
     var body: some View {
         ZStack {
             Circle().fill(Color.bhTerracotta)
@@ -353,7 +414,7 @@ private struct BhGuestChip: View {
 
 // MARK: - Vignette de plateforme 16×16
 
-private struct PlatformMiniChip: View {
+struct PlatformMiniChip: View {
     let platform: String?
 
     private var initial: String {

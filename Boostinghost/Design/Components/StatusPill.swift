@@ -66,10 +66,11 @@ struct PlatformBadge: View {
 
 struct CalendarDot: View {
     let color: Color
+    var size: CGFloat = 4
 
     var body: some View {
         Circle()
             .fill(color)
-            .frame(width: 4, height: 4)
+            .frame(width: size, height: size)
     }
 }

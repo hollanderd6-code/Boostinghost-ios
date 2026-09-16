@@ -24,6 +24,22 @@ enum Formatters {
         return amount(d)
     }
 
+    // MARK: - Currency with decimals  →  "145,80 €"  (used in prix détaillé breakdown)
+
+    private static let amountDecimalFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.locale                = Locale(identifier: "fr_FR")
+        f.numberStyle           = .decimal
+        f.maximumFractionDigits = 2
+        f.minimumFractionDigits = 2
+        return f
+    }()
+
+    static func amountDecimal(_ value: Double) -> String {
+        let s = amountDecimalFormatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
+        return "\(s)\u{202F}€"
+    }
+
     // MARK: - Time  →  "16 h"  /  "9 h 41"
 
     static func time(_ hhmm: String?) -> String? {
@@ -65,6 +81,22 @@ enum Formatters {
         return day(date)
     }
 
+    // MARK: - Short date  →  "20 avr."  "3 sept."
+
+    private static let dayShortFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale     = Locale(identifier: "fr_FR")
+        f.dateFormat = "d MMM"
+        return f
+    }()
+
+    static func dayShort(_ isoDate: String) -> String {
+        guard let date = isoDateFormatter.date(from: String(isoDate.prefix(10))) else {
+            return isoDate
+        }
+        return dayShortFormatter.string(from: date)
+    }
+
     // MARK: - Full date with year  →  "mercredi 1 octobre 2026"
 
     private static let dayWithYearFormatter: DateFormatter = {
@@ -79,6 +111,20 @@ enum Formatters {
             return isoDate
         }
         return dayWithYearFormatter.string(from: date)
+    }
+
+    // MARK: - Calendar day key  →  "yyyy-MM-dd" UTC  (clé interne des dictionnaires calendrier)
+
+    private static let dayKeyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale     = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone   = TimeZone(identifier: "UTC")
+        return f
+    }()
+
+    static func dayKey(_ date: Date) -> String {
+        dayKeyFormatter.string(from: date)
     }
 
     // MARK: - Short date for bande calendrier  →  "1"  "3"  etc.

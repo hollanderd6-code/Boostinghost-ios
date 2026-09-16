@@ -5,11 +5,15 @@ import SwiftUI
 struct MessagesView: View {
     @Environment(AuthStore.self) var authStore
 
-    @State private var vm = MessagesViewModel()
+    @Environment(MessagesViewModel.self) private var vm
+    @State private var path: [Conversation] = []
     @State private var showAccount = false
+    @State private var showSearch = false
+
+    private var router: NotificationRouter { NotificationRouter.shared }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 switch vm.state {
                 case .idle, .loading:
@@ -30,10 +34,32 @@ struct MessagesView: View {
             }
         }
         .refreshable { await reload() }
-        .task { await reload() }
+        .task {
+            // Skip if MainTabView already started or completed the load.
+            if case .loading = vm.state { return }
+            if case .loaded  = vm.state { return }
+            await reload()
+        }
         .onChange(of: authStore.agencyContext) { Task { await reload() } }
+        .onChange(of: router.pendingConversationId) { _, convId in
+            guard let convId else { return }
+            NotificationRouter.shared.pendingConversationId = nil
+            if let conv = vm.conversations.first(where: { $0.id == convId }) {
+                path.append(conv)
+            } else {
+                Task {
+                    await reload()
+                    if let conv = vm.conversations.first(where: { $0.id == convId }) {
+                        path.append(conv)
+                    }
+                }
+            }
+        }
         .sheet(isPresented: $showAccount) {
             AccountSheet()
+        }
+        .sheet(isPresented: $showSearch) {
+            GlobalSearchSheet()
         }
     }
 
@@ -45,40 +71,21 @@ struct MessagesView: View {
     // MARK: - Barre de navigation + filtres
 
     private var navBar: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .bottom, spacing: 0) {
-                VStack(alignment: .leading, spacing: 1) {
-                    if !vm.superTitle.isEmpty {
-                        Text(vm.superTitle)
-                            .font(.bhSurTitre)
-                            .foregroundStyle(Color.bhAttenue)
-                    }
-                    Text("Messages")
-                        .bhGrandTitre()
-                }
-                Spacer(minLength: 12)
+        GlassNavBar(
+            superTitle: vm.superTitle.isEmpty ? " " : vm.superTitle,
+            title: "Messages",
+            trailing: {
                 HStack(spacing: 10) {
-                    GlassCircleButton(icon: "magnifyingglass") { }
-                    InitialsButton {
-                        showAccount = true
-                    }
+                    GlassCircleButton(icon: "magnifyingglass") { showSearch = true }
+                    InitialsButton { showAccount = true }
                 }
+            },
+            footer: {
+                filterStrip
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, 14)
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 8)
-            .padding(.bottom, 12)
-
-            filterStrip
-                .padding(.horizontal, 18)
-                .padding(.bottom, 14)
-        }
-        .background {
-            Rectangle()
-                .glassEffect(in: .rect)
-                .specularEdge(cornerRadius: 0)
-                .chromeShadow()
-                .ignoresSafeArea(edges: .top)
-        }
+        )
     }
 
     // MARK: - Bandeau de filtres
@@ -111,7 +118,10 @@ struct MessagesView: View {
         ScrollView(showsIndicators: false) {
             LazyVStack(spacing: 10) {
                 ForEach(vm.filtered) { conversation in
-                    NavigationLink(value: conversation) {
+                    Button {
+                        Task { await vm.markConversationRead(conversation.id) }
+                        path.append(conversation)
+                    } label: {
                         ConversationRow(conversation: conversation)
                             .padding(.horizontal, 18)
                     }

@@ -11,7 +11,7 @@ struct AccountSwitcherSheet: View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
-                handle
+                SheetHandle()
                 sheetTitle
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
@@ -41,14 +41,6 @@ struct AccountSwitcherSheet: View {
     }
 
     // MARK: - Header
-
-    private var handle: some View {
-        Capsule()
-            .fill(Color.bhAttenue.opacity(0.3))
-            .frame(width: 36, height: 4)
-            .padding(.top, 12)
-            .padding(.bottom, 20)
-    }
 
     private var sheetTitle: some View {
         Text("Changer de compte")

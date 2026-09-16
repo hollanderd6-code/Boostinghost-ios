@@ -6,12 +6,19 @@ import FirebaseMessaging
 struct BoostinghostApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var authStore = AuthStore()
+    @State private var showSplash = true
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environment(authStore)
-                .task { await authStore.verifyOnLaunch() }
+            ZStack {
+                RootView()
+                    .environment(authStore)
+                    .task { await authStore.verifyOnLaunch() }
+
+                if showSplash {
+                    SplashView(onFinish: { showSplash = false })
+                }
+            }
         }
     }
 }
@@ -26,6 +33,7 @@ private final class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         FirebaseApp.configure()
         Messaging.messaging().delegate = PushNotificationManager.shared
+        UNUserNotificationCenter.current().delegate = PushNotificationManager.shared
         return true
     }
 

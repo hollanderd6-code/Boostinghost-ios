@@ -110,6 +110,9 @@ private struct DayCell: View {
     let day:  Int
     var vm: CalendarViewModel
 
+    @Environment(AuthStore.self) private var authStore
+    private var canViewPricing: Bool { authStore.session?.can("can_view_pricing") ?? true }
+
     private var isToday: Bool {
         Calendar.current.isDateInToday(date)
     }
@@ -152,7 +155,7 @@ private struct DayCell: View {
             }
         case .single:
             let key = CalendarViewModel.dayKey(for: date)
-            if let price = vm.dayPrices[key] {
+            if canViewPricing, let price = vm.dayPrices[key] {
                 Text("\(Int(price))€")
                     .font(.system(size: 9.5))
                     .foregroundStyle(subLabelColor)
@@ -390,6 +393,7 @@ struct PriceEditSheet: View {
                 }
             }
         }
+        .presentationDragIndicator(.visible)
         .onAppear {
             let key = CalendarViewModel.dayKey(for: day)
             if let p = vm.dayPrices[key] { priceText = String(Int(p)) }

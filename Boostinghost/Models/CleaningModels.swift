@@ -24,9 +24,12 @@ struct CleaningChecklist: Decodable, Identifiable {
     let propertyId: String?
     let reservationKey: String?  // croisement avec les assignations pour l'Historique
     let cleanerName: String?
-    let status: String?         // "completed", "validated", "rejected"
+    // Colonne pilote : owner_status → ownerStatus via convertFromSnakeCase
+    // "pending" = soumis, en attente de validation  "validated" = validé  "rejected" = complément demandé
+    let ownerStatus: String?
     let completedAt: String?    // ISO8601
     let photos: [String]?       // photo URLs
+    let propertyName: String?   // enrichi par le serveur ; priorité sur resolvedPropertyName si absent
 
     var resolvedPropertyName: String?
     var photoCount: Int { photos?.count ?? 0 }
@@ -37,15 +40,16 @@ struct CleaningChecklist: Decodable, Identifiable {
         propertyId     = try? c.decodeIfPresent(String.self, forKey: .propertyId)
         reservationKey = try? c.decodeIfPresent(String.self, forKey: .reservationKey)
         cleanerName    = try? c.decodeIfPresent(String.self, forKey: .cleanerName)
-        status         = try? c.decodeIfPresent(String.self, forKey: .status)
+        ownerStatus    = try? c.decodeIfPresent(String.self, forKey: .ownerStatus)
         completedAt    = try? c.decodeIfPresent(String.self, forKey: .completedAt)
         photos         = try? c.decodeIfPresent([String].self, forKey: .photos)
+        propertyName   = try? c.decodeIfPresent(String.self, forKey: .propertyName)
         resolvedPropertyName = nil
     }
 
     private enum CodingKeys: String, CodingKey {
         case _id = "_id", id
-        case propertyId, reservationKey, cleanerName, status, completedAt, photos
+        case propertyId, reservationKey, cleanerName, ownerStatus, completedAt, photos, propertyName
     }
 }
 
@@ -63,9 +67,18 @@ struct CleaningDayGroup: Identifiable {
 struct CleaningHistoryItem: Identifiable {
     var id: UUID = UUID()
     let dateStr: String          // "YYYY-MM-DD" (date du ménage = départ)
+    let propertyId: String?
     let propertyName: String?
-    let cleanerName: String?
-    let checklistStatus: String? // "validated", "rejected", "completed" (à valider), nil = pas de retour
+    let cleanerName: String?           // intervenante assignée
+    let checklistCleanerName: String?  // intervenante qui a rempli la checklist (nil = pas de checklist)
+    let checklistStatus: String? // ownerStatus : "pending" | "validated" | "rejected" | nil = pas de retour
+    let checklistId: String?     // nil si aucune checklist soumise pour ce créneau
+
+    // Ce qui fait foi : la checklist si elle existe, sinon l'assignation.
+    var effectiveCleanerName: String? {
+        if let n = checklistCleanerName, !n.isEmpty { return n }
+        return cleanerName
+    }
 }
 
 struct CleaningHistoryGroup: Identifiable {

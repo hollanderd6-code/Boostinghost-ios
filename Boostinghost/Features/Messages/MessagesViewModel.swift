@@ -42,15 +42,40 @@ final class MessagesViewModel {
         return parts.joined(separator: " · ")
     }
 
+    // MARK: - Single update entry point
+
+    func updateConversation(_ id: Int, _ mutate: (inout Conversation) -> Void) {
+        guard let idx = conversations.firstIndex(where: { $0.id == id }) else { return }
+        mutate(&conversations[idx])
+    }
+
+    // MARK: - Mark read (optimistic, with explicit rollback)
+
+    func markConversationRead(_ id: Int) async {
+        guard let idx = conversations.firstIndex(where: { $0.id == id }),
+              (conversations[idx].unreadCount ?? 0) > 0 else { return }
+
+        let previous = conversations[idx].unreadCount
+        conversations[idx].unreadCount = 0
+
+        do {
+            try await APIClient.shared.postVoid(Endpoint.markRead(id), body: EmptyBody())
+        } catch {
+            print("[MessagesVM] ⚠️ mark-read failed for conversation \(id): \(error)")
+            if let rollbackIdx = conversations.firstIndex(where: { $0.id == id }) {
+                conversations[rollbackIdx].unreadCount = previous
+            }
+        }
+    }
+
     // MARK: - Load
 
     func load() async {
-        state = .loading
+        if case .loaded = state {} else { state = .loading }
         do {
             let r: ConversationsResponse = try await APIClient.shared.get(
                 Endpoint.conversations, agencyAll: agencyAll
             )
-            // Tri décroissant sur last_message_time (ISO lexicographique)
             conversations = (r.conversations ?? []).sorted {
                 ($0.lastMessageTime ?? "") > ($1.lastMessageTime ?? "")
             }

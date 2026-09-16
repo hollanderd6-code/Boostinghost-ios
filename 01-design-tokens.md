@@ -27,7 +27,7 @@ Atténué        #5E6B63   sous-titres, métadonnées, unités
 ```
 Vert          #0E3B2E   primaire, boutons pleins, onglet actif
 Vert clair    #8FD3B4   accent sur fond sombre
-Occupé        #2E8B62   points de calendrier, jauges
+Occupé        #2E8B62   points de calendrier, jauges ; liens dans les bulles de message (souligné, même couleur)
 Occupé foncé  #1F6B4C   texte sur pastille verte
 Menthe fond   rgba(46,139,98,.13)
 Terracotta    #A8452A   urgence, à traiter, retenue
@@ -67,7 +67,7 @@ Intertitre         11.5 / bold    +0.13em    capitales, gris atténué
 
 ## Matériaux Liquid Glass
 
-**Chrome — verre franc.** Barre de navigation, barre d'onglets, feuilles, barre d'action basse.
+**Chrome — verre franc.** Barre de navigation, feuilles, barre d'action basse.
 ```
 remplissage  dégradé blanc .50 → .30 → .42
 flou         44px, saturation 230%, luminosité 1.07
@@ -89,12 +89,24 @@ ombre        0 8px 22px rgba(20,32,27,.08)
 
 **Opaque.** Un seul cas : la zone de signature, `#FFF` plein. Le trait doit se voir franchement.
 
+**Barre d'onglets — EXCEPTION : pilule neutre flottante.** Ne pas appliquer le verre chrome à cette surface. Décision explicite du projet (charte neutre, inspirée WhatsApp).
+```
+conteneur    Capsule(), fond .regularMaterial (blanc translucide système, sans teinte)
+bordure      1px rgba(0,0,0,.08)
+ombre        0 4px 20px rgba(0,0,0,.12)  — douce et large, opacité faible
+capsule      Capsule() rgba(0,0,0,.07)   — gris très clair, ~7 % noir, sans vert
+icône actif  Color.primary (noir), poids medium
+icône repos  #5E6B63 (bhAttenue), poids medium
+libellé      10.5 / medium, même couleur que l'icône
+```
+Aucune couleur de marque dans cette barre. Les ressorts restent inchangés (contact 0.25/0.80, relâchement 0.35/0.72, snap 0.32/0.78).
+
 ## Rayons
 ```
 Feuille (haut)     44        Carte              22
 Bloc interne       20        Bouton             15 – 16
 Vignette / icône   11 – 13   Puce / filtre      13 – 14
-Barre d'onglets    30        Pastille           8 – 10
+Barre d'onglets    Capsule() (rayon = h/2, auto)   Pastille    8 – 10
 ```
 
 ## Cibles tactiles

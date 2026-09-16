@@ -136,14 +136,13 @@ struct TeamMemberDetailView: View {
     private var memberHeader: some View {
         ListCard {
             HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(Color(hex: "#DCE8E1"))
-                        .frame(width: 52, height: 52)
-                    Text(member.initials.isEmpty ? "?" : member.initials)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(Color.bhVert)
-                }
+                ProfileAvatarView(
+                    logoUrl:   nil,
+                    firstName: member.firstName,
+                    lastName:  member.lastName,
+                    company:   nil,
+                    size:      52
+                )
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 8) {
@@ -175,12 +174,40 @@ struct TeamMemberDetailView: View {
 
     private var readContent: some View {
         Group {
+            if teamVM.isAgencyMode, let parentName = member.parentUserName, !parentName.isEmpty {
+                parentAccountSection(name: parentName)
+            }
             if !isCustomRole {
                 fixedRoleBanner
             }
             ForEach(Array(member.permissionGroups.enumerated()), id: \.offset) { _, group in
                 permissionGroupView(group)
             }
+        }
+    }
+
+    private func parentAccountSection(name: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionLabel(text: "Appartenance")
+            ListCard {
+                CardRow(showSeparator: false) {
+                    HStack {
+                        Text("Compte de rattachement")
+                            .font(.system(size: 14.5, weight: .medium))
+                            .foregroundStyle(Color.bhEncre)
+                        Spacer()
+                        Text(name)
+                            .font(.system(size: 14.5))
+                            .foregroundStyle(Color.bhAttenue)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                }
+            }
+            Text("Le rattachement ne peut pas être modifié.")
+                .font(.system(size: 13))
+                .foregroundStyle(Color(hex: "#5E6B63"))
+                .padding(.horizontal, 4)
         }
     }
 

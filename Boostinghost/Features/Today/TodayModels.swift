@@ -39,7 +39,7 @@ struct Arrivee: Decodable, Identifiable {
     let propertyId: String?
     let propertyName: String
     let propertyAddress: String?
-    let guestName: String
+    let guestName: String?
     let guestPhone: String?
     let platform: String?
     let arrivalTime: String?
@@ -66,7 +66,7 @@ struct Arrivee: Decodable, Identifiable {
         propertyId      = try c.decodeIfPresent(String.self, forKey: .propertyId)
         propertyName    = try c.decode(String.self, forKey: .propertyName)
         propertyAddress = try c.decodeIfPresent(String.self, forKey: .propertyAddress)
-        guestName       = try c.decode(String.self, forKey: .guestName)
+        guestName       = try c.decodeIfPresent(String.self, forKey: .guestName)
         guestPhone      = try c.decodeIfPresent(String.self, forKey: .guestPhone)
         platform        = try c.decodeIfPresent(String.self, forKey: .platform)
         arrivalTime     = try c.decodeIfPresent(String.self, forKey: .arrivalTime)
@@ -88,7 +88,7 @@ struct Depart: Decodable, Identifiable {
     let reservationUid: String
     let conversationId: Int?
     let propertyName: String
-    let guestName: String
+    let guestName: String?
     let platform: String?
     let departureTime: String?
     let nights: Int?
@@ -105,12 +105,91 @@ struct Depart: Decodable, Identifiable {
         reservationUid = try c.decode(String.self, forKey: .reservationUid)
         conversationId = c.flexInt(forKey: .conversationId)
         propertyName   = try c.decode(String.self, forKey: .propertyName)
-        guestName      = try c.decode(String.self, forKey: .guestName)
+        guestName      = try c.decodeIfPresent(String.self, forKey: .guestName)
         platform       = try c.decodeIfPresent(String.self, forKey: .platform)
         departureTime  = try c.decodeIfPresent(String.self, forKey: .departureTime)
         nights         = c.flexInt(forKey: .nights)
         blocking       = try c.decodeIfPresent([String].self, forKey: .blocking)
         status         = try c.decodeIfPresent(String.self, forKey: .status)
+    }
+}
+
+// MARK: - Arrivee depuis un Départ (pour ouvrir ReservationDetailView depuis DepartCard)
+
+extension Arrivee {
+    init(fromDepart d: Depart) {
+        reservationUid  = d.reservationUid
+        conversationId  = d.conversationId
+        propertyId      = nil
+        propertyName    = d.propertyName
+        propertyAddress = nil
+        guestName       = d.guestName
+        guestPhone      = nil
+        platform        = d.platform
+        arrivalTime     = nil
+        nights          = d.nights
+        guests          = nil
+        unreadCount     = nil
+        escalated       = nil
+        aiDisabled      = nil
+        blocking        = []
+        status          = d.status
+    }
+}
+
+// MARK: - Arrivée depuis une entrée du calendrier de prix (onglets Jour et Semaine)
+
+extension Arrivee {
+    init(calendarEntry entry: PricingCalendarEntry, property: PropertySummary) {
+        reservationUid  = entry.uid ?? ""
+        conversationId  = nil
+        propertyId      = property.id
+        propertyName    = property.displayName
+        propertyAddress = nil
+        guestName       = entry.guest ?? "Voyageur"
+        guestPhone      = nil
+        platform        = entry.isBhGuest ? "bhguest" : entry.platform
+        arrivalTime     = property.arrivalTime
+        nights          = entry.nights
+        guests          = nil
+        unreadCount     = nil
+        escalated       = nil
+        aiDisabled      = nil
+        blocking        = []
+        status          = nil
+    }
+}
+
+// MARK: - Arrivée depuis une Reservation (onglet Mensuel)
+
+extension Arrivee {
+    init(reservation r: Reservation, properties: [PropertySummary]) {
+        let prop        = properties.first { $0.id == r.propertyId }
+        reservationUid  = r.uid ?? r.id
+        conversationId  = r.conversationId
+        propertyId      = r.propertyId
+        propertyName    = prop?.displayName ?? r.propertyId
+        propertyAddress = nil
+        guestName       = r.guestName ?? "Voyageur"
+        guestPhone      = r.guestPhone
+        platform        = r.isBhGuest ? "bhguest" : r.platform
+        arrivalTime     = prop?.arrivalTime
+        nights          = { () -> Int? in
+            guard let s = Reservation.parseDay(r.startDate),
+                  let e = Reservation.parseDay(r.endDate) else { return nil }
+            var cal = Calendar(identifier: .gregorian)
+            cal.timeZone = TimeZone(identifier: "UTC")!
+            return cal.dateComponents([.day], from: s, to: e).day
+        }()
+        guests          = {
+            let t = (r.occupancyAdults ?? 0) + (r.occupancyChildren ?? 0)
+            return t > 0 ? t : nil
+        }()
+        unreadCount     = nil
+        escalated       = nil
+        aiDisabled      = nil
+        blocking        = []
+        status          = r.status
     }
 }
 
@@ -137,6 +216,8 @@ struct CleaningAssignment: Decodable, Identifiable {
 
     // Résolu post-décodage à partir de la liste des logements.
     var resolvedPropertyName: String?
+    // Résolu post-décodage depuis checklistByKey (reservationKey → checklist.id).
+    var checklistId: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case propertyId, reservationKey, cleanerName, cleanerPhone, cleanerEmail

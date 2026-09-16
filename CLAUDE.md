@@ -31,14 +31,21 @@ iOS 26.0 minimum, Swift 6, SwiftUI. **Aucune dépendance externe** : `URLSession
 `Security` (Keychain), `LocalAuthentication`, `PDFKit`. Pas de SPM, pas de
 CocoaPods.
 
-**Exception unique et nommée : `FirebaseMessaging`, via SPM.** Le backend
-(`services/notifications-service.js`) achemine toutes les notifications push
-exclusivement via `admin.messaging().send()` du Firebase Admin SDK — il n'existe
-aucun chemin APNs direct dans le code d'envoi. Ajouter ce chemin exigerait de
-modifier chaque fonction d'envoi d'un service en production, de gérer deux formats
-de token distincts en base, et d'écrire un service HTTP/2 + JWT côté Node. La
-dépendance `FirebaseMessaging` est donc la seule entrée SPM autorisée dans ce
-projet ; ne pas l'élargir sans décision explicite documentée ici.
+**Deux dépendances SPM sont autorisées, nommément :**
+
+**`FirebaseMessaging`** — Le backend (`services/notifications-service.js`) achemine
+toutes les notifications push exclusivement via `admin.messaging().send()` du Firebase
+Admin SDK — il n'existe aucun chemin APNs direct dans le code d'envoi. Ajouter ce
+chemin exigerait de modifier chaque fonction d'envoi d'un service en production, de
+gérer deux formats de token distincts en base, et d'écrire un service HTTP/2 + JWT
+côté Node.
+
+**`GoogleSignIn` (`GoogleSignIn-iOS`)** — Le backend vérifie l'`identityToken` JWT
+Google via `POST /api/auth/social`. Le SDK iOS est le seul chemin raisonnable pour
+obtenir ce token sans écrire une plomberie OAuth 2.0 PKCE complète dans l'app.
+Ajout décidé le 15 sept. 2026 lors de l'implémentation des boutons de connexion sociale.
+
+Ne pas ajouter d'autres dépendances SPM sans décision explicite documentée ici.
 
 iOS 26 est un choix arrêté, pas une valeur par défaut : Liquid Glass l'exige.
 Ne pas proposer de fallback pour iOS 18.
@@ -113,6 +120,13 @@ son argument via `camelCase()` avant toute recherche — les sites d'appel peuve
 continuer à écrire `"can_view_calendar"` ou `"canViewCalendar"` indifféremment.
 Ne pas contourner cette normalisation en accédant directement au dictionnaire.
 
+**`CodingKeys` avec raw values snake_case et `convertFromSnakeCase` sont incompatibles.**
+Le décodeur convertit la clé JSON en camelCase *avant* de comparer à `CodingKey.stringValue`.
+Si la raw value est `"notif_new_reservation"`, elle ne correspondra jamais à la clé convertie
+`"notifNewReservation"` → tous les champs tombent silencieusement sur leur valeur par défaut.
+Règle : dans un type décodé par l'`APIClient`, **ne jamais mettre de raw values snake_case dans `CodingKeys`**.
+Laisser les cases sans raw value — `convertFromSnakeCase` fait la correspondance automatiquement.
+
 Répondre à un voyageur Airbnb ou Booking passe par
 `POST /api/chat/conversations/:id/send-platform`, **pas** par `/api/chat/send`.
 
@@ -131,6 +145,35 @@ Des valeurs négatives existent en base (héritage du web). L'UI doit initialise
 champs avec `abs()`, afficher uniquement des valeurs ≥ 0, et écrire toujours une valeur
 positive. Ne jamais introduire de logique de signe pour ces champs : elle n'existe pas
 côté serveur.
+
+**Les types de notifications push sont éparpillés dans quatre fichiers backend.** Toute
+addition côté serveur doit être répercutée dans `PushNotificationManager.swift` (case du
+`switch type`). Inventaire complet au moment de la rédaction :
+
+| Destination iOS | Types serveur |
+|---|---|
+| `.messages` + `pendingConversationId` | `new_message` (`conversationId` camelCase), `new_guest_message` (`conversation_id` snake), `escalation`, `negative_sentiment`, `upsell_paid` |
+| `.messages` (sans conv direct) | `host_question` → `HostQuestionManager.fetchPending()` |
+| `.today` (default) | `new_reservation`, `new_booking`, `new_booking_guest`, `cancelled_reservation`, `arrivals`, `departures`, `daily_arrivals`, `daily_summary`, `reminder_j1`, `monthly_summary` |
+| `.manage` | `new_cleaning`, `cleaning_reminder`, `cleaning_alert`, `new_invoice`, `contract_signed`, `deposit_expiry_alert` |
+| `openSupport = true` | `support` (réservé — non encore envoyé en production) |
+
+Sources : `services/notifications-service.js`, `services/pushNotificationService.js`,
+`integrated-chat-handler.js`, `server.js`, `scripts/reconcile-deposits-cron.js`.
+
+Deux points d'attention :
+- Le payload `new_message` utilise la clé **camelCase** (`conversationId`) ; `new_guest_message`
+  et les types de `integrated-chat-handler.js` utilisent **snake_case** (`conversation_id`).
+  Le switch iOS gère les deux via un OR sur `userInfo`.
+- `deposit_expiry_alert` est envoyé par `scripts/reconcile-deposits-cron.js` (cron 48 h
+  avant expiration d'une caution Stripe). Il porte `depositId`, `reservationUid`, `userId`.
+
+**La création de facture voyageur reste sur desktop.** Elle exige un formulaire complet
+(`POST /api/invoice/create` avec tous les champs + `sendEmail: true`). Il n'existe aucune
+route pour envoyer un brouillon existant depuis l'historique. L'onglet Factures de l'app
+iOS se limite à lister l'historique et à renvoyer via `POST /api/invoice/resend`
+(`{ invoiceNumber: String }`). Une ligne sans `invoiceNumber` vient du chemin de repli
+`owner_invoices` — l'afficher sans bouton « Renvoyer » (resend échouerait sans numéro réel).
 
 ## Langue
 

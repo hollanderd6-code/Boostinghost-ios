@@ -69,6 +69,11 @@ struct ManageHubView: View {
     @Environment(AuthStore.self) var authStore
     @State private var vm = ManageHubViewModel()
     @State private var showAccount = false
+    @State private var showSearch = false
+    @State private var showNewPropertySheet = false
+    @State private var showPlanLimitAlert = false
+    @State private var showSyncAlert = false
+    @State private var syncAlertMessage = ""
 
     private var visibleEntries: [ManageEntry] {
         ManageEntry.visible(for: authStore.session)
@@ -80,17 +85,33 @@ struct ManageHubView: View {
         } else {
             NavigationStack {
                 scrollContent
+                    .refreshable { await reload() }
                     .safeAreaInset(edge: .top, spacing: 0) { navBar }
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationDestination(for: ManageEntry.self) { entry in
                         subScreenView(for: entry)
                     }
             }
-            .refreshable { await reload() }
             .task { await reload() }
             .onChange(of: authStore.agencyContext) { Task { await reload() } }
             .sheet(isPresented: $showAccount) {
                 AccountSheet()
+            }
+            .sheet(isPresented: $showSearch) {
+                GlobalSearchSheet()
+            }
+            .sheet(isPresented: $showNewPropertySheet) {
+                NewPropertySheet { Task { await reload() } }
+            }
+            .alert("Limite atteinte", isPresented: $showPlanLimitAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Le plan Starter est limité à 3 logements. Passez au plan Pro pour créer des logements supplémentaires.")
+            }
+            .alert("Synchronisation", isPresented: $showSyncAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(syncAlertMessage)
             }
         }
     }
@@ -105,7 +126,7 @@ struct ManageHubView: View {
     private var navBar: some View {
         GlassNavBar(superTitle: superTitle, title: "Gestion") {
             HStack(spacing: 10) {
-                GlassCircleButton(icon: "magnifyingglass") { }
+                GlassCircleButton(icon: "magnifyingglass") { showSearch = true }
                 InitialsButton {
                     showAccount = true
                 }
@@ -239,21 +260,13 @@ struct ManageHubView: View {
                     )
                 )
                 .frame(width: 4)
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 22,
-                        bottomLeadingRadius: 22,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: 0
-                    )
-                )
 
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 7) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.bhOr)
-                    Text("\(n) logement\(n == 1 ? "" : "s") à préparer")
+                    Text("\(n) logement\(n == 1 ? "" : "s") à compléter")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Color.bhOr)
                 }
@@ -266,6 +279,7 @@ struct ManageHubView: View {
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .background(Color.bhOrFond, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
@@ -276,15 +290,34 @@ struct ManageHubView: View {
             SectionLabel(text: "Raccourcis")
 
             ListCard {
-                CardRow(showSeparator: true) {
-                    shortcutRow(icon: "plus", label: "Ajouter un logement",
-                                trailing: addPropertyQuota)
+                Button {
+                    if vm.isAtStarterLimit {
+                        showPlanLimitAlert = true
+                    } else {
+                        showNewPropertySheet = true
+                    }
+                } label: {
+                    CardRow(showSeparator: true) {
+                        shortcutRow(icon: "plus", label: "Ajouter un logement",
+                                    trailing: addPropertyQuota)
+                    }
                 }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
 
-                CardRow(showSeparator: false) {
-                    shortcutRow(icon: "arrow.triangle.2.circlepath",
-                                label: "Resynchroniser les plateformes")
+                Button {
+                    Task {
+                        let msg = await vm.sync()
+                        syncAlertMessage = msg
+                        showSyncAlert = true
+                    }
+                } label: {
+                    CardRow(showSeparator: false) {
+                        syncShortcutRow
+                    }
                 }
+                .buttonStyle(.plain)
+                .disabled(vm.isSyncing)
             }
         }
     }
@@ -314,6 +347,34 @@ struct ManageHubView: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Color.bhAttenue.opacity(0.55))
+        }
+    }
+
+    private var syncShortcutRow: some View {
+        HStack(spacing: 12) {
+            Group {
+                if vm.isSyncing {
+                    ProgressView()
+                        .scaleEffect(0.85)
+                } else {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(Color.bhVert)
+                }
+            }
+            .frame(width: 28)
+
+            Text("Resynchroniser les plateformes")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(Color.bhEncre)
+
+            Spacer(minLength: 4)
+
+            if !vm.isSyncing {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.bhAttenue.opacity(0.55))
+            }
         }
     }
 

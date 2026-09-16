@@ -91,34 +91,37 @@ struct TemplateEditView: View {
     // MARK: - Barre
 
     private var navBar: some View {
-        HStack {
-            Button("Annuler") { dismiss() }
-                .font(.system(size: 16.5, weight: .semibold))
-                .foregroundStyle(Color.bhVert)
+        VStack(spacing: 0) {
+            SheetHandle()
+            HStack {
+                Button("Annuler") { dismiss() }
+                    .font(.system(size: 16.5, weight: .semibold))
+                    .foregroundStyle(Color.bhVert)
 
-            Spacer()
+                Spacer()
 
-            Text("Modifier")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color.bhEncre)
+                Text("Modifier")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Color.bhEncre)
 
-            Spacer()
+                Spacer()
 
-            Button {
-                Task { await doSave() }
-            } label: {
-                if isSaving {
-                    ProgressView().tint(Color.bhVert).scaleEffect(0.8)
-                } else {
-                    Text("Enregistrer")
-                        .font(.system(size: 16.5, weight: .semibold))
-                        .foregroundStyle(canSave ? Color.bhVert : Color.bhAttenue)
+                Button {
+                    Task { await doSave() }
+                } label: {
+                    if isSaving {
+                        ProgressView().tint(Color.bhVert).scaleEffect(0.8)
+                    } else {
+                        Text("Enregistrer")
+                            .font(.system(size: 16.5, weight: .semibold))
+                            .foregroundStyle(canSave ? Color.bhVert : Color.bhAttenue)
+                    }
                 }
+                .disabled(!canSave || isSaving)
             }
-            .disabled(!canSave || isSaving)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 14)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
         .background {
             Rectangle()
                 .glassEffect(in: .rect)

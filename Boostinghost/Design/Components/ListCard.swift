@@ -48,7 +48,7 @@ struct UrgentCard<Content: View>: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Filet gauche 4px dégradé
+            // Filet gauche 4px dégradé — rogné par clipShape sur le HStack
             Rectangle()
                 .fill(
                     LinearGradient(
@@ -58,19 +58,12 @@ struct UrgentCard<Content: View>: View {
                     )
                 )
                 .frame(width: 4)
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 22,
-                        bottomLeadingRadius: 22,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: 0
-                    )
-                )
 
             content()
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .background {
             GlassCardBackground(cornerRadius: 22, fillOpacity: 0.62)
         }

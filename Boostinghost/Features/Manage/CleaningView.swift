@@ -11,11 +11,12 @@ private enum CleaningPeriod: String, CaseIterable {
 // MARK: - Écran Ménage
 
 struct CleaningView: View {
-    @Environment(AuthStore.self)       private var authStore
-    @Environment(CalendarViewModel.self) private var calendarVM
-    @Environment(\.dismiss)            private var dismiss
-    @State private var vm     = CleaningViewModel()
-    @State private var period: CleaningPeriod = .today
+    @Environment(AuthStore.self)  private var authStore
+    @Environment(\.dismiss)      private var dismiss
+    @Environment(\.scenePhase)   private var scenePhase
+    @State private var vm               = CleaningViewModel()
+    @State private var period:          CleaningPeriod = .today
+    @State private var selectedDetail: CleaningDetailRef? = nil
 
     private var session:      Session? { authStore.session }
     private var isSubAccount: Bool     { session?.isSubAccount == true }
@@ -46,8 +47,18 @@ struct CleaningView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .task { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
+        .task { await vm.load(isSubAccount: isSubAccount) }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await vm.load(isSubAccount: isSubAccount) }
+        }
         .sheet(isPresented: $vm.showRejectSheet) { rejectSheet }
+        .sheet(item: $selectedDetail) { ref in
+            ChecklistDetailView(ref: ref, canManage: canManage, onChanged: {
+                Task { await vm.load(isSubAccount: isSubAccount) }
+            })
+            .environment(authStore)
+        }
     }
 
     // MARK: - Barre de navigation
@@ -86,10 +97,12 @@ struct CleaningView: View {
             .padding(.top, 8)
             .padding(.bottom, 12)
 
-            SegmentedGlass(
-                options: CleaningPeriod.allCases.map { (label: $0.rawValue, value: $0) },
-                selection: $period
-            )
+            Picker("Vue ménage", selection: $period) {
+                ForEach(CleaningPeriod.allCases, id: \.self) { p in
+                    Text(p.rawValue).tag(p)
+                }
+            }
+            .pickerStyle(.segmented)
             .padding(.horizontal, 18)
             .padding(.bottom, period == .history && !vm.historyCleanerNames.isEmpty ? 8 : 14)
 
@@ -110,42 +123,18 @@ struct CleaningView: View {
     // MARK: - Filtre intervenantes (onglet Historique)
 
     private var cleanerFilterBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                cleanerChip("Tous", selected: vm.historyCleanerFilter == nil) {
-                    vm.historyCleanerFilter = nil
-                }
-                ForEach(vm.historyCleanerNames, id: \.self) { name in
-                    cleanerChip(name, selected: vm.historyCleanerFilter == name) {
-                        vm.historyCleanerFilter = (vm.historyCleanerFilter == name) ? nil : name
-                    }
-                }
-            }
-            .padding(.horizontal, 18)
-        }
-    }
+        let chips: [ScrollableFilterBar.Chip] = [
+            .init(id: "__all__", filterId: nil, label: "Tous")
+        ] + vm.historyCleanerNames.map { .init(id: $0, filterId: $0, label: $0) }
 
-    @ViewBuilder
-    private func cleanerChip(_ label: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            if selected {
-                Text(label)
-                    .font(.system(size: 13.5, weight: .semibold))
-                    .foregroundStyle(Color.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(Color.bhVert, in: Capsule())
-            } else {
-                Text(label)
-                    .font(.system(size: 13.5))
-                    .foregroundStyle(Color.bhEncre)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .glassEffect(in: .rect(cornerRadius: 16))
+        return ScrollableFilterBar(
+            chips: chips,
+            selectedId: vm.historyCleanerFilter,
+            style: .prominent,
+            onSelect: { newId in
+                vm.historyCleanerFilter = (newId == vm.historyCleanerFilter) ? nil : newId
             }
-        }
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: selected)
+        )
     }
 
     // MARK: - Contenu Aujourd'hui
@@ -167,16 +156,26 @@ struct CleaningView: View {
             .padding(.top, 16)
             .padding(.bottom, 40)
         }
-        .refreshable { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
+        .refreshable { await vm.load(isSubAccount: isSubAccount) }
     }
 
     @ViewBuilder
     private var todayLoadedContent: some View {
         ForEach(vm.tightAssignments) { a in
-            AssignmentCard(assignment: a, isTight: true, canManage: canManage)
+            AssignmentCard(
+                assignment: a,
+                isTight: true,
+                canManage: canManage,
+                onDetail: { selectedDetail = detailRef(for: a) }
+            )
         }
         ForEach(vm.wideAssignments) { a in
-            AssignmentCard(assignment: a, isTight: false, canManage: canManage)
+            AssignmentCard(
+                assignment: a,
+                isTight: false,
+                canManage: canManage,
+                onDetail: { selectedDetail = detailRef(for: a) }
+            )
         }
 
         if !vm.checklistsToValidate.isEmpty {
@@ -190,7 +189,8 @@ struct CleaningView: View {
                         vm.rejectTargetId  = cl.id
                         vm.rejectNotes     = ""
                         vm.showRejectSheet = true
-                    }
+                    },
+                    onDetail: { selectedDetail = detailRef(for: cl) }
                 )
             }
         }
@@ -231,10 +231,22 @@ struct CleaningView: View {
                                 .bhIntertitre()
                                 .padding(.top, 4)
                             ForEach(group.tight) { a in
-                                AssignmentCard(assignment: a, isTight: true,  canManage: false, isFuture: true)
+                                AssignmentCard(
+                                    assignment: a,
+                                    isTight: true,
+                                    canManage: false,
+                                    isFuture: true,
+                                    onDetail: { selectedDetail = detailRef(for: a) }
+                                )
                             }
                             ForEach(group.wide) { a in
-                                AssignmentCard(assignment: a, isTight: false, canManage: false, isFuture: true)
+                                AssignmentCard(
+                                    assignment: a,
+                                    isTight: false,
+                                    canManage: false,
+                                    isFuture: true,
+                                    onDetail: { selectedDetail = detailRef(for: a) }
+                                )
                             }
                         }
                     }
@@ -244,7 +256,7 @@ struct CleaningView: View {
             .padding(.top, 16)
             .padding(.bottom, 40)
         }
-        .refreshable { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
+        .refreshable { await vm.load(isSubAccount: isSubAccount) }
     }
 
     // MARK: - Contenu Historique
@@ -266,7 +278,7 @@ struct CleaningView: View {
             .padding(.top, 16)
             .padding(.bottom, 40)
         }
-        .refreshable { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
+        .refreshable { await vm.load(isSubAccount: isSubAccount) }
     }
 
     @ViewBuilder
@@ -300,7 +312,10 @@ struct CleaningView: View {
                 ListCard {
                     ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, item in
                         CardRow(showSeparator: idx < group.items.count - 1) {
-                            HistoryItemRow(item: item)
+                            HistoryItemRow(
+                                item: item,
+                                onDetail: { selectedDetail = detailRef(for: item) }
+                            )
                         }
                     }
                 }
@@ -309,6 +324,57 @@ struct CleaningView: View {
     }
 
     // MARK: - États communs
+
+    private func detailRef(for a: CleaningAssignment) -> CleaningDetailRef {
+        let dateStr: String = {
+            guard let key = a.reservationKey, key.count >= 10 else { return "" }
+            let s = String(key.suffix(10))
+            return s.first?.isNumber == true ? s : ""
+        }()
+        return CleaningDetailRef(
+            propertyId:     a.propertyId,
+            propertyName:   a.resolvedPropertyName ?? a.propertyName,
+            cleanerName:    a.cleanerName,
+            dateStr:        dateStr,
+            windowStart:    a.windowStart,
+            windowEnd:      a.windowEnd,
+            reservationKey: a.reservationKey,
+            checklistId:    a.checklistId
+        )
+    }
+
+    private func detailRef(for cl: CleaningChecklist) -> CleaningDetailRef {
+        let dateStr: String = {
+            if let key = cl.reservationKey, key.count >= 10 {
+                let s = String(key.suffix(10))
+                if s.first?.isNumber == true { return s }
+            }
+            return cl.completedAt.map { String($0.prefix(10)) } ?? ""
+        }()
+        return CleaningDetailRef(
+            propertyId:     cl.propertyId,
+            propertyName:   cl.resolvedPropertyName,
+            cleanerName:    cl.cleanerName,
+            dateStr:        dateStr,
+            windowStart:    nil,
+            windowEnd:      nil,
+            reservationKey: cl.reservationKey,
+            checklistId:    cl.id
+        )
+    }
+
+    private func detailRef(for item: CleaningHistoryItem) -> CleaningDetailRef {
+        CleaningDetailRef(
+            propertyId:     item.propertyId,
+            propertyName:   item.propertyName,
+            cleanerName:    item.cleanerName,
+            dateStr:        item.dateStr,
+            windowStart:    nil,
+            windowEnd:      nil,
+            reservationKey: nil,
+            checklistId:    item.checklistId
+        )
+    }
 
     private var loadingIndicator: some View {
         HStack { Spacer(); ProgressView().tint(Color.bhAttenue); Spacer() }
@@ -325,7 +391,7 @@ struct CleaningView: View {
                 .foregroundStyle(Color.bhAttenue)
                 .multilineTextAlignment(.center)
             Button("Réessayer") {
-                Task { await vm.load(isSubAccount: isSubAccount, reservations: calendarVM.allReservations) }
+                Task { await vm.load(isSubAccount: isSubAccount) }
             }
             .font(.system(size: 15, weight: .semibold))
             .foregroundStyle(Color.bhVert)
@@ -394,6 +460,7 @@ private struct AssignmentCard: View {
     let isTight:    Bool
     let canManage:  Bool
     var isFuture:   Bool = false
+    let onDetail:   () -> Void
 
     @Environment(\.openURL) private var openURL
 
@@ -406,19 +473,18 @@ private struct AssignmentCard: View {
             Rectangle()
                 .fill(Color.bhTerracotta)
                 .frame(width: 4)
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 22, bottomLeadingRadius: 22,
-                        bottomTrailingRadius: 0, topTrailingRadius: 0
-                    )
-                )
             cardContent(accentColor: Color.bhTerracotta)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .background(Color.bhTerracottaBd, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .contentShape(Rectangle())
+        .onTapGesture { onDetail() }
     }
 
     private var wideCard: some View {
         ListCard { cardContent(accentColor: Color.bhOccupe) }
+            .contentShape(Rectangle())
+            .onTapGesture { onDetail() }
     }
 
     private func cardContent(accentColor: Color) -> some View {
@@ -435,10 +501,15 @@ private struct AssignmentCard: View {
                     }
                 }
                 Spacer(minLength: 8)
-                CleaningBadge(
-                    label: isTight ? "SERRÉ" : "LARGE",
-                    background: accentColor
-                )
+                HStack(spacing: 6) {
+                    CleaningBadge(
+                        label: isTight ? "RELOUÉ" : "LIBRE",
+                        background: accentColor
+                    )
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                }
             }
 
             SlotGauge(
@@ -562,6 +633,7 @@ private struct SlotGauge: View {
 
 private struct HistoryItemRow: View {
     let item: CleaningHistoryItem
+    let onDetail: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -569,24 +641,35 @@ private struct HistoryItemRow: View {
                 Text(item.propertyName ?? "—")
                     .font(.system(size: 15.5, weight: .medium))
                     .foregroundStyle(Color.bhEncre)
-                if let name = item.cleanerName, !name.isEmpty {
-                    Text(name)
+                if let effective = item.effectiveCleanerName, !effective.isEmpty {
+                    Text(effective)
                         .font(.bhMeta)
                         .foregroundStyle(Color.bhAttenue)
+                    if let assigned = item.cleanerName, !assigned.isEmpty,
+                       assigned != effective {
+                        Text("assignée : \(assigned)")
+                            .font(.bhMeta)
+                            .foregroundStyle(Color.bhAttenue.opacity(0.6))
+                    }
                 }
             }
             Spacer(minLength: 8)
             statusPill
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color.bhAttenue.opacity(0.55))
         }
+        .contentShape(Rectangle())
+        .onTapGesture { onDetail() }
     }
 
     private var statusPill: some View {
         let (text, style, icon): (String, PillStyle, String?) = {
             switch item.checklistStatus {
-            case "validated": return ("Validé",        .vert,       "checkmark.circle.fill")
-            case "rejected":  return ("Rejeté",        .terracotta, "xmark.circle.fill")
-            case "completed": return ("À valider",     .or,         "clock.fill")
-            default:          return ("Pas de retour", .neutre,     nil)
+            case "validated": return ("Validé",               .vert,       "checkmark.circle.fill")
+            case "rejected":  return ("Complément demandé",   .terracotta, "xmark.circle.fill")
+            case "pending":   return ("À valider",            .or,         "clock.fill")
+            default:          return ("Pas de retour",        .neutre,     nil)
             }
         }()
         return StatusPill(text: text, style: style, icon: icon)
@@ -600,17 +683,25 @@ private struct ValidateCard: View {
     let canManage:  Bool
     let onValidate: () -> Void
     let onReject:   () -> Void
+    let onDetail:   () -> Void
 
     var body: some View {
         ListCard {
             VStack(alignment: .leading, spacing: 10) {
-                Text(checklist.resolvedPropertyName ?? checklist.propertyId ?? "—")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color.bhEncre)
-
-                Text(completionLabel)
-                    .font(.bhMeta)
-                    .foregroundStyle(Color.bhAttenue)
+                HStack(spacing: 6) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(checklist.resolvedPropertyName ?? checklist.propertyId ?? "—")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.bhEncre)
+                        Text(completionLabel)
+                            .font(.bhMeta)
+                            .foregroundStyle(Color.bhAttenue)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                }
 
                 if canManage {
                     HStack(spacing: 10) {
@@ -645,6 +736,8 @@ private struct ValidateCard: View {
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .contentShape(Rectangle())
+        .onTapGesture { onDetail() }
     }
 
     private var completionLabel: String {

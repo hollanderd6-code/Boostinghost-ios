@@ -41,7 +41,7 @@ final class CleaningViewModel {
     }
 
     var filteredHistoryGroups: [CleaningHistoryGroup] {
-        let items = historyCleanerFilter.map { f in historyItems.filter { $0.cleanerName == f } } ?? historyItems
+        let items = historyCleanerFilter.map { f in historyItems.filter { $0.effectiveCleanerName == f } } ?? historyItems
         var grouped: [String: [CleaningHistoryItem]] = [:]
         for item in items { grouped[item.dateStr, default: []].append(item) }
         return grouped.keys.sorted(by: >).map { CleaningHistoryGroup(dateStr: $0, items: grouped[$0]!) }
@@ -49,19 +49,36 @@ final class CleaningViewModel {
 
     // MARK: - Chargement
 
-    func load(isSubAccount: Bool, reservations: [Reservation] = []) async {
-        loadState = .loading
+    func load(isSubAccount: Bool) async {
+        if case .loaded = loadState {} else { loadState = .loading }
+
+        // Un sous-compte cleaner n'a pas can_view_properties → utiliser l'endpoint
+        // dédié qui renvoie uniquement id/name/arrivalTime/departureTime/color
+        // derrière can_view_cleaning. Pour un compte principal, garder /api/properties.
+        let propEndpoint = isSubAccount ? Endpoint.cleaningPropertyNames : Endpoint.properties
 
         async let assignmentsResult: CleaningAssignmentsResponse =
             APIClient.shared.get(Endpoint.cleaningAssignments, agencyAll: true)
         async let propertiesResult: PropertiesResponse =
-            APIClient.shared.get(Endpoint.properties, agencyAll: true)
+            APIClient.shared.get(propEndpoint, agencyAll: true)
         async let checklistsResult: CleaningChecklistsResponse =
             APIClient.shared.get(Endpoint.cleaningChecklists, agencyAll: true)
+        async let reservationsResult: ReservationsResponse =
+            APIClient.shared.get(Endpoint.reservations, agencyAll: true)
 
         let allAssignments = (try? await assignmentsResult)?.assignments ?? []
-        let properties     = (try? await propertiesResult)?.properties   ?? []
+        let properties: [Property]
+        do {
+            properties = try await propertiesResult.properties ?? []
+        } catch {
+            // 403 = cleaner sans can_view_properties sur /api/properties (ne devrait
+            // plus arriver après migration vers cleaningPropertyNames, mais loggé pour
+            // ne pas avaler l'erreur silencieusement).
+            print("[CleaningVM] ⚠️ GET propriétés échoué (\(propEndpoint.path)): \(error) — les noms de logements ne seront pas résolus.")
+            properties = []
+        }
         let rawChecklists  = (try? await checklistsResult)?.checklists   ?? []
+        let reservations   = (try? await reservationsResult)?.reservations ?? []
 
         if !isSubAccount {
             let r: CleanersListResponse? = try? await APIClient.shared.get(Endpoint.cleaners, agencyAll: true)
@@ -96,32 +113,56 @@ final class CleaningViewModel {
         for key in propKeys { resaByPropMut[key]?.sort { $0.startDate < $1.startDate } }
         let resaByProp = resaByPropMut
 
+        #if DEBUG
+        print("[SLOT] reservations reçues=\(reservations.count) logements indexés=\(resaByProp.count)")
+        #endif
+
         // Index checklists par reservation_key (pour l'Historique)
         let checklistByKey: [String: CleaningChecklist] = rawChecklists.reduce(into: [:]) { d, c in
             if let key = c.reservationKey { d[key] = c }
         }
 
+        #if DEBUG
+        let avecKey = rawChecklists.filter { $0.reservationKey != nil }.count
+        print("[DEBUG-CL] rawChecklists=\(rawChecklists.count)  avecReservationKey=\(avecKey)  indexés=\(checklistByKey.count)")
+        for c in rawChecklists.prefix(5) {
+            print("[DEBUG-CL]   id=\(c.id)  key=\(c.reservationKey ?? "nil")  ownerStatus=\(c.ownerStatus ?? "nil")  completedAt=\(c.completedAt ?? "nil")")
+        }
+        #endif
+
         let tightThreshold: TimeInterval = 6 * 3600
 
-        // Filtre par date : suffix(10) == dayStr, format réel uniquement (commence par un chiffre)
+        // Filtre par date : suffix(10) == dayStr, format réel uniquement (commence par un chiffre).
+        // Déduplique par reservationKey — le serveur peut renvoyer deux fois la même assignation virtuelle.
         func dayAssignments(_ dayStr: String) -> [CleaningAssignment] {
-            allAssignments.filter { a in
+            var seen = Set<String>()
+            return allAssignments.filter { a in
                 guard let key = a.reservationKey, key.count >= 10 else { return false }
                 let suffix = String(key.suffix(10))
-                guard suffix.first?.isNumber == true else { return false }
-                return suffix == dayStr
+                guard suffix.first?.isNumber == true, suffix == dayStr else { return false }
+                return seen.insert(key).inserted
             }
         }
 
-        // Résolution du nom et du créneau pour un jour donné
+        // Résolution du nom, du créneau et de la checklist liée pour un jour donné
+        var slotLogDone = false
         func resolve(_ a: CleaningAssignment, dayStr: String) -> CleaningAssignment {
             var a = a
             guard let pid = a.propertyId else { return a }
             a.resolvedPropertyName = nameByProp[pid]
             a.windowStart = depTimeByProp[pid]
+            #if DEBUG
+            if !slotLogDone {
+                slotLogDone = true
+                let resasForPid = resaByProp[pid] ?? []
+                print("[SLOT] premier ménage prop=\(nameByProp[pid] ?? pid) pid=\(pid) dayStr=\(dayStr)")
+                print("[SLOT]   résas pour ce logement=\(resasForPid.count) startDates=\(resasForPid.map(\.startDate))")
+            }
+            #endif
             if resaByProp[pid]?.contains(where: { $0.startDate == dayStr }) == true {
                 a.windowEnd = arrTimeByProp[pid]
             }
+            a.checklistId = a.reservationKey.flatMap { checklistByKey[$0]?.id }
             return a
         }
 
@@ -149,6 +190,7 @@ final class CleaningViewModel {
             let dur = CleaningAssignment.slotDuration(start: a.windowStart, end: a.windowEnd)
             let d   = dur.map { String(format: "%.0f min", $0 / 60) } ?? "nil"
             print("[DEBUG-CLEANING]   \(a.resolvedPropertyName ?? a.propertyId ?? "?")  start=\(a.windowStart ?? "nil")  end=\(a.windowEnd ?? "nil")  dur=\(d)")
+            print("[DEBUG-DUP]     propertyId=\(a.propertyId ?? "nil")  reservationKey=\(a.reservationKey ?? "nil")  isDefault=\(a.isDefault.map(String.init) ?? "nil")  cleanerName=\(a.cleanerName ?? "nil")")
         }
         #endif
 
@@ -157,10 +199,13 @@ final class CleaningViewModel {
         wideAssignments  = todayWide
 
         checklistsToValidate = rawChecklists
-            .filter { $0.status == "completed" }
+            .filter { $0.ownerStatus == "pending" }
             .map { c in
                 var c = c
+                // resolvedPropertyName : dict d'abord (compte principal), puis champ
+                // serveur comme repli (cleaner dont GET /api/properties était 403)
                 c.resolvedPropertyName = c.propertyId.flatMap { nameByProp[$0] }
+                    ?? c.propertyName
                 return c
             }
 
@@ -182,22 +227,71 @@ final class CleaningViewModel {
             return String(format: "%04d-%02d-%02d", dc2.year!, dc2.month!, dc2.day!)
         })
 
+        var historySeen = Set<String>()
         historyItems = allAssignments.compactMap { a -> CleaningHistoryItem? in
             guard let key = a.reservationKey, key.count >= 10 else { return nil }
             let suffix = String(key.suffix(10))
             guard suffix.first?.isNumber == true, historySet.contains(suffix) else { return nil }
-            let propName = a.propertyId.flatMap { nameByProp[$0] } ?? a.propertyName
+            guard historySeen.insert(key).inserted else { return nil }
+            let propName = a.propertyId.flatMap { nameByProp[$0] }
+                ?? a.propertyName
+                ?? a.reservationKey.flatMap { checklistByKey[$0]?.propertyName }
             return CleaningHistoryItem(
                 dateStr: suffix,
+                propertyId: a.propertyId,
                 propertyName: propName,
                 cleanerName: a.cleanerName,
-                checklistStatus: checklistByKey[key]?.status
+                checklistCleanerName: checklistByKey[key]?.cleanerName,
+                checklistStatus: checklistByKey[key]?.ownerStatus,
+                checklistId: checklistByKey[key]?.id
             )
         }.sorted { $0.dateStr > $1.dateStr }
 
         historyCleanerNames = Array(
-            Set(historyItems.compactMap { $0.cleanerName }.filter { !$0.isEmpty })
+            Set(historyItems.compactMap { $0.effectiveCleanerName }.filter { !$0.isEmpty })
         ).sorted()
+
+        #if DEBUG
+        print("[DEBUG-HIST] allAssignments=\(allAssignments.count) historyItems=\(historyItems.count)")
+        let histAvecId     = historyItems.filter { $0.checklistId != nil }.count
+        let histAvecStatus = historyItems.filter { $0.checklistStatus != nil }.count
+        var statusDist: [String: Int] = [:]
+        for item in historyItems { statusDist[item.checklistStatus ?? "nil", default: 0] += 1 }
+        let distStr = statusDist.sorted { $0.value > $1.value }.map { "\($0.key)×\($0.value)" }.joined(separator: "  ")
+        print("[DEBUG-HIST] avecChecklistId=\(histAvecId)  avecStatus=\(histAvecStatus)  dist: \(distStr)")
+
+        // Diagnostic croisement : pour les items sans checklist, compare le suffix date
+        // de la reservationKey de l'assignation avec les suffixes des checklists indexées.
+        // Si clMêmeDate > 0 → les clés partagent la même date mais diffèrent avant.
+        // Si clMêmeDate = 0 → les dates sont différentes (hypothèse : assignation = séjour
+        // à venir, checklist = séjour qui vient de finir).
+        let sansChecklist = historyItems.filter { $0.checklistId == nil }.prefix(5)
+        if !sansChecklist.isEmpty {
+            print("[DEBUG-CROSS] \(sansChecklist.count) items sans checklist (total historyItems=\(historyItems.count))")
+            let clSuffixes: [(key: String, suffix: String)] = checklistByKey.keys.compactMap { ck in
+                guard ck.count >= 10 else { return nil }
+                let s = String(ck.suffix(10))
+                guard s.first?.isNumber == true else { return nil }
+                return (ck, s)
+            }
+            for item in sansChecklist {
+                guard let assKey = allAssignments.first(where: { a in
+                    guard let k = a.reservationKey, k.count >= 10 else { return false }
+                    return String(k.suffix(10)) == item.dateStr && a.propertyId == item.propertyId
+                })?.reservationKey else {
+                    print("[DEBUG-CROSS]  \(item.dateStr) \(item.propertyName ?? "?") — reservationKey introuvable dans allAssignments")
+                    continue
+                }
+                let assDateSuffix = assKey.count >= 10 ? String(assKey.suffix(10)) : assKey
+                let mêmeDate = clSuffixes.filter { $0.suffix == assDateSuffix }
+                let autresDates = clSuffixes.filter { $0.suffix != assDateSuffix }.prefix(3)
+                print("[DEBUG-CROSS]  assKey=\(assKey)  assDate=\(assDateSuffix)  clMêmeDate=\(mêmeDate.count) \(mêmeDate.prefix(2).map(\.key))")
+                if mêmeDate.isEmpty {
+                    print("[DEBUG-CROSS]    → aucune checklist avec ce suffix. Dates disponibles: \(autresDates.map(\.suffix))")
+                }
+            }
+        }
+        #endif
 
         loadState = .loaded
     }

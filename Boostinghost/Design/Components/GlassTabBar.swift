@@ -1,18 +1,5 @@
 import SwiftUI
 
-// MARK: - Visibilité de la barre d'onglets
-
-private struct TabBarHiddenKey: EnvironmentKey {
-    static let defaultValue: Binding<Bool> = .constant(false)
-}
-
-extension EnvironmentValues {
-    var tabBarHidden: Binding<Bool> {
-        get { self[TabBarHiddenKey.self] }
-        set { self[TabBarHiddenKey.self] = newValue }
-    }
-}
-
 // MARK: - Onglets disponibles
 
 enum AppTab: String, CaseIterable, Hashable {
@@ -30,16 +17,12 @@ enum AppTab: String, CaseIterable, Hashable {
         }
     }
 
-    /// Retourne true si cet onglet est visible pour la session donnée.
     func isVisible(for session: Session?) -> Bool {
         guard let session, session.isSubAccount else { return true }
         switch self {
-        case .today:
-            return session.can("can_view_calendar")
-        case .calendar:
-            return session.can("can_view_calendar")
-        case .messages:
-            return session.can("can_view_messages")
+        case .today:    return session.can("can_view_calendar")
+        case .calendar: return session.can("can_view_calendar")
+        case .messages: return session.can("can_view_messages")
         case .manage:
             return session.canAny(
                 "can_view_properties",
@@ -50,134 +33,129 @@ enum AppTab: String, CaseIterable, Hashable {
         }
     }
 
-    /// Liste des onglets filtrés selon les droits.
     static func visible(for session: Session?) -> [AppTab] {
         allCases.filter { $0.isVisible(for: session) }
     }
 }
 
-// MARK: - Barre d'onglets flottante
-
-/// Affichée seulement quand trois onglets ou plus sont visibles.
-/// En dessous de trois, chaque feature s'affiche directement.
-struct GlassTabBar: View {
-    let tabs: [AppTab]
-    @Binding var selection: AppTab
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(tabs, id: \.self) { tab in
-                tabItem(tab)
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 10)
-        .glassEffect(in: .rect(cornerRadius: 30))
-        .specularEdge(cornerRadius: 30)
-        .chromeShadow()
-        .padding(.horizontal, 20)
-    }
-
-    private func tabItem(_ tab: AppTab) -> some View {
-        let active = selection == tab
-        return Button {
-            selection = tab
-        } label: {
-            VStack(spacing: 3) {
-                Image(systemName: tab.icon)
-                    .imageScale(.medium)
-                    .frame(height: 22)
-                Text(tab.rawValue)
-                    .font(.bhOnglet)
-            }
-            .foregroundStyle(active ? Color.bhVert : Color.bhAttenue)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.18), value: selection)
-    }
-}
-
-// MARK: - Conteneur principal qui choisit l'affichage selon les droits
+// MARK: - Conteneur principal
 
 struct MainTabView: View {
     @Environment(AuthStore.self) var authStore
-    @State private var selection:   AppTab          = .today
-    @State private var tabBarHidden                 = false
-    @State private var calendarVM   = CalendarViewModel()
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var selectedTab: AppTab = .today
+    @State private var calendarVM = CalendarViewModel()
+    @State private var messagesVM = MessagesViewModel()
+    @State private var showSupportSheet = false
+    // Host questions
+    @State private var hostQuestion: HostQuestion? = nil
+    @State private var showHostConfirmation = false
+    @State private var hostConfirmationText = ""
 
-    private var tabs: [AppTab] {
-        AppTab.visible(for: authStore.session)
-    }
+    private var router: NotificationRouter { NotificationRouter.shared }
+    private var hostQM: HostQuestionManager { HostQuestionManager.shared }
+    private var session: Session? { authStore.session }
+    private var visibleTabs: [AppTab] { AppTab.visible(for: session) }
 
     var body: some View {
         ZStack {
             AppBackground()
 
-            // Si un seul onglet : navigation directe, pas de barre
-            if tabs.count == 1, let only = tabs.first {
+            if visibleTabs.count == 1, let only = visibleTabs.first {
                 featureView(for: only)
-                    .environment(\.tabBarHidden, $tabBarHidden)
-                    .environment(calendarVM)
             } else {
-                ZStack(alignment: .bottom) {
-                    featureView(for: selection)
-                        .safeAreaInset(edge: .bottom) {
-                            if tabs.count >= 3 && !tabBarHidden {
-                                Color.clear.frame(height: 80)
-                            }
+                TabView(selection: $selectedTab) {
+                    if AppTab.today.isVisible(for: session) {
+                        Tab(AppTab.today.rawValue, systemImage: AppTab.today.icon, value: AppTab.today) {
+                            featureView(for: .today)
                         }
-                        .environment(\.tabBarHidden, $tabBarHidden)
-                        .environment(calendarVM)
-
-                    if tabs.count >= 3 && !tabBarHidden {
-                        VStack {
-                            Spacer()
-                            GlassTabBar(tabs: tabs, selection: $selection)
-                                .padding(.bottom, 12)
+                    }
+                    if AppTab.calendar.isVisible(for: session) {
+                        Tab(AppTab.calendar.rawValue, systemImage: AppTab.calendar.icon, value: AppTab.calendar) {
+                            featureView(for: .calendar)
                         }
-                        .ignoresSafeArea(edges: .bottom)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                    if AppTab.messages.isVisible(for: session) {
+                        Tab(AppTab.messages.rawValue, systemImage: AppTab.messages.icon, value: AppTab.messages) {
+                            featureView(for: .messages)
+                        }
+                        .badge(messagesVM.unreadCount)
+                    }
+                    if AppTab.manage.isVisible(for: session) {
+                        Tab(AppTab.manage.rawValue, systemImage: AppTab.manage.icon, value: AppTab.manage) {
+                            featureView(for: .manage)
+                        }
                     }
                 }
             }
         }
-        .task { debugLogTabs() }
-        .onChange(of: authStore.accountSwitchTrigger) {
-            selection = .today
+        .environment(calendarVM)
+        .environment(messagesVM)
+        .task {
+            messagesVM.agencyAll = authStore.agencyAll
+            await messagesVM.load()
+            hostQuestion = hostQM.pendingQuestion
+            hostQM.startPolling()
         }
-    }
-
-    private func debugLogTabs() {
-        let s = authStore.session
-        print("[DEBUG-TABS] isSubAccount=\(s?.isSubAccount ?? false)")
-        print("[DEBUG-TABS] permissions=\(s?.permissions as Any)")
-
-        let candidates: [(AppTab, [String])] = [
-            (.today,    ["can_view_calendar"]),
-            (.calendar, ["can_view_calendar"]),
-            (.messages, ["can_view_messages"]),
-            (.manage,   ["can_view_properties", "can_view_cleaning",
-                         "can_view_owners", "can_view_invoices"]),
-        ]
-        for (tab, keys) in candidates {
-            for key in keys {
-                let result = s?.can(key) ?? true
-                let dictVal = s?.permissions?[key]
-                print("[DEBUG-TABS]   \(tab.rawValue) key=\(key) can()=\(result) dict[\(key)]=\(dictVal as Any)")
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task {
+                    messagesVM.agencyAll = authStore.agencyAll
+                    await messagesVM.load()
+                }
+                hostQM.startPolling()
+            } else if phase == .background {
+                hostQM.stopPolling()
             }
         }
-        print("[DEBUG-TABS] tabs.count=\(tabs.count) tabs=\(tabs.map(\.rawValue))")
+        .onChange(of: hostQM.pendingQuestion) { _, q in
+            hostQuestion = q
+        }
+        .onChange(of: hostQM.lastConfirmation) { _, msg in
+            guard let msg else { return }
+            hostConfirmationText = msg
+            showHostConfirmation = true
+            hostQM.clearConfirmation()
+        }
+        .onChange(of: authStore.accountSwitchTrigger) {
+            selectedTab = .today
+        }
+        .onChange(of: router.pendingTab) { _, tab in
+            guard let tab else { return }
+            if tab.isVisible(for: session) { selectedTab = tab }
+            NotificationRouter.shared.pendingTab = nil
+        }
+        .onChange(of: router.openSupport) { _, open in
+            guard open else { return }
+            showSupportSheet = true
+            NotificationRouter.shared.openSupport = false
+        }
+        .sheet(isPresented: $showSupportSheet) {
+            AccountSheet(initialDestination: .support).environment(authStore)
+        }
+        .sheet(item: $hostQuestion) { q in
+            HostQuestionSheet(question: q)
+                .interactiveDismissDisabled()
+        }
+        .alert("Réponse transmise", isPresented: $showHostConfirmation) {
+            Button("OK") {}
+        } message: {
+            Text(hostConfirmationText)
+        }
+        .onDisappear { hostQM.stopPolling() }
     }
+
+    // MARK: - Vues des onglets
 
     @ViewBuilder
     private func featureView(for tab: AppTab) -> some View {
         switch tab {
         case .today:
-            TodayView(onSwitchToCalendar: { selection = .calendar })
+            TodayView(onSwitchToCalendar: {
+                if AppTab.calendar.isVisible(for: session) { selectedTab = .calendar }
+            })
         case .calendar:
-            CalendarView()
+            CalendarView(selectedTab: $selectedTab)
         case .messages:
             MessagesView()
         case .manage:

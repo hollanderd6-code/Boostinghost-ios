@@ -18,15 +18,19 @@ final class CleanersViewModel {
     private(set) var properties: [Property] = []
 
     var showCreateSheet = false
+    private(set) var targetAccounts: [TargetAccount] = []
+
+    var isAgencyMode: Bool { targetAccounts.count > 1 }
 
     // MARK: - Load (parallel)
 
     func load() async {
         loadState = .loading
 
-        async let cleanersTask: CleanersListResponse   = APIClient.shared.get(Endpoint.cleaners, agencyAll: true)
-        async let defaultsTask: DefaultCleanersResponse = APIClient.shared.get(Endpoint.defaultCleaners, agencyAll: true)
-        async let propertiesTask: PropertiesResponse    = APIClient.shared.get(Endpoint.properties, agencyAll: true)
+        async let cleanersTask: CleanersListResponse    = APIClient.shared.get(Endpoint.cleaners, agencyAll: true)
+        async let defaultsTask: DefaultCleanersResponse  = APIClient.shared.get(Endpoint.defaultCleaners, agencyAll: true)
+        async let propertiesTask: PropertiesResponse     = APIClient.shared.get(Endpoint.properties, agencyAll: true)
+        async let targetsTask: TargetAccountsResponse    = APIClient.shared.get(Endpoint.targetAccounts)
 
         do {
             cleaners = (try await cleanersTask).cleaners
@@ -39,6 +43,7 @@ final class CleanersViewModel {
         properties = ((try? await propertiesTask)?.properties ?? [])
             .filter { !$0.id.isEmpty }
             .sorted { ($0.internalName ?? $0.name) < ($1.internalName ?? $1.name) }
+        targetAccounts = (try? await targetsTask)?.accounts ?? []
 
         loadState = .loaded
 
@@ -75,12 +80,24 @@ final class CleanersViewModel {
         defaultsByProperty[propertyId]
     }
 
+    // MARK: - Target accounts (GET /api/agency/target-accounts)
+
+    func loadTargetAccounts() async {
+        do {
+            let r: TargetAccountsResponse = try await APIClient.shared.get(Endpoint.targetAccounts)
+            targetAccounts = r.accounts
+        } catch {
+            targetAccounts = []
+        }
+    }
+
     // MARK: - Create (POST /api/cleaners)
 
     func create(name: String, email: String?, phone: String?,
-                notes: String?, isActive: Bool) async throws -> CleanerItem {
+                notes: String?, isActive: Bool, targetUserId: String?) async throws -> CleanerItem {
         let body = CleanerWriteBody(name: name, email: email, phone: phone,
-                                    notes: notes, isActive: isActive, subAccountId: nil)
+                                    notes: notes, isActive: isActive, subAccountId: nil,
+                                    targetUserId: targetUserId)
         let resp: CreateCleanerResponse = try await APIClient.shared.post(
             Endpoint.cleaners, body: body, agencyAll: true
         )
@@ -96,7 +113,8 @@ final class CleanersViewModel {
                 phone: String?, notes: String?, isActive: Bool) async throws {
         let subAccountId = cleaners.first(where: { $0.id == id })?.subAccountId
         let body = CleanerWriteBody(name: name, email: email, phone: phone,
-                                    notes: notes, isActive: isActive, subAccountId: subAccountId)
+                                    notes: notes, isActive: isActive, subAccountId: subAccountId,
+                                    targetUserId: nil)
         try await APIClient.shared.putVoid(Endpoint.cleaner(id), body: body, agencyAll: true)
         if let idx = cleaners.firstIndex(where: { $0.id == id }) {
             cleaners[idx].name     = name

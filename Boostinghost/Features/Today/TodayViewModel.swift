@@ -38,8 +38,7 @@ final class TodayViewModel {
     // MARK: - Load
 
     func load() async {
-        state = .loading
-        arrivees = []; departs = []; assignments = []
+        if case .loaded = state {} else { state = .loading }
 
         async let todayResult = fetchToday()
         async let cleaningResult = fetchCleaning()
@@ -54,6 +53,7 @@ final class TodayViewModel {
             if (e as? APIError) == .subscriptionRequired {
                 state = .subscriptionRequired
             } else {
+                print("[TodayVM] ⚠️ Erreur chargement: \(e)")
                 state = .error("Impossible de charger les données")
             }
         }
@@ -75,10 +75,30 @@ final class TodayViewModel {
     }
 
     private func fetchCleaning() async -> [CleaningAssignment] {
-        guard let r: CleaningAssignmentsResponse = try? await APIClient.shared.get(
-            Endpoint.cleaningAssignments, agencyAll: agencyAll
-        ) else { return [] }
-        return r.assignments ?? []
+        async let assignmentsTask: CleaningAssignmentsResponse =
+            APIClient.shared.get(Endpoint.cleaningAssignments, agencyAll: agencyAll)
+        async let propertiesTask: PropertiesResponse =
+            APIClient.shared.get(Endpoint.properties, agencyAll: agencyAll)
+
+        let allAssignments = (try? await assignmentsTask)?.assignments ?? []
+        let properties     = (try? await propertiesTask)?.properties   ?? []
+
+        let cal      = Calendar(identifier: .gregorian)
+        let dc       = cal.dateComponents([.year, .month, .day], from: cal.startOfDay(for: Date()))
+        let todayStr = String(format: "%04d-%02d-%02d", dc.year!, dc.month!, dc.day!)
+
+        let nameByProp = properties.reduce(into: [String: String]()) { d, p in
+            d[p.id] = p.internalName ?? p.name
+        }
+
+        return allAssignments.compactMap { a -> CleaningAssignment? in
+            guard let key = a.reservationKey, key.count >= 10 else { return nil }
+            let suffix = String(key.suffix(10))
+            guard suffix.first?.isNumber == true, suffix == todayStr else { return nil }
+            var a = a
+            a.resolvedPropertyName = a.propertyId.flatMap { nameByProp[$0] }
+            return a
+        }
     }
 }
 

@@ -15,26 +15,29 @@ final class AccountViewModel {
 
     // MARK: - Counters (nil = still loading; loaded but failed stays nil and shows "—")
 
-    var teamCount:          LoadedInt = .loading
-    var platformsConnected: LoadedInt = .loading
-    var cleanersCount:      LoadedInt = .loading
-    var templatesCount:     LoadedInt = .loading
+    var teamCount:               LoadedInt = .loading
+    var platformsConnected:      LoadedInt = .loading
+    var cleanersCount:           LoadedInt = .loading
+    var templatesCount:          LoadedInt = .loading
+    var managedPropertiesCount:  LoadedInt = .loading
+
+    var notificationSettings: NotificationSettings? = nil
 
     // MARK: - Load
 
     func load() async {
-        // DEBUG — à retirer après diagnostic de la réponse subscription
-        await debugPrintSubscriptionRaw()
-
         async let subTask:       SubscriptionStatus       = APIClient.shared.get(Endpoint.subscriptionStatus)
         async let profileTask:   UserProfile              = APIClient.shared.get(Endpoint.userProfile)
         async let teamTask:      SubAccountsResponse      = APIClient.shared.get(Endpoint.subAccountsList, agencyAll: true)
         async let diffusionTask: DiffusionResponse        = APIClient.shared.get(Endpoint.propertiesDiffusion, agencyAll: true)
         async let cleanersTask:  CleanersListResponse     = APIClient.shared.get(Endpoint.cleaners, agencyAll: true)
         async let tplTask:       MessageTemplatesResponse = APIClient.shared.get(Endpoint.messageTemplates, agencyAll: true)
+        async let propsTask:     PropertiesResponse       = APIClient.shared.get(Endpoint.properties, agencyAll: true)
+        async let notifTask:     NotificationSettings     = APIClient.shared.get(Endpoint.notificationSettings)
 
-        subscriptionStatus = try? await subTask
-        userProfile        = try? await profileTask
+        subscriptionStatus    = try? await subTask
+        userProfile           = try? await profileTask
+        notificationSettings  = try? await notifTask
 
         if let r = try? await teamTask {
             teamCount = .loaded(r.subAccounts.count)
@@ -59,23 +62,12 @@ final class AccountViewModel {
         } else {
             templatesCount = .failed
         }
-    }
 
-    // MARK: - Debug (supprimer après diagnostic)
-
-    private func debugPrintSubscriptionRaw() async {
-        guard let token = await APIClient.shared.token else {
-            print("[DEBUG-SUB] pas de token")
-            return
+        if let r = try? await propsTask {
+            managedPropertiesCount = .loaded(r.properties?.count ?? 0)
+        } else {
+            managedPropertiesCount = .failed
         }
-        var req = URLRequest(url: Endpoint.subscriptionStatus)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        guard let (data, _) = try? await URLSession.shared.data(for: req) else {
-            print("[DEBUG-SUB] réseau KO")
-            return
-        }
-        let raw = String(data: data, encoding: .utf8) ?? "(non-UTF8)"
-        print("[DEBUG-SUB] JSON brut /api/subscription/status :\n\(raw)")
     }
 }
 
