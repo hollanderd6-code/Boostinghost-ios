@@ -4,6 +4,7 @@ import SwiftUI
 
 struct MessagesView: View {
     @Environment(AuthStore.self) var authStore
+    @Environment(SetupViewModel.self) private var setupVM
 
     @Environment(MessagesViewModel.self) private var vm
     @State private var path: [Conversation] = []
@@ -56,7 +57,7 @@ struct MessagesView: View {
             }
         }
         .sheet(isPresented: $showAccount) {
-            AccountSheet()
+            AccountSheet().environment(setupVM)
         }
         .sheet(isPresented: $showSearch) {
             GlobalSearchSheet()

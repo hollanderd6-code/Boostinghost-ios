@@ -470,3 +470,24 @@ struct PracticalInfo: Decodable {
         return names.isEmpty ? "—" : names.joined(separator: " · ")
     }
 }
+
+// MARK: - Welcome book completion
+
+extension Property {
+    var welcomeBookCompletionBlocks: Int {
+        var n = 0
+        // Bloc Accès : code, wifi (nom OU mdp), instructions
+        if accessCode?.isEmpty == false
+            || wifiName?.isEmpty == false
+            || wifiPassword?.isEmpty == false
+            || accessInstructions?.isEmpty == false { n += 1 }
+        // Bloc Quartier : practicalInfo
+        if practicalInfo?.hasAny == true { n += 1 }
+        // Bloc Équipements : amenities (booléens OU custom) OU règles maison
+        if amenities?.hasAny == true
+            || amenities?.custom?.isEmpty == false
+            || houseRules?.isDefined == true
+            || houseRules?.custom?.isEmpty == false { n += 1 }
+        return n
+    }
+}

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HelpView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(SetupViewModel.self) private var setupVM
     @State private var vm = HelpViewModel()
     @State private var searchText = ""
     @State private var expandedIDs: Set<Int> = []
@@ -80,9 +81,13 @@ struct HelpView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 20) {
                     searchBar
+                    setupSection
                     if !vm.faq.isEmpty { faqSection }
                     if !vm.videos.isEmpty { videosSection }
                     if !vm.guides.isEmpty { guidesSection }
+                    #if DEBUG
+                    debugSection
+                    #endif
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 16)
@@ -120,6 +125,159 @@ struct HelpView: View {
                 .specularEdge(cornerRadius: 14)
         }
     }
+
+    // MARK: - Configuration (deux entrées distinctes)
+
+    @State private var isRestoringCard = false
+    @State private var restoreError: String?
+
+    private var setupSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("Configuration")
+            ListCard {
+                // Entry 1 — always visible for main accounts: resume guided flow
+                CardRow(showSeparator: setupVM.isDismissed) {
+                    Button {
+                        resumeConfiguration()
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "checklist")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(Color.bhVert)
+                                .frame(width: 22)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Reprendre ma configuration")
+                                    .font(.system(size: 15.5))
+                                    .foregroundStyle(Color.bhEncre)
+                                Text("Continuer ou modifier la configuration")
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhAttenue)
+                            }
+                            Spacer(minLength: 8)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minHeight: 44)
+                }
+
+                // Entry 2 — only if the setup card has been dismissed
+                if setupVM.isDismissed {
+                    CardRow(showSeparator: false) {
+                        Button {
+                            Task { await restoreCard() }
+                        } label: {
+                            HStack(spacing: 14) {
+                                if isRestoringCard {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                        .frame(width: 22)
+                                } else {
+                                    Image(systemName: "eye")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundStyle(Color.bhAttenue)
+                                        .frame(width: 22)
+                                }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Réafficher le suivi de configuration")
+                                        .font(.system(size: 15.5))
+                                        .foregroundStyle(Color.bhEncre)
+                                    if let err = restoreError {
+                                        Text(err)
+                                            .font(.bhMeta)
+                                            .foregroundStyle(Color.bhTerracotta)
+                                    } else {
+                                        Text("Afficher la carte de suivi sur Aujourd'hui")
+                                            .font(.bhMeta)
+                                            .foregroundStyle(Color.bhAttenue)
+                                    }
+                                }
+                                Spacer(minLength: 8)
+                                if !isRestoringCard {
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                                }
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isRestoringCard)
+                        .frame(minHeight: 44)
+                    }
+                }
+            }
+        }
+    }
+
+    private func resumeConfiguration() {
+        NotificationCenter.default.post(name: .navigateToToday, object: nil)
+        // TECH DEBT: The 400ms delay is a workaround for the absence of a
+        // SwiftUI sheet-dismiss-completion callback. AccountSheet dismisses
+        // itself via NotificationCenter, leaving no synchronous hook.
+        // Replace before release with a proper mechanism: observe a
+        // pendingOnboardingAction flag in NotificationRouter from RootView's
+        // sheet onDismiss callback, and trigger startManually() there.
+        let steps = setupVM.steps
+        Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            OnboardingCoordinator.shared.startManually(setupSteps: steps)
+        }
+    }
+
+    private func restoreCard() async {
+        isRestoringCard = true
+        restoreError    = nil
+        let start = Date()
+        do {
+            struct Body: Encodable { let preferences: Prefs }
+            struct Prefs: Encodable { let setupCardDismissed: Bool }
+            try await APIClient.shared.putVoid(
+                Endpoint.userPreferences,
+                body: Body(preferences: Prefs(setupCardDismissed: false))
+            )
+            NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
+            NotificationCenter.default.post(name: .navigateToToday, object: nil)
+        } catch {
+            let elapsed = Date().timeIntervalSince(start)
+            #if DEBUG
+            debugLogPreferencesError(error, label: "restoreCard", elapsed: elapsed)
+            #endif
+            restoreError = "Impossible de réafficher la carte."
+        }
+        isRestoringCard = false
+    }
+
+#if DEBUG
+    private func debugLogPreferencesError(_ error: Error, label: String, elapsed: TimeInterval) {
+        let path = Endpoint.userPreferences.relativePath ?? Endpoint.userPreferences.absoluteString
+        print("[Debug][\(label)][PUT \(path)] durée=\(String(format: "%.2f", elapsed))s")
+        if let api = error as? APIError {
+            switch api {
+            case .network(let urlErr as URLError):
+                print("  catégorie : réseau URLError")
+                print("  code : \(urlErr.code.rawValue) — \(urlErr.localizedDescription)")
+                print("  timeout : \(urlErr.code == .timedOut ? "oui" : "non")")
+            case .network(let other):
+                print("  catégorie : réseau (autre)")
+                print("  erreur : \(other.localizedDescription)")
+            case .server(let status, let msg):
+                print("  catégorie : serveur HTTP \(status)")
+                if let msg { print("  message : \(msg)") }
+                print("  timeout : non")
+            case .unauthorized:
+                print("  catégorie : 401 non autorisé")
+            default:
+                print("  catégorie : \(api)")
+            }
+        } else {
+            print("  catégorie : \(type(of: error)) — \(error.localizedDescription)")
+        }
+    }
+#endif
 
     // MARK: - FAQ
 
@@ -186,6 +344,84 @@ struct HelpView: View {
             }
         }
     }
+
+    // MARK: - Debug (DEBUG builds only)
+
+#if DEBUG
+    private var debugSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("Développement")
+            ListCard {
+                CardRow(showSeparator: true) {
+                    Button {
+                        NotificationCenter.default.post(name: .navigateToToday, object: nil)
+                        // TECH DEBT: 400ms fixed delay — see resumeConfiguration() comment.
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(400))
+                            OnboardingCoordinator.shared.previewFirstLaunch()
+                        }
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "wand.and.stars")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(Color.bhVert)
+                                .frame(width: 22)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Tester le premier démarrage")
+                                    .font(.system(size: 15.5))
+                                    .foregroundStyle(Color.bhEncre)
+                                Text("Simule le premier lancement — sans persistance")
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhAttenue)
+                            }
+                            Spacer(minLength: 8)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minHeight: 44)
+                }
+
+                CardRow(showSeparator: false) {
+                    Button {
+                        NotificationCenter.default.post(name: .navigateToToday, object: nil)
+                        // TECH DEBT: 400ms fixed delay — see resumeConfiguration() comment.
+                        let steps = setupVM.steps
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(400))
+                            OnboardingCoordinator.shared.startManually(setupSteps: steps)
+                        }
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "checklist.checked")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(Color.bhVert)
+                                .frame(width: 22)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Tester la configuration guidée")
+                                    .font(.system(size: 15.5))
+                                    .foregroundStyle(Color.bhEncre)
+                                Text("Flow métier basé sur vos vraies données")
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhAttenue)
+                            }
+                            Spacer(minLength: 8)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minHeight: 44)
+                }
+            }
+        }
+    }
+#endif
 
     // MARK: - Section header
 

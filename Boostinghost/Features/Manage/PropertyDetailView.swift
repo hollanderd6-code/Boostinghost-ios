@@ -312,14 +312,7 @@ struct PropertyDetailView: View {
         }
     }
 
-    private var livretFilled: Int {
-        var n = 0
-        if property.accessCode?.isEmpty == false || property.wifiName?.isEmpty == false
-            || property.accessInstructions?.isEmpty == false { n += 1 }
-        if property.practicalInfo?.hasAny == true { n += 1 }
-        if property.amenities?.hasAny == true { n += 1 }
-        return n
-    }
+    private var livretFilled: Int { property.welcomeBookCompletionBlocks }
 
     private func openWelcomeBook() {
         guard let urlStr = property.welcomeBookUrl, !urlStr.isEmpty,

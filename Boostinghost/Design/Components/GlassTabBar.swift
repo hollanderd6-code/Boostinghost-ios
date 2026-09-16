@@ -42,6 +42,7 @@ enum AppTab: String, CaseIterable, Hashable {
 
 struct MainTabView: View {
     @Environment(AuthStore.self) var authStore
+    @Environment(SetupViewModel.self) private var setupVM
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: AppTab = .today
     @State private var calendarVM = CalendarViewModel()
@@ -130,8 +131,13 @@ struct MainTabView: View {
             showSupportSheet = true
             NotificationRouter.shared.openSupport = false
         }
+        .onReceive(NotificationCenter.default.publisher(for: .navigateToToday)) { _ in
+            if AppTab.today.isVisible(for: session) { selectedTab = .today }
+        }
         .sheet(isPresented: $showSupportSheet) {
-            AccountSheet(initialDestination: .support).environment(authStore)
+            AccountSheet(initialDestination: .support)
+                .environment(authStore)
+                .environment(setupVM)
         }
         .sheet(item: $hostQuestion) { q in
             HostQuestionSheet(question: q)
@@ -151,7 +157,7 @@ struct MainTabView: View {
     private func featureView(for tab: AppTab) -> some View {
         switch tab {
         case .today:
-            TodayView(onSwitchToCalendar: {
+            TodayView(selectedTab: $selectedTab, onSwitchToCalendar: {
                 if AppTab.calendar.isVisible(for: session) { selectedTab = .calendar }
             })
         case .calendar:

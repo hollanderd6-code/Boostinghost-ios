@@ -78,6 +78,7 @@ final class MessageTemplatesViewModel {
         if let idx = templates.firstIndex(where: { $0.id == id }) {
             templates[idx] = updated
         }
+        NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
         return updated
     }
 
@@ -96,5 +97,6 @@ final class MessageTemplatesViewModel {
         if let idx = templates.firstIndex(where: { $0.id == templateId }) {
             templates[idx].active = newValue
         }
+        NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
     }
 }

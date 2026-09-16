@@ -222,6 +222,7 @@ struct ICalFluxSheet: View {
             // Le bandeau Or de la section iCal s'affiche automatiquement après rechargement
             // si le logement est à la fois diffusé et synchronisé par lien.
             onDone()
+            NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
             dismiss()
         } catch let err as APIError {
             saveError = err.userMessage

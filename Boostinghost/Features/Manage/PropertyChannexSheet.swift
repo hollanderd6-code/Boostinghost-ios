@@ -173,6 +173,7 @@ struct PropertyChannexSheet: View {
             #endif
             isConnecting = false
             onConnected()
+            NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
             dismiss()
         } catch let err as APIError {
             #if DEBUG

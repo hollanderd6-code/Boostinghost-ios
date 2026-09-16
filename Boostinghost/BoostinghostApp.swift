@@ -52,6 +52,9 @@ private final class AppDelegate: NSObject, UIApplicationDelegate {
 private struct RootView: View {
     @Environment(AuthStore.self) var authStore
 
+    private let onboarding = OnboardingCoordinator.shared
+    @State private var setupVM = SetupViewModel()
+
     var body: some View {
         Group {
             switch authStore.appState {
@@ -59,16 +62,44 @@ private struct RootView: View {
                 Color.clear.ignoresSafeArea()
             case .authenticated:
                 MainTabView()
+                    .environment(setupVM)
+                    // fullScreenCover is only presented once hasLoaded = true
+                    // and isShowingOnboarding = true, preventing any flash for
+                    // existing accounts while preferences are being fetched.
+                    .fullScreenCover(
+                        isPresented: Binding(
+                            get: { onboarding.hasLoaded && onboarding.isShowingOnboarding },
+                            set: { _ in }
+                        )
+                    ) {
+                        OnboardingFlowView()
+                            .environment(authStore)
+                            .environment(setupVM)
+                    }
             case .unauthenticated:
                 LoginView()
             }
         }
-        // Request notification permission on every transition to .authenticated.
-        // UNUserNotificationCenter shows the system dialog only once; subsequent
-        // calls silently renew the APNs token — the recommended pattern.
         .onChange(of: authStore.appState) { _, newState in
-            if newState == .authenticated {
+            switch newState {
+            case .authenticated:
                 Task { await PushNotificationManager.shared.requestAuthorization() }
+                if let session = authStore.session {
+                    Task { await onboarding.load(session: session) }
+                }
+            case .unauthenticated:
+                onboarding.reset()
+                setupVM.reset()
+            case .loading:
+                break
+            }
+        }
+        // Account switch (agency context change or sub-account login):
+        // reset the coordinator and reload for the new effective session.
+        .onChange(of: authStore.accountSwitchTrigger) { _, _ in
+            onboarding.reset()
+            if authStore.appState == .authenticated, let session = authStore.session {
+                Task { await onboarding.load(session: session) }
             }
         }
     }

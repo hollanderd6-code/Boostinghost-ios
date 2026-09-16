@@ -2,7 +2,8 @@ import SwiftUI
 
 // MARK: - Navigation destinations
 
-enum AccountDestination: Hashable {
+enum AccountDestination: Hashable, Identifiable {
+    var id: Self { self }
     case subscription
     case profile
     case team
@@ -10,6 +11,7 @@ enum AccountDestination: Hashable {
     case cleaners
     case messageTemplates
     case notifications
+    case payments
     case help
     case support
 }
@@ -81,6 +83,8 @@ struct AccountSheet: View {
                     MessageTemplatesView()
                 case .notifications:
                     NotificationsView()
+                case .payments:
+                    StripeSettingsView()
                 case .help:
                     HelpView()
                 case .support:
@@ -91,6 +95,9 @@ struct AccountSheet: View {
         .task {
             await authStore.fetchDelegations()
             await vm.load()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .navigateToToday)) { _ in
+            dismiss()
         }
         .sheet(isPresented: $showSwitcher) {
             AccountSwitcherSheet { showSwitcher = false; dismiss() }
@@ -211,6 +218,14 @@ struct AccountSheet: View {
                                title: "Comptes gérés",
                                value: delegationsLabel)
                         .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Paiements — Stripe et passerelle
+            CardRow(showSeparator: true) {
+                NavigationLink(value: AccountDestination.payments) {
+                    rowContent(icon: "banknote", title: "Paiements")
                 }
                 .buttonStyle(.plain)
             }

@@ -41,6 +41,7 @@ final class TeamViewModel {
 
     func update(id: Int, request: SubAccountUpdateRequest) async throws {
         try await APIClient.shared.putVoid(Endpoint.subAccount(id), body: request, agencyAll: true)
+        NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
     }
 
     // MARK: - Target accounts (GET /api/agency/target-accounts)
@@ -67,5 +68,6 @@ final class TeamViewModel {
             Endpoint.subAccountsCreate, body: body, agencyAll: true
         )
         await reload()
+        NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
     }
 }

@@ -371,6 +371,7 @@ struct QuartierBlockView: View {
             )
             displayed = response.property
             onUpdate(response.property)
+            NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
             isEditing = false
         } catch let err as APIError {
             switch err {

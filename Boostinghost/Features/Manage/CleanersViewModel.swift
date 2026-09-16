@@ -103,6 +103,7 @@ final class CleanersViewModel {
         )
         cleaners.append(resp.cleaner)
         cleaners.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
         return resp.cleaner
     }
 
@@ -123,6 +124,7 @@ final class CleanersViewModel {
             cleaners[idx].notes    = notes
             cleaners[idx].isActive = isActive
         }
+        NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
     }
 
     // MARK: - Delete (DELETE /api/cleaners/:id)
@@ -131,6 +133,7 @@ final class CleanersViewModel {
         try await APIClient.shared.delete(Endpoint.cleaner(id), agencyAll: true)
         cleaners.removeAll { $0.id == id }
         defaultsByProperty = defaultsByProperty.filter { $0.value.cleanerId != id }
+        NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
     }
 
     // MARK: - Regenerate link (POST /api/cleaners/:id/regenerate-link)

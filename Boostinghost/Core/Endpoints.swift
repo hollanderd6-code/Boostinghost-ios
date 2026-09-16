@@ -182,6 +182,13 @@ enum Endpoint {
     // Search
     static let search = base.appending(path: "/api/search")
 
+    // User preferences (setup card persistence)
+    static let userPreferences = base.appending(path: "/api/user/preferences")
+
+    // Stripe status (personal account connection)
+    static let stripeStatus            = base.appending(path: "/api/stripe/status")
+    static let stripeCreateOnboarding  = base.appending(path: "/api/stripe/create-onboarding-link")
+
     // Help content
     static let helpContent = base.appending(path: "/api/help/content")
 

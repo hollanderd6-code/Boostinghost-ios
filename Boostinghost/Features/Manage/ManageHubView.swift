@@ -67,6 +67,7 @@ enum ManageEntry: CaseIterable, Hashable {
 
 struct ManageHubView: View {
     @Environment(AuthStore.self) var authStore
+    @Environment(SetupViewModel.self) private var setupVM
     @State private var vm = ManageHubViewModel()
     @State private var showAccount = false
     @State private var showSearch = false
@@ -95,13 +96,16 @@ struct ManageHubView: View {
             .task { await reload() }
             .onChange(of: authStore.agencyContext) { Task { await reload() } }
             .sheet(isPresented: $showAccount) {
-                AccountSheet()
+                AccountSheet().environment(setupVM)
             }
             .sheet(isPresented: $showSearch) {
                 GlobalSearchSheet()
             }
             .sheet(isPresented: $showNewPropertySheet) {
-                NewPropertySheet { Task { await reload() } }
+                NewPropertySheet {
+                    Task { await reload() }
+                    NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
+                }
             }
             .alert("Limite atteinte", isPresented: $showPlanLimitAlert) {
                 Button("OK", role: .cancel) { }

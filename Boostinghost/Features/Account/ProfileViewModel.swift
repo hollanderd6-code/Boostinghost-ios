@@ -153,6 +153,7 @@ final class ProfileViewModel {
             )
             useBhStripe = resp.useBhStripe
             profile?.useBhStripe = resp.useBhStripe
+            NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
         } catch let err as APIError {
             useBhStripe = !newValue   // annulation optimiste
             saveError = err.userMessage

@@ -460,6 +460,7 @@ struct EquipementsBlockView: View {
             )
             displayed = r.property
             onUpdate(r.property)
+            NotificationCenter.default.post(name: .setupShouldRefresh, object: nil)
             isEditing = false
         } catch let err as APIError {
             switch err {

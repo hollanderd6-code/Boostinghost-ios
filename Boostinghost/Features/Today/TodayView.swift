@@ -4,13 +4,17 @@ import SwiftUI
 
 struct TodayView: View {
     @Environment(AuthStore.self) var authStore
+    @Binding var selectedTab: AppTab
     var onSwitchToCalendar: () -> Void = {}
 
     @State private var vm = TodayViewModel()
+    @Environment(SetupViewModel.self) private var setupVM
     @State private var showAccount = false
     @State private var showSearch = false
 
     @Environment(\.scenePhase) private var scenePhase
+
+    private var showSetupCard: Bool { !(authStore.session?.isSubAccount ?? false) }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -32,17 +36,36 @@ struct TodayView: View {
         }
         .safeAreaInset(edge: .top, spacing: 0) { navBar }
         .refreshable { await reload() }
-        .task { await reload() }
-        .onChange(of: authStore.agencyContext) { Task { await reload() } }
+        .task {
+            await reload()
+            if showSetupCard { await setupVM.load() }
+        }
+        .onChange(of: authStore.agencyContext) {
+            Task {
+                await reload()
+                if showSetupCard { await setupVM.silentRefresh() }
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task { await reload() }
+            if selectedTab == .today, showSetupCard, case .loaded = setupVM.loadState {
+                Task { await setupVM.silentRefresh() }
+            }
+        }
+        .onChange(of: selectedTab) { _, newTab in
+            guard newTab == .today, showSetupCard, case .loaded = setupVM.loadState else { return }
+            Task { await setupVM.silentRefresh() }
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("NSCalendarDayChanged"))) { _ in
             Task { await reload() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .setupShouldRefresh)) { _ in
+            guard showSetupCard else { return }
+            Task { await setupVM.silentRefresh() }
+        }
         .sheet(isPresented: $showAccount) {
-            AccountSheet()
+            AccountSheet().environment(setupVM)
         }
         .sheet(isPresented: $showSearch) {
             GlobalSearchSheet()
@@ -69,6 +92,12 @@ struct TodayView: View {
 
     @ViewBuilder
     private var loadedContent: some View {
+        if showSetupCard && !setupVM.isDismissed {
+            SetupCardView(vm: setupVM) { stepID in
+                handleSetupStepTap(stepID)
+            }
+        }
+
         countersStrip
 
         calendarStrip
@@ -227,6 +256,22 @@ struct TodayView: View {
     private func reload() async {
         vm.agencyAll = authStore.agencyAll
         await vm.load()
+    }
+
+    // MARK: - Setup card routing
+
+    private func handleSetupStepTap(_ stepID: SetupStepID) {
+        switch stepID {
+        case .property:
+            // Keep direct routing to Manage tab — existing validated path.
+            NotificationRouter.shared.pendingTab = .manage
+        default:
+            // All other steps open the targeted guided flow for that step.
+            // SetupStepID and OnboardingFlowStep share identical raw values.
+            if let step = OnboardingFlowStep(rawValue: stepID.rawValue) {
+                OnboardingCoordinator.shared.start(at: step)
+            }
+        }
     }
 
     // MARK: - États de chargement

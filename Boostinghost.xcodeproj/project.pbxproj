@@ -155,6 +155,15 @@
 		AB0000000000000000000711 /* UpsellSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000710 /* UpsellSheet.swift */; };
 		AB0000000000000000000F01 /* TemplatePickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F02 /* TemplatePickerSheet.swift */; };
 		AB0000000000000000000F03 /* NoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F04 /* NoteSheet.swift */; };
+		AB0000000000000000000F07 /* SetupModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F08 /* SetupModels.swift */; };
+		AB0000000000000000000F09 /* SetupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F0A /* SetupViewModel.swift */; };
+		AB0000000000000000000F0B /* SetupCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F0C /* SetupCardView.swift */; };
+		AB0000000000000000000F0D /* PropertyPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F0E /* PropertyPickerSheet.swift */; };
+		AB0000000000000000000F0F /* StripeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F10 /* StripeSettingsView.swift */; };
+		AB0000000000000000001001 /* OnboardingCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001002 /* OnboardingCoordinator.swift */; };
+		AB0000000000000000001003 /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001004 /* OnboardingFlowView.swift */; };
+		AB0000000000000000001005 /* OnboardingGuidedFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */; };
+		AB0000000000000000001007 /* AppTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001008 /* AppTourView.swift */; };
 		B1C7E4920A3F4D5E82F6A3B1C9D02E47 /* TemplateEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */; };
 		BF11223344556677889900BA /* SupportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AA /* SupportModels.swift */; };
 		BF11223344556677889900BB /* SupportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AB /* SupportViewModel.swift */; };
@@ -317,6 +326,15 @@
 		AB0000000000000000000710 /* UpsellSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpsellSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F02 /* TemplatePickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePickerSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F04 /* NoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F08 /* SetupModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupModels.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F0A /* SetupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F0C /* SetupCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupCardView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F0E /* PropertyPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyPickerSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F10 /* StripeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripeSettingsView.swift; sourceTree = "<group>"; };
+		AB0000000000000000001002 /* OnboardingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinator.swift; sourceTree = "<group>"; };
+		AB0000000000000000001004 /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
+		AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingGuidedFlowView.swift; sourceTree = "<group>"; };
+		AB0000000000000000001008 /* AppTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTourView.swift; sourceTree = "<group>"; };
 		B4D7291B8EFF4179AC8D6D7E /* ReservationEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationEditSheet.swift; sourceTree = "<group>"; };
 		BF11223344556677889900AA /* SupportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportModels.swift; sourceTree = "<group>"; };
 		BF11223344556677889900AB /* SupportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportViewModel.swift; sourceTree = "<group>"; };
@@ -458,8 +476,20 @@
 				AB0000000000000000000602 /* JourView.swift */,
 				AB0000000000000000000604 /* SemaineView.swift */,
 				BHSPL000000000000000001 /* SplashView.swift */,
+				AB0000000000000000001000 /* Onboarding */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000001000 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000001002 /* OnboardingCoordinator.swift */,
+				AB0000000000000000001004 /* OnboardingFlowView.swift */,
+				AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */,
+				AB0000000000000000001008 /* AppTourView.swift */,
+			);
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		AB0000000000000000000207 /* Auth */ = {
@@ -477,6 +507,10 @@
 				AB0000000000000000000131 /* TodayModels.swift */,
 				AB0000000000000000000132 /* TodayViewModel.swift */,
 				AB0000000000000000000133 /* TodayView.swift */,
+				AB0000000000000000000F08 /* SetupModels.swift */,
+				AB0000000000000000000F0A /* SetupViewModel.swift */,
+				AB0000000000000000000F0C /* SetupCardView.swift */,
+				AB0000000000000000000F0E /* PropertyPickerSheet.swift */,
 				AB0000000000000000000429 /* ReservationDetailViewModel.swift */,
 				AB000000000000000000042B /* ReservationDetailView.swift */,
 				AB000000000000000000042E /* HosterzzModels.swift */,
@@ -636,6 +670,7 @@
 				BF33445566778899001122AB /* HelpViewModel.swift */,
 				BF33445566778899001122AC /* HelpView.swift */,
 				AB000000000000000000040C /* ProfileViewModel.swift */,
+				AB0000000000000000000F10 /* StripeSettingsView.swift */,
 			);
 			path = Account;
 			sourceTree = "<group>";
@@ -786,6 +821,10 @@
 				AB0000000000000000000603 /* JourView.swift in Sources */,
 				AB0000000000000000000605 /* SemaineView.swift in Sources */,
 				BHSPL000000000000000002 /* SplashView.swift in Sources */,
+				AB0000000000000000001001 /* OnboardingCoordinator.swift in Sources */,
+				AB0000000000000000001003 /* OnboardingFlowView.swift in Sources */,
+				AB0000000000000000001005 /* OnboardingGuidedFlowView.swift in Sources */,
+				AB0000000000000000001007 /* AppTourView.swift in Sources */,
 				AB0000000000000000000010 /* Palette.swift in Sources */,
 				AB0000000000000000000011 /* Materials.swift in Sources */,
 				AB0000000000000000000012 /* Typography.swift in Sources */,
@@ -805,6 +844,10 @@
 				AB0000000000000000000021 /* TodayModels.swift in Sources */,
 				AB0000000000000000000022 /* TodayViewModel.swift in Sources */,
 				AB0000000000000000000023 /* TodayView.swift in Sources */,
+				AB0000000000000000000F07 /* SetupModels.swift in Sources */,
+				AB0000000000000000000F09 /* SetupViewModel.swift in Sources */,
+				AB0000000000000000000F0B /* SetupCardView.swift in Sources */,
+				AB0000000000000000000F0D /* PropertyPickerSheet.swift in Sources */,
 				AB000000000000000000042A /* ReservationDetailViewModel.swift in Sources */,
 				AB000000000000000000042C /* ReservationDetailView.swift in Sources */,
 				AB000000000000000000042D /* HosterzzModels.swift in Sources */,
@@ -890,6 +933,7 @@
 				BF33445566778899001122BC /* HelpView.swift in Sources */,
 				AB0000000000000000000409 /* ProfileAvatarView.swift in Sources */,
 				AB000000000000000000040B /* ProfileViewModel.swift in Sources */,
+				AB0000000000000000000F0F /* StripeSettingsView.swift in Sources */,
 				AB000000000000000000040D /* ContractsModels.swift in Sources */,
 				AB000000000000000000040F /* ContractsViewModel.swift in Sources */,
 				AB0000000000000000000411 /* ContractsView.swift in Sources */,
