@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import PhotosUI
 
 // MARK: - Écran ménage (détail)
 
@@ -17,6 +18,12 @@ struct ChecklistDetailView: View {
     @State private var presentingShareSheet = false
     @State private var isPreparingShare    = false
     @State private var shareError:          String? = nil
+    @State private var selectedPhotoItem:   PhotosPickerItem? = nil
+    @State private var arrivalPhotoItem:    PhotosPickerItem? = nil
+    @State private var showCameraPicker                       = false
+    @State private var showCameraUnavailableAlert             = false
+    @State private var showProblemForm                        = false
+    @State private var showSubmitSuccess                      = false
 
     private var isSubAccount: Bool { authStore.session?.isSubAccount == true }
 
@@ -36,6 +43,48 @@ struct ChecklistDetailView: View {
         }
         .sheet(isPresented: $presentingShareSheet) {
             ShareSheet(activityItems: shareItemsToPresent)
+        }
+        .sheet(isPresented: $showCameraPicker) {
+            CameraPickerView { image in
+                guard let uri = compressPhoto(image) else { return }
+                vm.addPhoto(PhotoDraft(id: UUID().uuidString, data: uri, source: .camera), ref: ref)
+            }
+            .ignoresSafeArea()
+        }
+        .alert("Appareil photo indisponible", isPresented: $showCameraUnavailableAlert) {
+            Button("OK") { showCameraUnavailableAlert = false }
+        } message: {
+            Text("L'appareil photo n'est pas disponible sur cet appareil.")
+        }
+        .sheet(isPresented: $vm.showSignatureSheet) {
+            SignatureSheet(
+                signerName: authStore.session?.displayName ?? "",
+                ownerEmail: "",
+                footerText: "Je certifie avoir effectué toutes les tâches listées.",
+                isSending:  vm.isSubmitting,
+                onSign:     { data in vm.signatureData = data },
+                onSendTap:  {
+                    Task {
+                        let ok = await vm.submitChecklist(ref: ref)
+                        vm.showSignatureSheet = false
+                        if ok { showSubmitSuccess = true }
+                    }
+                },
+                onCancel:   { vm.showSignatureSheet = false }
+            )
+        }
+        .alert("Ménage envoyé", isPresented: $showSubmitSuccess) {
+            Button("OK") { onChanged?(); dismiss() }
+        } message: {
+            Text("La checklist a été soumise avec succès.")
+        }
+        .alert("Erreur lors de l'envoi", isPresented: Binding(
+            get: { vm.submitError != nil },
+            set: { if !$0 { vm.submitError = nil } }
+        )) {
+            Button("OK") { vm.submitError = nil }
+        } message: {
+            Text(vm.submitError ?? "")
         }
         .alert("Erreur", isPresented: Binding(
             get: { shareError != nil },
@@ -120,6 +169,8 @@ struct ChecklistDetailView: View {
             errorPlaceholder(msg)
         case .noChecklist:
             noChecklistView
+        case .editing:
+            cleanerEditingView
         case .loaded:
             if let detail = vm.detail {
                 loadedScrollView(for: detail)
@@ -204,7 +255,6 @@ struct ChecklistDetailView: View {
 
     private var noChecklistStatusCard: some View {
         let line: String = {
-            if isSubAccount { return "Détail non disponible pour les sous-comptes" }
             if let name = ref.cleanerName, !name.isEmpty {
                 return "Pas encore rempli par \(name)"
             }
@@ -256,6 +306,671 @@ struct ChecklistDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 12)
         }
+    }
+
+    // MARK: - Mode édition (sous-compte cleaner)
+
+    private var cleanerEditingView: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                cleanerProgressCard
+                if vm.draftTasks.isEmpty && vm.templateMissing {
+                    Text("Aucune checklist définie pour ce logement.")
+                        .font(.bhMeta)
+                        .foregroundStyle(Color.bhAttenue)
+                        .padding(.top, 8)
+                } else {
+                    ForEach(groupedTasks(vm.draftTasks), id: \.room) { group in
+                        interactiveTaskSection(room: group.room, tasks: group.tasks)
+                    }
+                }
+                cleanerPhotosSection
+                arrivalStateSection
+                restockSection
+                reportProblemSection
+                cleanerNotesSection
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 16)
+            .padding(.bottom, 40)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            cleanerSubmitBar
+        }
+        .refreshable {
+            vm = ChecklistDetailViewModel()
+            await vm.load(ref: ref, isSubAccount: isSubAccount)
+        }
+    }
+
+    private var cleanerProgressCard: some View {
+        let done  = vm.draftTasks.filter { $0.checked }.count
+        let total = vm.draftTasks.count
+        return ListCard {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        if let name = ref.cleanerName, !name.isEmpty {
+                            Text(name)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(Color.bhEncre)
+                        }
+                        if !ref.dateStr.isEmpty {
+                            Text(Formatters.day(ref.dateStr))
+                                .font(.bhMeta)
+                                .foregroundStyle(Color.bhAttenue)
+                        }
+                        if let start = ref.windowStart {
+                            Text(slotLabel(start: start, end: ref.windowEnd))
+                                .font(.bhMeta)
+                                .foregroundStyle(Color.bhAttenue)
+                        }
+                    }
+                    Spacer(minLength: 8)
+                    if total > 0 {
+                        Text("\(done)/\(total)")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(done == total ? Color.bhOccupe : Color.bhAttenue)
+                    }
+                }
+                if total > 0 {
+                    ProgressView(value: Double(done), total: Double(total))
+                        .tint(done == total ? Color.bhOccupe : Color.bhVert)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func interactiveTaskSection(room: String, tasks: [ChecklistTask]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(ChecklistTask.roomLabel(room).uppercased())
+                .bhIntertitre()
+                .padding(.top, 4)
+            ListCard {
+                ForEach(Array(tasks.enumerated()), id: \.element.id) { idx, task in
+                    CardRow(showSeparator: idx < tasks.count - 1) {
+                        Button {
+                            vm.toggleTask(task.id, ref: ref)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: task.checked ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(task.checked
+                                        ? Color.bhOccupe
+                                        : Color.bhAttenue.opacity(0.35))
+                                Text(task.name)
+                                    .font(.bhCorps)
+                                    .foregroundStyle(task.checked ? Color.bhAttenue : Color.bhEncre)
+                                    .strikethrough(task.checked, color: Color.bhAttenue)
+                                Spacer(minLength: 0)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .frame(minHeight: 44)
+                    }
+                }
+            }
+        }
+    }
+
+    private var cleanerPhotosSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text("PHOTOS").bhIntertitre()
+                        if vm.isSavingDraft { ProgressView().scaleEffect(0.7) }
+                    }
+                    Text("Photos prises sur place\u{00A0}: \(vm.cameraCount)\u{00A0}/\u{00A0}5")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(vm.cameraCount >= 5 ? Color.bhOccupe : Color.bhAttenue)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.top, 4)
+            if let err = vm.draftSaveError {
+                Text(err)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.bhTerracotta)
+            }
+            if !vm.draftPhotos.isEmpty {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 4),
+                        GridItem(.flexible(), spacing: 4),
+                        GridItem(.flexible(), spacing: 4),
+                    ],
+                    spacing: 4
+                ) {
+                    ForEach(vm.draftPhotos) { photo in
+                        ZStack(alignment: .topTrailing) {
+                            ZStack(alignment: .bottomLeading) {
+                                PhotoThumbView(
+                                    dataURI: photo.data,
+                                    onTap:       { fullscreenPhoto = FullscreenPhoto(dataURI: photo.data) },
+                                    onLongPress: { vm.removePhoto(id: photo.id, ref: ref) }
+                                )
+                                if photo.source != .unknown {
+                                    Text(photo.source == .camera ? "Sur place" : "Galerie")
+                                        .font(.system(size: 9, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 5)
+                                        .padding(.vertical, 2)
+                                        .background(
+                                            photo.source == .camera
+                                                ? Color.bhOccupe.opacity(0.85)
+                                                : Color.bhAttenue.opacity(0.75),
+                                            in: Capsule()
+                                        )
+                                        .padding(5)
+                                }
+                            }
+                            Button { vm.removePhoto(id: photo.id, ref: ref) } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 20))
+                                    .symbolRenderingMode(.hierarchical)
+                                    .foregroundStyle(.white)
+                                    .shadow(radius: 2)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(4)
+                        }
+                    }
+                }
+            }
+            HStack(spacing: 8) {
+                Button {
+                    if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                        showCameraPicker = true
+                    } else {
+                        showCameraUnavailableAlert = true
+                    }
+                } label: {
+                    Label("Appareil photo", systemImage: "camera.fill")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.bhVert)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.bhMentheFond, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                    Label("Galerie", systemImage: "photo.on.rectangle")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.bhEncreDouce)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .onChange(of: selectedPhotoItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let data  = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data),
+                   let uri   = compressPhoto(image) {
+                    vm.addPhoto(PhotoDraft(id: UUID().uuidString, data: uri, source: .gallery), ref: ref)
+                }
+                selectedPhotoItem = nil
+            }
+        }
+    }
+
+    private var cleanerNotesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("NOTE").bhIntertitre().padding(.top, 4)
+            ListCard {
+                TextEditor(text: $vm.draftNotes)
+                    .frame(minHeight: 80)
+                    .font(.bhCorps)
+                    .foregroundStyle(Color.bhEncre)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .scrollContentBackground(.hidden)
+                    .onChange(of: vm.draftNotes) { _, _ in
+                        vm.scheduleNotesSave(ref: ref)
+                    }
+            }
+        }
+    }
+
+    // MARK: - IPHONEFIX-7 : État du logement à l'arrivée
+
+    private var arrivalStateSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("ÉTAT À L'ARRIVÉE").bhIntertitre().padding(.top, 4)
+            ListCard {
+                Group {
+                    if vm.arrivalDraftSaved {
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 18))
+                                .foregroundStyle(Color.bhOccupe)
+                            Text("Enregistré dans le brouillon")
+                                .font(.bhCorps)
+                                .foregroundStyle(Color.bhAttenue)
+                            Spacer()
+                            Button {
+                                vm.arrivalDraftSaved = false
+                            } label: {
+                                Text("Modifier")
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhVert)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                    } else if vm.arrivalChoice == nil {
+                        VStack(spacing: 0) {
+                            CardRow(showSeparator: true) {
+                                Button {
+                                    vm.arrivalChoice = .ok
+                                    Task { await vm.saveArrivalOk(ref: ref) }
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "checkmark.circle")
+                                            .font(.system(size: 20))
+                                            .foregroundStyle(Color.bhOccupe)
+                                        Text("RAS — logement en ordre")
+                                            .font(.bhCorps)
+                                            .foregroundStyle(Color.bhEncre)
+                                        Spacer()
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .frame(minHeight: 44)
+                            }
+                            CardRow(showSeparator: false) {
+                                Button {
+                                    vm.arrivalChoice = .damage
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "exclamationmark.triangle")
+                                            .font(.system(size: 18))
+                                            .foregroundStyle(Color.bhTerracotta)
+                                        Text("Signaler une dégradation")
+                                            .font(.bhCorps)
+                                            .foregroundStyle(Color.bhEncre)
+                                        Spacer()
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .frame(minHeight: 44)
+                            }
+                        }
+                    } else if vm.arrivalChoice == .ok {
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 18))
+                                .foregroundStyle(Color.bhOccupe)
+                            Text("Logement en ordre à l'arrivée")
+                                .font(.bhCorps)
+                                .foregroundStyle(Color.bhAttenue)
+                            Spacer()
+                            Button {
+                                vm.arrivalChoice = nil
+                            } label: {
+                                Text("Modifier")
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhVert)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                    } else {
+                        arrivalDamageForm
+                    }
+                }
+            }
+        }
+    }
+
+    private var arrivalDamageForm: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let _ = vm.arrivalDamageUploadedUrl {
+                HStack(spacing: 8) {
+                    Image(systemName: "photo.badge.checkmark")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Color.bhOccupe)
+                    Text("Photo ajoutée")
+                        .font(.bhCorps)
+                        .foregroundStyle(Color.bhAttenue)
+                    Spacer()
+                }
+            } else if vm.isUploadingArrivalPhoto {
+                HStack(spacing: 8) {
+                    ProgressView().scaleEffect(0.8)
+                    Text("Envoi de la photo…")
+                        .font(.bhCorps)
+                        .foregroundStyle(Color.bhAttenue)
+                    Spacer()
+                }
+            } else {
+                PhotosPicker(selection: $arrivalPhotoItem, matching: .images) {
+                    Label("Ajouter une photo", systemImage: "camera")
+                        .font(.system(size: 14.5, weight: .medium))
+                        .foregroundStyle(Color.bhVert)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color.bhMentheFond, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            TextField("Description de la dégradation", text: $vm.arrivalDamageTitle)
+                .font(.bhCorps)
+                .foregroundStyle(Color.bhEncre)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            if let err = vm.arrivalReportError {
+                Text(err)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.bhTerracotta)
+            }
+            HStack(spacing: 10) {
+                Button {
+                    vm.arrivalChoice             = nil
+                    vm.arrivalDamageTitle        = ""
+                    vm.arrivalDamageUploadedUrl  = nil
+                    vm.arrivalReportError        = nil
+                    vm.arrivalDraftSaved         = false
+                } label: {
+                    Text("Annuler")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.bhAttenue)
+                }
+                .buttonStyle(.plain)
+                Spacer()
+                Button {
+                    Task { await vm.saveDamageDraft(ref: ref) }
+                } label: {
+                    Group {
+                        if vm.isSavingArrivalDraft {
+                            ProgressView().tint(.white).scaleEffect(0.8)
+                        } else {
+                            Text("Sauvegarder")
+                        }
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(
+                        vm.arrivalDamageTitle.isEmpty ? Color.bhTerracotta.opacity(0.4) : Color.bhTerracotta,
+                        in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(vm.arrivalDamageTitle.isEmpty || vm.isSavingArrivalDraft)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .onChange(of: arrivalPhotoItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let data  = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data),
+                   let uri   = compressPhoto(image) {
+                    await vm.uploadArrivalPhoto(uri, ref: ref)
+                }
+                arrivalPhotoItem = nil
+            }
+        }
+    }
+
+    // MARK: - IPHONEFIX-9 : Réassort
+
+    @ViewBuilder
+    private var restockSection: some View {
+        if !vm.consumableItems.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("RÉASSORT").bhIntertitre()
+                    if !vm.restockSelected.isEmpty {
+                        Text("(\(vm.restockSelected.count))")
+                            .bhIntertitre()
+                            .foregroundStyle(Color.bhVert)
+                    }
+                }
+                .padding(.top, 4)
+                ListCard {
+                    ForEach(Array(vm.consumableItems.enumerated()), id: \.element.id) { idx, item in
+                        CardRow(showSeparator: idx < vm.consumableItems.count - 1) {
+                            Button {
+                                vm.toggleRestock(item.id, ref: ref)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text(item.icon)
+                                        .font(.system(size: 18))
+                                    Text(item.label)
+                                        .font(.bhCorps)
+                                        .foregroundStyle(Color.bhEncre)
+                                    Spacer()
+                                    Image(systemName: vm.restockSelected.contains(item.id)
+                                          ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(vm.restockSelected.contains(item.id)
+                                            ? Color.bhVert : Color.bhAttenue.opacity(0.35))
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .frame(minHeight: 44)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - IPHONEFIX-11 : Signaler un problème
+
+    private var reportProblemSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if vm.issueDraftSaved {
+                ListCard {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color.bhOccupe)
+                        Text("Enregistré dans le brouillon")
+                            .font(.bhCorps)
+                            .foregroundStyle(Color.bhAttenue)
+                        Spacer()
+                        Button {
+                            vm.issueDraftSaved = false
+                        } label: {
+                            Text("Modifier")
+                                .font(.bhMeta)
+                                .foregroundStyle(Color.bhVert)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                }
+            } else if showProblemForm {
+                Text("SIGNALER UN PROBLÈME").bhIntertitre().padding(.top, 4)
+                ListCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        TextField("Titre de l'incident", text: $vm.problemTitle)
+                            .font(.bhCorps)
+                            .foregroundStyle(Color.bhEncre)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color.primary.opacity(0.05),
+                                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        ZStack(alignment: .topLeading) {
+                            if vm.problemDesc.isEmpty {
+                                Text("Détails (optionnel)")
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhAttenue.opacity(0.6))
+                                    .padding(.horizontal, 12)
+                                    .padding(.top, 10)
+                                    .allowsHitTesting(false)
+                            }
+                            TextEditor(text: $vm.problemDesc)
+                                .frame(height: 60)
+                                .font(.bhCorps)
+                                .foregroundStyle(Color.bhEncre)
+                                .scrollContentBackground(.hidden)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                        }
+                        .background(Color.primary.opacity(0.05),
+                                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        HStack(spacing: 8) {
+                            ForEach([("normal", "Normal"), ("high", "Important"), ("urgent", "Urgent")], id: \.0) { prio, label in
+                                Button {
+                                    vm.problemPriority = prio
+                                } label: {
+                                    Text(label)
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(vm.problemPriority == prio ? .white : Color.bhEncre)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            vm.problemPriority == prio
+                                                ? (prio == "urgent" ? Color.bhTerracotta : prio == "high" ? Color(hex: "#D97706") : Color.bhVert)
+                                                : Color.primary.opacity(0.06),
+                                            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            Spacer()
+                        }
+                        if let err = vm.problemReportError {
+                            Text(err)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(Color.bhTerracotta)
+                        }
+                        HStack(spacing: 10) {
+                            Button {
+                                showProblemForm       = false
+                                vm.problemTitle       = ""
+                                vm.problemDesc        = ""
+                                vm.problemPriority    = "normal"
+                                vm.problemReportError = nil
+                                vm.issueDraftSaved    = false
+                            } label: {
+                                Text("Annuler")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundStyle(Color.bhAttenue)
+                            }
+                            .buttonStyle(.plain)
+                            Spacer()
+                            Button {
+                                Task { await vm.saveIssueDraft(ref: ref) }
+                            } label: {
+                                Group {
+                                    if vm.isSavingIssueDraft {
+                                        ProgressView().tint(.white).scaleEffect(0.8)
+                                    } else {
+                                        Text("Sauvegarder")
+                                    }
+                                }
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(
+                                    vm.problemTitle.isEmpty ? Color.bhVert.opacity(0.4) : Color.bhVert,
+                                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(vm.problemTitle.isEmpty || vm.isSavingIssueDraft)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                }
+            } else {
+                Button {
+                    showProblemForm = true
+                } label: {
+                    ListCard {
+                        HStack(spacing: 10) {
+                            Image(systemName: "wrench.and.screwdriver")
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color.bhAttenue)
+                            Text("Signaler un problème")
+                                .font(.bhCorps)
+                                .foregroundStyle(Color.bhAttenue)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(Color.bhAttenue.opacity(0.5))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+
+    private var cleanerSubmitBar: some View {
+        Button {
+            vm.showSignatureSheet = true
+        } label: {
+            HStack(spacing: 8) {
+                if vm.isSubmitting {
+                    ProgressView().tint(.white).scaleEffect(0.85)
+                } else {
+                    Image(systemName: "signature")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                Text("Signer et soumettre")
+                    .font(.system(size: 16.5, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                vm.canSubmit ? Color.bhVert : Color.bhVert.opacity(0.35),
+                in: RoundedRectangle(cornerRadius: 15, style: .continuous)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(!vm.canSubmit)
+        .padding(.horizontal, 18)
+        .padding(.top, 12)
+        .padding(.bottom, 12)
+        .background {
+            Rectangle()
+                .glassEffect(in: .rect)
+                .specularEdge(cornerRadius: 0)
+                .chromeShadow()
+                .ignoresSafeArea(edges: .bottom)
+        }
+    }
+
+    // MARK: - Compression photo (maxWidth 800 px, JPEG 0.6)
+
+    private func compressPhoto(_ image: UIImage) -> String? {
+        let maxWidth: CGFloat = 800
+        let scale    = image.size.width > maxWidth ? maxWidth / image.size.width : 1
+        let newSize  = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        let resized  = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: newSize)) }
+        guard let data = resized.jpegData(compressionQuality: 0.6) else { return nil }
+        return "data:image/jpeg;base64," + data.base64EncodedString()
     }
 
     // MARK: - Contenu chargé
@@ -954,6 +1669,42 @@ private struct ShareSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Appareil photo (UIImagePickerController)
+
+private struct CameraPickerView: UIViewControllerRepresentable {
+    var onCapture: (UIImage) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker            = UIImagePickerController()
+        picker.sourceType     = .camera
+        picker.delegate       = context.coordinator
+        picker.allowsEditing  = false
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(onCapture: onCapture) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let onCapture: (UIImage) -> Void
+        init(onCapture: @escaping (UIImage) -> Void) { self.onCapture = onCapture }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            picker.dismiss(animated: true)
+            guard let image = info[.originalImage] as? UIImage else { return }
+            onCapture(image)
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            picker.dismiss(animated: true)
+        }
+    }
 }
 
 // MARK: - Décodage base64 partagé

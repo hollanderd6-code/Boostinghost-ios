@@ -1109,7 +1109,7 @@
 				INFOPLIST_FILE = Boostinghost/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Boostinghost;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Utilisé pour photographier les justificatifs de débours.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Boostinghost utilise l'appareil photo pour ajouter les photos de contrôle lors des interventions de ménage.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Face ID permet d'accéder à votre espace sans ressaisir votre mot de passe.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Utilisé pour joindre une photo ou un document à un débours.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1144,7 +1144,7 @@
 				INFOPLIST_FILE = Boostinghost/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Boostinghost;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Utilisé pour photographier les justificatifs de débours.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Boostinghost utilise l'appareil photo pour ajouter les photos de contrôle lors des interventions de ménage.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Face ID permet d'accéder à votre espace sans ressaisir votre mot de passe.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Utilisé pour joindre une photo ou un document à un débours.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
