@@ -4,6 +4,7 @@ struct CalendarView: View {
     @Binding var selectedTab: AppTab
     @Environment(AuthStore.self) private var authStore
     @Environment(CalendarViewModel.self) private var vm
+    @Environment(TipCoordinator.self) private var tipCoordinator
     @Environment(\.scenePhase) private var scenePhase
     @State private var tab = CalendarTab.mensuel
     @State private var pollingTask: Task<Void, Never>?
@@ -45,7 +46,10 @@ struct CalendarView: View {
             if case .single(let id) = vm.displayMode, !authStore.agencyAll, tab == .mensuel {
                 await vm.loadPricing(for: id)
             }
-            if isCalendarTabActive { startPolling() }
+            if isCalendarTabActive {
+                startPolling()
+                tryPresentCalendarTip()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .calendarShouldRefresh)) { _ in
             guard isCalendarTabActive else { return }
@@ -55,10 +59,12 @@ struct CalendarView: View {
             if newTab == .calendar {
                 if case .loaded = vm.loadState {
                     Task { await vm.silentRefresh() }
+                    tryPresentCalendarTip()
                 }
                 startPolling()
             } else {
                 stopPolling()
+                TipCoordinator.shared.calendarTabDidHide()
             }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -108,6 +114,11 @@ struct CalendarView: View {
             vm.agencyAll = new
             Task { await vm.reload() }
         }
+        .onChange(of: tipCoordinator.unseenTips) { _, new in
+            guard isCalendarTabActive, !new.isEmpty else { return }
+            guard case .loaded = vm.loadState else { return }
+            tryPresentCalendarTip()
+        }
     }
 
     // MARK: Task-based polling (25 s, annulé en arrière-plan)
@@ -126,6 +137,18 @@ struct CalendarView: View {
     private func stopPolling() {
         pollingTask?.cancel()
         pollingTask = nil
+    }
+
+    private func tryPresentCalendarTip() {
+        guard isCalendarTabActive else { return }
+        guard case .loaded = vm.loadState else { return }
+        let tc = TipCoordinator.shared
+        if tc.unseenTips.contains(.calendarBulkAction) {
+            tc.tryPresent(.calendarBulkAction)
+            return
+        }
+        guard !tc.bulkActionSeenThisCalendarVisit, vm.properties.count >= 2 else { return }
+        tc.tryPresent(.calendarPropertyPicker)
     }
 
     // MARK: Contenu Mensuel

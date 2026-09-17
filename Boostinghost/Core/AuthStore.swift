@@ -205,6 +205,7 @@ final class AuthStore {
 
     func signOut() {
         OnboardingCoordinator.shared.reset()
+        TipCoordinator.shared.reset()
         KeychainStore.delete()
         KeychainStore.deleteOrigin()
         SessionStore.clear()

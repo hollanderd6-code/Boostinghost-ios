@@ -5,6 +5,7 @@ import SwiftUI
 struct ConversationDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(MessagesViewModel.self) private var messagesVM
+    @Environment(TipCoordinator.self) private var tipCoordinator
 
     @State private var vm: ConversationDetailViewModel
     @State private var showUpsellSheet    = false
@@ -30,6 +31,10 @@ struct ConversationDetailView: View {
         .task {
             await messagesVM.markConversationRead(vm.conversation.id)
             await vm.load()
+            tryPresentConversationTip()
+        }
+        .onDisappear {
+            TipCoordinator.shared.conversationDidHide()
         }
         .alert("Erreur", isPresented: Binding(
             get: { vm.sendError != nil },
@@ -82,59 +87,72 @@ struct ConversationDetailView: View {
     // MARK: - Barre de navigation
 
     private var navBar: some View {
-        HStack(alignment: .center, spacing: 10) {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.bhVert)
-                    .frame(width: 36, height: 36)
-                    .glassEffect(in: .circle)
-                    .specularEdge(cornerRadius: 18)
-            }
-            .buttonStyle(.plain)
+        VStack(spacing: 0) {
+            HStack(alignment: .center, spacing: 10) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color.bhVert)
+                        .frame(width: 36, height: 36)
+                        .glassEffect(in: .circle)
+                        .specularEdge(cornerRadius: 18)
+                }
+                .buttonStyle(.plain)
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(vm.conversation.guestDisplayName ?? "—")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color.bhEncre)
-                    .lineLimit(1)
-                let sub = [
-                    vm.conversation.propertyName,
-                    vm.conversation.platform.map { Color.platformLabel($0) }
-                ].compactMap { $0 }.joined(separator: " · ")
-                if !sub.isEmpty {
-                    Text(sub)
-                        .font(.system(size: 12.5))
-                        .foregroundStyle(Color.bhAttenue)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(vm.conversation.guestDisplayName ?? "—")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Color.bhEncre)
                         .lineLimit(1)
+                    let sub = [
+                        vm.conversation.propertyName,
+                        vm.conversation.platform.map { Color.platformLabel($0) }
+                    ].compactMap { $0 }.joined(separator: " · ")
+                    if !sub.isEmpty {
+                        Text(sub)
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(Color.bhAttenue)
+                            .lineLimit(1)
+                    }
                 }
-            }
 
-            Spacer(minLength: 8)
+                Spacer(minLength: 8)
 
-            Menu {
-                Button {
-                    showUpsellSheet = true
+                Menu {
+                    Button {
+                        tipCoordinator.markSeen(.messagesUpsell)
+                        showUpsellSheet = true
+                    } label: {
+                        Label("Prestation payante", systemImage: "creditcard")
+                    }
                 } label: {
-                    Label("Prestation payante", systemImage: "creditcard")
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.bhVert)
+                        .frame(width: 36, height: 36)
+                        .glassEffect(in: .circle)
+                        .specularEdge(cornerRadius: 18)
                 }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.bhVert)
-                    .frame(width: 36, height: 36)
-                    .glassEffect(in: .circle)
-                    .specularEdge(cornerRadius: 18)
-            }
-            .buttonStyle(.plain)
+                .buttonStyle(.plain)
 
-            if vm.isEscalated {
-                StatusPill(text: "À reprendre", style: .or, icon: "sparkles")
+                if vm.isEscalated {
+                    StatusPill(text: "À reprendre", style: .or, icon: "sparkles")
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 14)
+
+            if tipCoordinator.presentedTip == .messagesUpsell {
+                ContextualTipView(
+                    title: "Proposer une prestation",
+                    message: "Proposez directement un service payant au voyageur : départ tardif, arrivée anticipée ou prestation complémentaire.",
+                    onDismiss: { tipCoordinator.dismiss() }
+                )
+                .transition(.opacity)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 14)
+        .animation(.easeInOut(duration: 0.25), value: tipCoordinator.presentedTip)
         .background {
             Rectangle()
                 .glassEffect(in: .rect)
@@ -295,6 +313,15 @@ struct ConversationDetailView: View {
                 if let resumeDate = vm.aiResumeDate {
                     aiPauseBanner(resumeDate: resumeDate)
                 }
+                if tipCoordinator.presentedTip == .aiTakeover {
+                    ContextualTipView(
+                        title: "Reprendre la conversation",
+                        message: "Appuyez sur « Reprendre » pour répondre vous-même. L'IA reprend automatiquement après votre réponse.",
+                        onDismiss: { tipCoordinator.dismiss() }
+                    )
+                    .padding(.top, 8)
+                    .transition(.opacity)
+                }
                 actionBar
             }
             HStack(alignment: .bottom, spacing: 10) {
@@ -377,6 +404,7 @@ struct ConversationDetailView: View {
                 color: vm.isAiDisabled ? Color.bhVert : (vm.isEscalated ? Color.bhOr : Color.bhAttenue),
                 disabled: false
             ) {
+                tipCoordinator.markSeen(.aiTakeover)
                 if vm.isAiDisabled {
                     showHandBackAlert = true
                 } else {
@@ -473,6 +501,18 @@ struct ConversationDetailView: View {
         .disabled(disabled || loading)
         .opacity(disabled ? 0.35 : 1)
     }
+    // MARK: - Tip presentation
+
+    private func tryPresentConversationTip() {
+        let tc = TipCoordinator.shared
+        if !vm.suggestionActive, tc.unseenTips.contains(.aiTakeover) {
+            tc.tryPresent(.aiTakeover)
+            return
+        }
+        guard !tc.aiTakeoverSeenThisConversationVisit else { return }
+        tc.tryPresent(.messagesUpsell)
+    }
+
     // MARK: - Sync vers la liste Messages
 
     private func sendAndSync() async {

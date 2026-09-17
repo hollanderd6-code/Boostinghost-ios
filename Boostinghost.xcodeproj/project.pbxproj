@@ -161,6 +161,8 @@
 		AB0000000000000000000F0D /* PropertyPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F0E /* PropertyPickerSheet.swift */; };
 		AB0000000000000000000F0F /* StripeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F10 /* StripeSettingsView.swift */; };
 		AB0000000000000000001001 /* OnboardingCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001002 /* OnboardingCoordinator.swift */; };
+		AB0000000000000000002001 /* TipCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000002002 /* TipCoordinator.swift */; };
+		AB0000000000000000002003 /* ContextualTipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000002004 /* ContextualTipView.swift */; };
 		AB0000000000000000001003 /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001004 /* OnboardingFlowView.swift */; };
 		AB0000000000000000001005 /* OnboardingGuidedFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */; };
 		AB0000000000000000001007 /* AppTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001008 /* AppTourView.swift */; };
@@ -332,6 +334,8 @@
 		AB0000000000000000000F0E /* PropertyPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyPickerSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F10 /* StripeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripeSettingsView.swift; sourceTree = "<group>"; };
 		AB0000000000000000001002 /* OnboardingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinator.swift; sourceTree = "<group>"; };
+		AB0000000000000000002002 /* TipCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipCoordinator.swift; sourceTree = "<group>"; };
+		AB0000000000000000002004 /* ContextualTipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTipView.swift; sourceTree = "<group>"; };
 		AB0000000000000000001004 /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
 		AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingGuidedFlowView.swift; sourceTree = "<group>"; };
 		AB0000000000000000001008 /* AppTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTourView.swift; sourceTree = "<group>"; };
@@ -477,6 +481,7 @@
 				AB0000000000000000000604 /* SemaineView.swift */,
 				BHSPL000000000000000001 /* SplashView.swift */,
 				AB0000000000000000001000 /* Onboarding */,
+				AB0000000000000000002000 /* Tips */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -490,6 +495,15 @@
 				AB0000000000000000001008 /* AppTourView.swift */,
 			);
 			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000002000 /* Tips */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000002002 /* TipCoordinator.swift */,
+				AB0000000000000000002004 /* ContextualTipView.swift */,
+			);
+			path = Tips;
 			sourceTree = "<group>";
 		};
 		AB0000000000000000000207 /* Auth */ = {
@@ -825,6 +839,8 @@
 				AB0000000000000000001003 /* OnboardingFlowView.swift in Sources */,
 				AB0000000000000000001005 /* OnboardingGuidedFlowView.swift in Sources */,
 				AB0000000000000000001007 /* AppTourView.swift in Sources */,
+				AB0000000000000000002001 /* TipCoordinator.swift in Sources */,
+				AB0000000000000000002003 /* ContextualTipView.swift in Sources */,
 				AB0000000000000000000010 /* Palette.swift in Sources */,
 				AB0000000000000000000011 /* Materials.swift in Sources */,
 				AB0000000000000000000012 /* Typography.swift in Sources */,

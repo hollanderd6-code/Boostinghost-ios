@@ -63,6 +63,7 @@ private struct RootView: View {
             case .authenticated:
                 MainTabView()
                     .environment(setupVM)
+                    .environment(TipCoordinator.shared)
                     // fullScreenCover is only presented once hasLoaded = true
                     // and isShowingOnboarding = true, preventing any flash for
                     // existing accounts while preferences are being fetched.
@@ -86,10 +87,12 @@ private struct RootView: View {
                 Task { await PushNotificationManager.shared.requestAuthorization() }
                 if let session = authStore.session {
                     Task { await onboarding.load(session: session) }
+                    TipCoordinator.shared.load(session: session)
                 }
             case .unauthenticated:
                 onboarding.reset()
                 setupVM.reset()
+                TipCoordinator.shared.reset()
             case .loading:
                 break
             }
@@ -98,8 +101,10 @@ private struct RootView: View {
         // reset the coordinator and reload for the new effective session.
         .onChange(of: authStore.accountSwitchTrigger) { _, _ in
             onboarding.reset()
+            TipCoordinator.shared.reset()
             if authStore.appState == .authenticated, let session = authStore.session {
                 Task { await onboarding.load(session: session) }
+                TipCoordinator.shared.load(session: session)
             }
         }
     }

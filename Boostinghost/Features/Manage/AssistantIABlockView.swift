@@ -39,6 +39,7 @@ private struct IaDraft {
 
 struct AssistantIABlockView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(TipCoordinator.self) private var tipCoordinator
 
     private let onUpdate: (Property) -> Void
 
@@ -74,9 +75,22 @@ struct AssistantIABlockView: View {
                     VStack(spacing: 16) {
                         statutCard
                         qrCard
+                        if tipCoordinator.presentedTip == .assistantIAFacts {
+                            ContextualTipView(
+                                title: "L'IA retient vos informations",
+                                message: "Ajoutez les informations propres à ce logement : consignes, particularités ou règles. L'IA pourra les utiliser dans ses réponses.",
+                                onDismiss: { tipCoordinator.dismiss() }
+                            )
+                            .transition(.opacity)
+                        }
                         faitsCard
+                            .simultaneousGesture(TapGesture().onEnded {
+                                guard tipCoordinator.presentedTip == .assistantIAFacts else { return }
+                                TipCoordinator.shared.markSeen(.assistantIAFacts)
+                            })
                         raccourcisCard
                     }
+                    .animation(.easeInOut(duration: 0.25), value: tipCoordinator.presentedTip)
                     .padding(.horizontal, 18)
                     .padding(.top, 20)
                     .padding(.bottom, 40)
@@ -85,7 +99,13 @@ struct AssistantIABlockView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
-        .task { await loadFacts() }
+        .task {
+            await loadFacts()
+            TipCoordinator.shared.tryPresent(.assistantIAFacts)
+        }
+        .onDisappear {
+            TipCoordinator.shared.releaseIfPresented(.assistantIAFacts)
+        }
         .alert("Erreur", isPresented: Binding(
             get: { saveError != nil },
             set: { if !$0 { saveError = nil } }

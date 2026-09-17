@@ -82,6 +82,7 @@ struct HelpView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     searchBar
                     setupSection
+                    tipsSection
                     if !vm.faq.isEmpty { faqSection }
                     if !vm.videos.isEmpty { videosSection }
                     if !vm.guides.isEmpty { guidesSection }
@@ -208,6 +209,51 @@ struct HelpView: View {
                         .disabled(isRestoringCard)
                         .frame(minHeight: 44)
                     }
+                }
+            }
+        }
+    }
+
+    // MARK: - Conseils
+
+    @State private var tipsReset = false
+
+    private var tipsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("Conseils")
+            ListCard {
+                CardRow(showSeparator: false) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) { tipsReset = true }
+                        TipCoordinator.shared.resetForReplay()
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: tipsReset ? "checkmark.circle.fill" : "lightbulb")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(tipsReset ? Color.bhVert : Color.bhOr)
+                                .frame(width: 22)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tipsReset ? "Conseils réactivés" : "Revoir les conseils de l'application")
+                                    .font(.system(size: 15.5))
+                                    .foregroundStyle(Color.bhEncre)
+                                if !tipsReset {
+                                    Text("Réaffiche les astuces à la prochaine utilisation des fonctionnalités")
+                                        .font(.bhMeta)
+                                        .foregroundStyle(Color.bhAttenue)
+                                }
+                            }
+                            Spacer(minLength: 8)
+                            if !tipsReset {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                            }
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(tipsReset)
+                    .frame(minHeight: 44)
                 }
             }
         }

@@ -7,6 +7,9 @@ struct CalendarNavBar: View {
     var vm: CalendarViewModel
     @Binding var tab: CalendarTab
 
+    @Environment(TipCoordinator.self) private var tipCoordinator
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var showBulkAction = false
 
     var body: some View {
@@ -37,6 +40,9 @@ struct CalendarNavBar: View {
                         }
                         .contentShape(Rectangle())
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        tipCoordinator.markSeen(.calendarPropertyPicker)
+                    })
 
                     // Grand titre
                     Text(vm.monthTitle)
@@ -48,6 +54,7 @@ struct CalendarNavBar: View {
                 // Boutons droite — modification en masse + chevrons de mois
                 HStack(spacing: 8) {
                     Button {
+                        tipCoordinator.markSeen(.calendarBulkAction)
                         showBulkAction = true
                     } label: {
                         Image(systemName: "slider.horizontal.3")
@@ -77,7 +84,24 @@ struct CalendarNavBar: View {
             .pickerStyle(.segmented)
             .padding(.horizontal, 18)
             .padding(.bottom, 14)
+
+            if tipCoordinator.presentedTip == .calendarBulkAction {
+                ContextualTipView(
+                    title: "Modifier plusieurs nuits",
+                    message: "L'outil de sélection groupée permet de bloquer ou libérer plusieurs nuits d'un coup.",
+                    onDismiss: { tipCoordinator.dismiss() }
+                )
+                .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top)))
+            } else if tipCoordinator.presentedTip == .calendarPropertyPicker {
+                ContextualTipView(
+                    title: "Filtrer par logement",
+                    message: "Appuyez sur le nom en haut pour n'afficher qu'un seul logement sur le calendrier.",
+                    onDismiss: { tipCoordinator.dismiss() }
+                )
+                .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top)))
+            }
         }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: tipCoordinator.presentedTip)
         .background {
             Rectangle()
                 .glassEffect(in: .rect)
