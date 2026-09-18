@@ -537,12 +537,14 @@ private struct AssignmentCard: View {
     }
 
     private var stateLine: String? {
-        let statusText: String
-        switch assignment.status ?? "pending" {
-        case "in_progress": statusText = "En cours"
-        case "completed":   statusText = "Terminé"
-        default:            statusText = "Pas commencé"
+        // États terminaux : le créneau n'est plus pertinent.
+        switch assignment.effectiveCleaningState {
+        case .pendingValidation: return "Terminé · À valider"
+        case .validated:         return "Validé"
+        case .rejected:          return "Complément demandé"
+        case .notStarted, .inProgress: break
         }
+        let statusText = assignment.effectiveCleaningState == .inProgress ? "En cours" : "Pas commencé"
         if let d = slotDuration {
             let h   = Int(d / 3600)
             let m   = Int((d.truncatingRemainder(dividingBy: 3600)) / 60)

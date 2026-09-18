@@ -53,6 +53,12 @@ struct Arrivee: Decodable, Identifiable {
 
     var isUrgent: Bool { !blocking.isEmpty }
 
+    // Blocking reasons whose sole origin is the messaging layer.
+    // Used to filter urgent arrivals for sub-accounts without can_view_messages.
+    static let messagingBlockingReasons: Set<String> = [
+        "message_non_lu", "ia_a_passe_la_main", "pas_de_conversation"
+    ]
+
     private enum CodingKeys: String, CodingKey {
         case reservationUid, conversationId, propertyId, propertyName, propertyAddress
         case guestName, guestPhone, platform, arrivalTime, nights, guests
@@ -209,15 +215,21 @@ struct CleaningAssignment: Decodable, Identifiable {
     let cleanerEmail: String?
     var windowStart: String?     // calculé post-décodage depuis property.departureTime
     var windowEnd: String?       // calculé post-décodage : arrivalTime si même-jour, sinon nil
-    let status: String?          // "pending", "in_progress", "completed"
+    let status: String?          // jamais peuplé (pas de colonne cleaning_assignments.status en base)
     let groupName: String?
     let propertyName: String?    // joint par le serveur ; priorité à resolvedPropertyName
     let isDefault: Bool?         // true = assignation virtuelle (non persistée)
 
     // Résolu post-décodage à partir de la liste des logements.
     var resolvedPropertyName: String?
-    // Résolu post-décodage depuis checklistByKey (reservationKey → checklist.id).
+    // Résolu post-décodage depuis checklistByKey (reservationKey → checklist.*).
     var checklistId: String? = nil
+    // true si une checklist finalisée (completedAt != nil) existe pour cette clé.
+    var checklistCompleted: Bool = false
+    // ownerStatus de la checklist finalisée : "pending" | "validated" | "rejected"
+    var checklistOwnerStatus: String? = nil
+    // true si un brouillon (completedAt == nil) existe pour cette clé.
+    var checklistHasDraft: Bool = false
 
     enum CodingKeys: String, CodingKey {
         case propertyId, reservationKey, cleanerName, cleanerPhone, cleanerEmail

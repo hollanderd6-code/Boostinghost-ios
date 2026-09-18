@@ -4,9 +4,11 @@
 //   TZ=Pacific/Midway   xcodebuild test -scheme Boostinghost -destination 'platform=macOS'
 //   TZ=Pacific/Kiritimati xcodebuild test -scheme Boostinghost -destination 'platform=macOS'
 
+import Foundation
 import Testing
 @testable import Boostinghost
 
+@MainActor
 struct CalendarViewModelTests {
 
     // currentMonthKey() doit retourner le mois local, jamais le mois UTC.

@@ -87,6 +87,33 @@ struct CleaningHistoryGroup: Identifiable {
     let items: [CleaningHistoryItem]
 }
 
+// MARK: - État d'exécution d'un ménage (dérivé de la checklist correspondante)
+
+enum CleaningExecutionState: Equatable {
+    case notStarted        // aucune checklist / brouillon vide
+    case inProgress        // brouillon actif (completedAt == nil, activité commencée)
+    case pendingValidation // checklist finalisée, owner_status == "pending"
+    case validated         // owner_status == "validated"
+    case rejected          // owner_status == "rejected"
+}
+
+extension CleaningAssignment {
+    // Source de vérité : la checklist correspondante, pas cleaning_assignments.status.
+    var effectiveCleaningState: CleaningExecutionState {
+        if checklistCompleted {
+            switch checklistOwnerStatus {
+            case "validated": return .validated
+            case "rejected":  return .rejected
+            default:          return .pendingValidation
+            }
+        } else if checklistHasDraft {
+            return .inProgress
+        } else {
+            return .notStarted
+        }
+    }
+}
+
 // MARK: - Utilitaire de créneau partagé entre ViewModel et View
 
 extension CleaningAssignment {

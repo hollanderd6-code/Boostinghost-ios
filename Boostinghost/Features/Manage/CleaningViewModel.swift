@@ -26,6 +26,9 @@ final class CleaningViewModel {
     var rejectTargetId: String? = nil
     var rejectNotes:    String  = ""
 
+    // Mémorisé pour que validate()/reject() puissent recharger sans paramètre.
+    private var lastIsSubAccount: Bool = false
+
     // MARK: - Calculés
 
     var todayCount:        Int { tightAssignments.count + wideAssignments.count }
@@ -50,6 +53,7 @@ final class CleaningViewModel {
     // MARK: - Chargement
 
     func load(isSubAccount: Bool) async {
+        lastIsSubAccount = isSubAccount
         if case .loaded = loadState {} else { loadState = .loading }
 
         // Un sous-compte cleaner n'a pas can_view_properties → utiliser l'endpoint
@@ -57,12 +61,25 @@ final class CleaningViewModel {
         // derrière can_view_cleaning. Pour un compte principal, garder /api/properties.
         let propEndpoint = isSubAccount ? Endpoint.cleaningPropertyNames : Endpoint.properties
 
+        // Fenêtre 31 jours pour couvrir l'Historique (J-1 à J-30 + 1 jour tampon).
+        // Envoyé comme ?since=YYYY-MM-DD au backend pour lever le LIMIT 100 sur cette plage.
+        let sinceStr: String = {
+            let cal0 = Calendar(identifier: .gregorian)
+            let today0 = cal0.startOfDay(for: Date())
+            guard let d = cal0.date(byAdding: .day, value: -31, to: today0) else { return "" }
+            let dc = cal0.dateComponents([.year, .month, .day], from: d)
+            return String(format: "%04d-%02d-%02d", dc.year!, dc.month!, dc.day!)
+        }()
+        let checklistQueryItems: [URLQueryItem] = sinceStr.isEmpty
+            ? [] : [URLQueryItem(name: "since", value: sinceStr)]
+
         async let assignmentsResult: CleaningAssignmentsResponse =
             APIClient.shared.get(Endpoint.cleaningAssignments, agencyAll: true)
         async let propertiesResult: PropertiesResponse =
             APIClient.shared.get(propEndpoint, agencyAll: true)
         async let checklistsResult: CleaningChecklistsResponse =
-            APIClient.shared.get(Endpoint.cleaningChecklists, agencyAll: true)
+            APIClient.shared.get(Endpoint.cleaningChecklists, agencyAll: true,
+                                 extraQueryItems: checklistQueryItems)
         async let reservationsResult: ReservationsResponse =
             APIClient.shared.get(Endpoint.reservations, agencyAll: true)
 
@@ -117,10 +134,16 @@ final class CleaningViewModel {
         print("[SLOT] reservations reçues=\(reservations.count) logements indexés=\(resaByProp.count)")
         #endif
 
-        // Index checklists par reservation_key (pour l'Historique)
+        // Index checklists finalisées par reservation_key (completedAt != nil).
         let checklistByKey: [String: CleaningChecklist] = rawChecklists.reduce(into: [:]) { d, c in
-            if let key = c.reservationKey { d[key] = c }
+            guard let key = c.reservationKey, c.completedAt != nil else { return }
+            d[key] = c
         }
+        // Clés des brouillons actifs (completedAt == nil) — pour détecter "En cours".
+        let draftKeySet: Set<String> = Set(rawChecklists.compactMap { c in
+            guard let key = c.reservationKey, c.completedAt == nil else { return nil }
+            return key
+        })
 
         #if DEBUG
         let avecKey = rawChecklists.filter { $0.reservationKey != nil }.count
@@ -162,7 +185,14 @@ final class CleaningViewModel {
             if resaByProp[pid]?.contains(where: { $0.startDate == dayStr }) == true {
                 a.windowEnd = arrTimeByProp[pid]
             }
-            a.checklistId = a.reservationKey.flatMap { checklistByKey[$0]?.id }
+            // Dériver l'état depuis la checklist — source de vérité unique pour l'exécution.
+            if let key = a.reservationKey {
+                let cl = checklistByKey[key]
+                a.checklistId            = cl?.id
+                a.checklistCompleted     = cl != nil
+                a.checklistOwnerStatus   = cl?.ownerStatus
+                a.checklistHasDraft      = draftKeySet.contains(key)
+            }
             return a
         }
 
@@ -301,13 +331,15 @@ final class CleaningViewModel {
     func validate(checklist: CleaningChecklist) async {
         let url = Endpoint.checklistValidate(checklist.id)
         try? await APIClient.shared.putVoid(url, body: EmptyBody(), agencyAll: true)
-        checklistsToValidate.removeAll { $0.id == checklist.id }
+        // Rechargement complet : met à jour Aujourd'hui (état dérivé) et Historique en une passe.
+        await load(isSubAccount: lastIsSubAccount)
     }
 
     func reject(checklist: CleaningChecklist, notes: String) async {
         let url  = Endpoint.checklistReject(checklist.id)
         let body = RejectBody(notes: notes)
         try? await APIClient.shared.putVoid(url, body: body, agencyAll: true)
-        checklistsToValidate.removeAll { $0.id == checklist.id }
+        // Rechargement complet : met à jour Aujourd'hui (état dérivé) et Historique en une passe.
+        await load(isSubAccount: lastIsSubAccount)
     }
 }

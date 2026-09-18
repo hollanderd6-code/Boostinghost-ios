@@ -183,6 +183,9 @@
 		BHSPL000000000000000002 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BHSPL000000000000000001 /* SplashView.swift */; };
 		CF000000000000000000AA01 /* PropertyICalSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF000000000000000000AA00 /* PropertyICalSectionView.swift */; };
 		CF000000000000000000AA11 /* ICalFluxSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF000000000000000000AA10 /* ICalFluxSheet.swift */; };
+		AB0000000000000000009021 /* CleaningStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009011 /* CleaningStateTests.swift */; };
+		AB0000000000000000009022 /* LaneAlgorithmTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009012 /* LaneAlgorithmTests.swift */; };
+		AB0000000000000000009023 /* CalendarViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009013 /* CalendarViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -361,6 +364,10 @@
 		CF000000000000000000AA10 /* ICalFluxSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICalFluxSheet.swift; sourceTree = "<group>"; };
 		E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEditView.swift; sourceTree = "<group>"; };
 		FCEFF6EA47A84ED5A7DC5BBF /* DiffusionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffusionViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000009002 /* BoostinghostTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BoostinghostTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB0000000000000000009011 /* CleaningStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningStateTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009012 /* LaneAlgorithmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneAlgorithmTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009013 /* CalendarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -389,6 +396,7 @@
 			isa = PBXGroup;
 			children = (
 				AB0000000000000000000202 /* Boostinghost */,
+				AB0000000000000000009001 /* BoostinghostTests */,
 				56574ACD304C923D00B05D3D /* Frameworks */,
 				AB0000000000000000000211 /* Products */,
 			);
@@ -567,6 +575,7 @@
 			isa = PBXGroup;
 			children = (
 				AB0000000000000000000101 /* Boostinghost.app */,
+				AB0000000000000000009002 /* BoostinghostTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -719,6 +728,16 @@
 			path = Upsell;
 			sourceTree = "<group>";
 		};
+		AB0000000000000000009001 /* BoostinghostTests */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000009011 /* CleaningStateTests.swift */,
+				AB0000000000000000009012 /* LaneAlgorithmTests.swift */,
+				AB0000000000000000009013 /* CalendarViewModelTests.swift */,
+			);
+			path = BoostinghostTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -743,6 +762,21 @@
 			productReference = AB0000000000000000000101 /* Boostinghost.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AB0000000000000000009041 /* BoostinghostTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AB0000000000000000009053 /* Build configuration list for PBXNativeTarget "BoostinghostTests" */;
+			buildPhases = (
+				AB0000000000000000009031 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BoostinghostTests;
+			productName = BoostinghostTests;
+			productReference = AB0000000000000000009002 /* BoostinghostTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -755,6 +789,10 @@
 				TargetAttributes = {
 					AB0000000000000000000401 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					AB0000000000000000009041 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = AB0000000000000000000401;
 					};
 				};
 			};
@@ -777,6 +815,7 @@
 			projectRoot = "";
 			targets = (
 				AB0000000000000000000401 /* Boostinghost */,
+				AB0000000000000000009041 /* BoostinghostTests */,
 			);
 		};
 /* End PBXProject section */
@@ -968,6 +1007,16 @@
 				AB0000000000000000000423 /* OwnerClientDetailViewModel.swift in Sources */,
 				AB0000000000000000000425 /* OwnerClientDetailView.swift in Sources */,
 				AB0000000000000000000711 /* UpsellSheet.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AB0000000000000000009031 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AB0000000000000000009021 /* CleaningStateTests.swift in Sources */,
+				AB0000000000000000009022 /* LaneAlgorithmTests.swift in Sources */,
+				AB0000000000000000009023 /* CalendarViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1170,6 +1219,46 @@
 			};
 			name = Release;
 		};
+		AB0000000000000000009051 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H5H2Y3S26J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.boostinghost.app.tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Boostinghost.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Boostinghost";
+			};
+			name = Debug;
+		};
+		AB0000000000000000009052 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H5H2Y3S26J;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.boostinghost.app.tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Boostinghost.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Boostinghost";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1187,6 +1276,15 @@
 			buildConfigurations = (
 				AB0000000000000000000407 /* Debug */,
 				AB0000000000000000000408 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AB0000000000000000009053 /* Build configuration list for PBXNativeTarget "BoostinghostTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB0000000000000000009051 /* Debug */,
+				AB0000000000000000009052 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
