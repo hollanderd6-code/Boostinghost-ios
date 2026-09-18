@@ -464,6 +464,21 @@ private struct AssignmentCard: View {
 
     @Environment(\.openURL) private var openURL
 
+    // MARK: - Présentation d'état
+    private var isValidated: Bool { assignment.effectiveCleaningState == .validated }
+
+    private var stateAccentColor: Color {
+        isValidated ? .bhOccupe : (isTight ? .bhTerracotta : .bhOccupe)
+    }
+
+    private var tightBackground: Color {
+        isValidated ? .bhMentheFond : .bhTerracottaBd
+    }
+
+    private var badgeLabel: String {
+        isValidated ? "PRÊT" : (isTight ? "RELOUÉ" : "LIBRE")
+    }
+
     var body: some View {
         if isTight { tightCard } else { wideCard }
     }
@@ -471,18 +486,18 @@ private struct AssignmentCard: View {
     private var tightCard: some View {
         HStack(spacing: 0) {
             Rectangle()
-                .fill(Color.bhTerracotta)
+                .fill(stateAccentColor)
                 .frame(width: 4)
-            cardContent(accentColor: Color.bhTerracotta)
+            cardContent(accentColor: stateAccentColor)
         }
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .background(Color.bhTerracottaBd, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(tightBackground, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .contentShape(Rectangle())
         .onTapGesture { onDetail() }
     }
 
     private var wideCard: some View {
-        ListCard { cardContent(accentColor: Color.bhOccupe) }
+        ListCard { cardContent(accentColor: stateAccentColor) }
             .contentShape(Rectangle())
             .onTapGesture { onDetail() }
     }
@@ -503,7 +518,7 @@ private struct AssignmentCard: View {
                 Spacer(minLength: 8)
                 HStack(spacing: 6) {
                     CleaningBadge(
-                        label: isTight ? "RELOUÉ" : "LIBRE",
+                        label: badgeLabel,
                         background: accentColor
                     )
                     Image(systemName: "chevron.right")
@@ -516,19 +531,24 @@ private struct AssignmentCard: View {
                 windowStart: assignment.windowStart,
                 windowEnd:   assignment.windowEnd,
                 isTight:     isTight,
-                isFuture:    isFuture
+                isFuture:    isFuture,
+                fillColor:   accentColor
             )
 
             if !isFuture, let line = stateLine {
                 Text(line)
                     .font(.system(size: 13.5, weight: isTight ? .semibold : .regular))
-                    .foregroundStyle(isTight ? accentColor : Color.bhAttenue)
+                    .foregroundStyle((isValidated || isTight) ? accentColor : Color.bhAttenue)
             }
 
             if canManage,
                let phone = assignment.cleanerPhone, !phone.isEmpty,
                let name  = assignment.cleanerName,  !name.isEmpty {
-                callButton(name: name, phone: phone)
+                if isValidated {
+                    phoneChip(name: name, phone: phone)
+                } else {
+                    callButton(name: name, phone: phone)
+                }
             }
         }
         .padding(.horizontal, 14)
@@ -578,6 +598,26 @@ private struct AssignmentCard: View {
         }
         .buttonStyle(.plain)
     }
+
+    private func phoneChip(name: String, phone: String) -> some View {
+        Button {
+            let cleaned = phone.filter { $0.isNumber || $0 == "+" }
+            if let url = URL(string: "tel:\(cleaned)") { openURL(url) }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "phone")
+                    .font(.system(size: 12, weight: .medium))
+                Text(name)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(Color.bhAttenue)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.bhAttenue.opacity(0.10), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 // MARK: - Jauge de créneau
@@ -587,6 +627,7 @@ private struct SlotGauge: View {
     let windowEnd:   String?
     let isTight:     Bool
     var isFuture:    Bool = false
+    var fillColor:   Color? = nil
 
     var body: some View {
         HStack(spacing: 8) {
@@ -600,7 +641,7 @@ private struct SlotGauge: View {
                     Capsule()
                         .fill(Color.bhAttenue.opacity(0.15))
                     Capsule()
-                        .fill(isTight ? Color.bhTerracotta : Color.bhOccupe)
+                        .fill(fillColor ?? (isTight ? Color.bhTerracotta : Color.bhOccupe))
                         .frame(width: geo.size.width * progress)
                 }
             }

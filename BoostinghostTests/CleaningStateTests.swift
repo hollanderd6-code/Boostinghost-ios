@@ -111,4 +111,36 @@ struct CleaningStateTests {
                     "completed=\(completed) status=\(ownerStatus ?? "nil") draft=\(hasDraft) → attendu \(expected)")
         }
     }
+
+    // P1–P5 — Non-régression "PRÊT" : seul .validated produit l'état positif.
+
+    @Test("P1 — validated → .validated (badge PRÊT)")
+    func p1_validatedIsReady() {
+        let a = makeAssignment(checklistCompleted: true, checklistOwnerStatus: "validated")
+        #expect(a.effectiveCleaningState == .validated)
+    }
+
+    @Test("P2 — notStarted ≠ .validated")
+    func p2_notStartedNotReady() {
+        let a = makeAssignment()
+        #expect(a.effectiveCleaningState != .validated)
+    }
+
+    @Test("P3 — inProgress ≠ .validated")
+    func p3_inProgressNotReady() {
+        let a = makeAssignment(checklistCompleted: false, checklistHasDraft: true)
+        #expect(a.effectiveCleaningState != .validated)
+    }
+
+    @Test("P4 — pendingValidation ≠ .validated")
+    func p4_pendingNotReady() {
+        let a = makeAssignment(checklistCompleted: true, checklistOwnerStatus: "pending")
+        #expect(a.effectiveCleaningState != .validated)
+    }
+
+    @Test("P5 — rejected ≠ .validated")
+    func p5_rejectedNotReady() {
+        let a = makeAssignment(checklistCompleted: true, checklistOwnerStatus: "rejected")
+        #expect(a.effectiveCleaningState != .validated)
+    }
 }
