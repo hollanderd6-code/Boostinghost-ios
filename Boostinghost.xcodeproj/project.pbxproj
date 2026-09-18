@@ -152,6 +152,7 @@
 		AB000000000000000000070B /* ScrollableFilterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070A /* ScrollableFilterBar.swift */; };
 		AB000000000000000000070C /* InvoiceDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070D /* InvoiceDetailSheet.swift */; };
 		AB000000000000000000070E /* InvoiceCreationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070F /* InvoiceCreationSheet.swift */; };
+		AB000000000000000000081E /* TrialExpirationBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000081F /* TrialExpirationBanner.swift */; };
 		AB0000000000000000000711 /* UpsellSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000710 /* UpsellSheet.swift */; };
 		AB0000000000000000000F01 /* TemplatePickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F02 /* TemplatePickerSheet.swift */; };
 		AB0000000000000000000F03 /* NoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F04 /* NoteSheet.swift */; };
@@ -325,6 +326,7 @@
 		AB000000000000000000070A /* ScrollableFilterBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollableFilterBar.swift; sourceTree = "<group>"; };
 		AB000000000000000000070D /* InvoiceDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceDetailSheet.swift; sourceTree = "<group>"; };
 		AB000000000000000000070F /* InvoiceCreationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceCreationSheet.swift; sourceTree = "<group>"; };
+		AB000000000000000000081F /* TrialExpirationBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrialExpirationBanner.swift; sourceTree = "<group>"; };
 		AB0000000000000000000710 /* UpsellSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpsellSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F02 /* TemplatePickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePickerSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F04 /* NoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSheet.swift; sourceTree = "<group>"; };
@@ -521,6 +523,7 @@
 				AB0000000000000000000131 /* TodayModels.swift */,
 				AB0000000000000000000132 /* TodayViewModel.swift */,
 				AB0000000000000000000133 /* TodayView.swift */,
+				AB000000000000000000081F /* TrialExpirationBanner.swift */,
 				AB0000000000000000000F08 /* SetupModels.swift */,
 				AB0000000000000000000F0A /* SetupViewModel.swift */,
 				AB0000000000000000000F0C /* SetupCardView.swift */,
@@ -860,6 +863,7 @@
 				AB0000000000000000000021 /* TodayModels.swift in Sources */,
 				AB0000000000000000000022 /* TodayViewModel.swift in Sources */,
 				AB0000000000000000000023 /* TodayView.swift in Sources */,
+				AB000000000000000000081E /* TrialExpirationBanner.swift in Sources */,
 				AB0000000000000000000F07 /* SetupModels.swift in Sources */,
 				AB0000000000000000000F09 /* SetupViewModel.swift in Sources */,
 				AB0000000000000000000F0B /* SetupCardView.swift in Sources */,
