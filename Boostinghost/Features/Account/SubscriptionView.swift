@@ -79,26 +79,67 @@ struct SubscriptionView: View {
 
     private func infoCard(status: SubscriptionStatus) -> some View {
         ListCard {
-            // Formule
-            if let plan = formattedPlan(status.planType) {
-                infoRow(label: "Formule", value: plan, separator: hasQuota(status) || hasRenewal(status))
+            if status.isTrial {
+                trialRows(status: status)
+            } else {
+                activeRows(status: status)
             }
+        }
+    }
 
-            // Quota — affiché uniquement si propertiesUsed > 0 (compte agence = 0, c'est juste)
-            // BACKEND: propertiesUsed ignore les délégations, corrigé côté serveur plus tard
-            if let used = status.propertiesUsed, used > 0 {
-                let limit = status.propertiesLimit
-                let quotaText = limit.map { "\(used) / \($0)" } ?? "\(used)"
-                infoRow(label: "Logements",
-                        value: "\(quotaText) logement\(used == 1 ? "" : "s")",
-                        separator: hasRenewal(status))
-            }
+    // Rows pour un trial actif
+    @ViewBuilder
+    private func trialRows(status: SubscriptionStatus) -> some View {
+        let showQuota = (status.propertiesUsed ?? 0) > 0
+        let showDate  = status.trialEndDate != nil
 
-            // Renouvellement — null en base si abonnement créé hors Stripe ; affiche "—" dans ce cas
-            infoRow(label: "Renouvellement",
-                    value: status.currentPeriodEnd.map { Formatters.dayWithYear($0) } ?? "—",
+        infoRow(label: "Période",
+                value: "Essai gratuit",
+                separator: showDate || showQuota)
+
+        if let endDate = status.trialEndDate {
+            let daysLine: String = {
+                guard let d = status.daysRemaining else { return Formatters.dayWithYear(endDate) }
+                if d <= 0 { return "Aujourd'hui — \(Formatters.dayWithYear(endDate))" }
+                let unit = d == 1 ? "jour" : "jours"
+                return "\(d) \(unit) — \(Formatters.dayWithYear(endDate))"
+            }()
+            infoRow(label: "Fin d'essai",
+                    value: daysLine,
+                    separator: showQuota)
+        }
+
+        if let used = status.propertiesUsed, used > 0 {
+            let limit = status.propertiesLimit
+            let quotaText = limit.map { "\(used) / \($0)" } ?? "\(used)"
+            infoRow(label: "Logements",
+                    value: "\(quotaText) logement\(used == 1 ? "" : "s")",
                     separator: false)
         }
+    }
+
+    // Rows pour un abonnement actif (comportement original conservé)
+    @ViewBuilder
+    private func activeRows(status: SubscriptionStatus) -> some View {
+        // Formule
+        if let plan = formattedPlan(status.planType) {
+            infoRow(label: "Formule", value: plan, separator: hasQuota(status) || true)
+        }
+
+        // Quota — affiché uniquement si propertiesUsed > 0 (compte agence = 0, c'est juste)
+        // BACKEND: propertiesUsed ignore les délégations, corrigé côté serveur plus tard
+        if let used = status.propertiesUsed, used > 0 {
+            let limit = status.propertiesLimit
+            let quotaText = limit.map { "\(used) / \($0)" } ?? "\(used)"
+            infoRow(label: "Logements",
+                    value: "\(quotaText) logement\(used == 1 ? "" : "s")",
+                    separator: true)
+        }
+
+        // Renouvellement — null en base si abonnement créé hors Stripe ; affiche "—" dans ce cas
+        infoRow(label: "Renouvellement",
+                value: status.currentPeriodEnd.map { Formatters.dayWithYear($0) } ?? "—",
+                separator: false)
     }
 
     @ViewBuilder
@@ -131,9 +172,5 @@ struct SubscriptionView: View {
 
     private func hasQuota(_ s: SubscriptionStatus) -> Bool {
         (s.propertiesUsed ?? 0) > 0
-    }
-
-    private func hasRenewal(_ s: SubscriptionStatus) -> Bool {
-        true // toujours affiché, même avec "—" si les colonnes Stripe sont vides
     }
 }

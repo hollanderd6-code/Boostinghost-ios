@@ -11,10 +11,29 @@ struct TodayView: View {
     @Environment(SetupViewModel.self) private var setupVM
     @State private var showAccount = false
     @State private var showSearch = false
+    @State private var showSubscriptionSheet = false
 
     @Environment(\.scenePhase) private var scenePhase
 
     private var showSetupCard: Bool { !(authStore.session?.isSubAccount ?? false) }
+
+    private var shouldShowTrialBanner: Bool {
+        guard !(authStore.session?.isSubAccount ?? false) else { return false }
+        return vm.subscriptionStatus?.shouldShowTrialBanner ?? false
+    }
+
+    private var canViewMessages: Bool {
+        authStore.session?.can("can_view_messages") ?? true
+    }
+
+    // Single filtered source: urgentArrivees minus messaging items for sub-accounts
+    // without can_view_messages. Counter and cards both derive from this collection.
+    private var visibleUrgentArrivees: [Arrivee] {
+        guard !canViewMessages else { return vm.urgentArrivees }
+        return vm.urgentArrivees.filter { arrivee in
+            arrivee.blocking.contains { !Arrivee.messagingBlockingReasons.contains($0) }
+        }
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -67,6 +86,9 @@ struct TodayView: View {
         .sheet(isPresented: $showAccount) {
             AccountSheet().environment(setupVM)
         }
+        .sheet(isPresented: $showSubscriptionSheet) {
+            AccountSheet(initialDestination: .subscription).environment(setupVM)
+        }
         .sheet(isPresented: $showSearch) {
             GlobalSearchSheet()
         }
@@ -102,9 +124,15 @@ struct TodayView: View {
 
         calendarStrip
 
-        if !vm.urgentArrivees.isEmpty {
+        if shouldShowTrialBanner, let sub = vm.subscriptionStatus {
+            TrialExpirationBanner(status: sub) {
+                showSubscriptionSheet = true
+            }
+        }
+
+        if !visibleUrgentArrivees.isEmpty {
             SectionLabel(text: "À traiter maintenant")
-            ForEach(vm.urgentArrivees) { a in
+            ForEach(visibleUrgentArrivees) { a in
                 UrgentArrivalCard(arrivee: a) {
                     Task { await vm.load() }
                 }
@@ -132,7 +160,7 @@ struct TodayView: View {
             }
         }
 
-        if vm.allSectionsEmpty {
+        if visibleUrgentArrivees.isEmpty && vm.normalArrivees.isEmpty && vm.departs.isEmpty && vm.assignments.isEmpty {
             Text("Rien à signaler pour aujourd'hui.")
                 .font(.bhCorps)
                 .foregroundStyle(Color.bhAttenue)
@@ -161,7 +189,7 @@ struct TodayView: View {
     }
 
     private var aTraiterCounter: some View {
-        let count = vm.compteurs?.aTraiter ?? 0
+        let count = visibleUrgentArrivees.count
         let urgent = count > 0
         return VStack(spacing: 5) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -255,6 +283,7 @@ struct TodayView: View {
 
     private func reload() async {
         vm.agencyAll = authStore.agencyAll
+        vm.isSubAccount = authStore.session?.isSubAccount ?? false
         await vm.load()
     }
 
@@ -397,6 +426,19 @@ private struct UrgentArrivalCard: View {
     @State private var writeConversation: Conversation? = nil
     @State private var showDetail = false
 
+    private var canViewMessages: Bool {
+        authStore.session?.can("can_view_messages") ?? true
+    }
+
+    // Blocking reasons visible to this session — messaging reasons are stripped
+    // when the sub-account lacks can_view_messages.
+    private var effectiveBlocking: [String] {
+        canViewMessages ? arrivee.blocking :
+            arrivee.blocking.filter { !Arrivee.messagingBlockingReasons.contains($0) }
+    }
+
+    private var displayPrimaryAction: String { primaryAction(for: effectiveBlocking) }
+
     var body: some View {
         UrgentCard {
             VStack(alignment: .leading, spacing: 8) {
@@ -406,7 +448,7 @@ private struct UrgentArrivalCard: View {
                         .font(.bhTitreLigne)
                         .foregroundStyle(Color.bhEncre)
                         .lineLimit(1)
-                    let labels = arrivee.blocking.compactMap(blockingLabel)
+                    let labels = effectiveBlocking.compactMap(blockingLabel)
                     ForEach(labels.prefix(2), id: \.self) { StatusPill(text: $0, style: .terracotta) }
                     Spacer(minLength: 4)
                     PlatformBadge(platform: arrivee.platform)
@@ -423,12 +465,12 @@ private struct UrgentArrivalCard: View {
 
                 // Ligne 3 : deux boutons compacts côte à côte
                 HStack(spacing: 8) {
-                    PrimaryButton(title: primaryAction(for: arrivee)) {
-                        if primaryAction(for: arrivee) == "Voir la réservation" {
+                    PrimaryButton(title: displayPrimaryAction) {
+                        if displayPrimaryAction == "Voir la réservation" {
                             showDetail = true
                         }
                     }
-                    if let convId = arrivee.conversationId {
+                    if let convId = arrivee.conversationId, canViewMessages {
                         GlassButton(title: "Écrire", icon: "bubble.left") {
                             writeConversation = Conversation(
                                 arriveeId: convId,
@@ -591,9 +633,9 @@ private func blockingLabel(_ motif: String) -> String? {
     }
 }
 
-private func primaryAction(for arrivee: Arrivee) -> String {
-    if arrivee.blocking.contains("pas_de_conversation") { return "Créer une conversation" }
-    if arrivee.blocking.contains("code_acces_manquant") { return "Envoyer les codes" }
+private func primaryAction(for blocking: [String]) -> String {
+    if blocking.contains("pas_de_conversation") { return "Créer une conversation" }
+    if blocking.contains("code_acces_manquant") { return "Envoyer les codes" }
     return "Voir la réservation"
 }
 

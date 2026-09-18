@@ -12,11 +12,14 @@ final class TodayViewModel {
     private(set) var arrivees: [Arrivee] = []
     private(set) var departs: [Depart] = []
     private(set) var assignments: [CleaningAssignment] = []
+    private(set) var subscriptionStatus: SubscriptionStatus? = nil
 
     // getAgencyUserIds returns [userId] alone when the account has no accepted
     // delegations, so this parameter cannot broaden the scope beyond real rights.
     // Keep mutable: a "Mon compte / Tous les comptes" picker will drive it.
     var agencyAll = true
+    // Set by TodayView before load — skips subscription fetch for sub-accounts.
+    var isSubAccount = false
 
     // MARK: - Computed
 
@@ -40,8 +43,9 @@ final class TodayViewModel {
     func load() async {
         if case .loaded = state {} else { state = .loading }
 
-        async let todayResult = fetchToday()
+        async let todayResult   = fetchToday()
         async let cleaningResult = fetchCleaning()
+        async let subResult     = fetchSubscriptionStatus()
 
         switch await todayResult {
         case .success(let r):
@@ -58,7 +62,9 @@ final class TodayViewModel {
             }
         }
 
-        assignments = await cleaningResult
+        assignments        = await cleaningResult
+        // Subscription status is secondary — failure is silenced, Today stays functional.
+        subscriptionStatus = await subResult
     }
 
     // MARK: - Private
@@ -72,6 +78,11 @@ final class TodayViewModel {
         } catch {
             return .failure(error)
         }
+    }
+
+    private func fetchSubscriptionStatus() async -> SubscriptionStatus? {
+        guard !isSubAccount else { return nil }
+        return try? await APIClient.shared.get(Endpoint.subscriptionStatus)
     }
 
     private func fetchCleaning() async -> [CleaningAssignment] {
