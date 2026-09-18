@@ -3,6 +3,7 @@ import SwiftUI
 struct InvoiceCreationSheet: View {
     let arrivee: Arrivee
     let reservation: Reservation?
+    let onCreated: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -34,9 +35,10 @@ struct InvoiceCreationSheet: View {
     @State private var feedback: (message: String, isError: Bool)?
     @State private var createdInvoiceNumber: String?
 
-    init(arrivee: Arrivee, reservation: Reservation?) {
+    init(arrivee: Arrivee, reservation: Reservation?, onCreated: (() -> Void)? = nil) {
         self.arrivee = arrivee
         self.reservation = reservation
+        self.onCreated = onCreated
 
         let r = reservation
         let firstName = r?.guestFirstName ?? ""
@@ -67,7 +69,7 @@ struct InvoiceCreationSheet: View {
         _checkinDate  = State(initialValue: checkin)
         _checkoutDate = State(initialValue: checkout)
 
-        _rentAmount       = State(initialValue: Self.fmtOpt(r?.amountRooms ?? r?.amountTotal))
+        _rentAmount       = State(initialValue: Self.fmtOpt(r?.invoiceRentAmount))
         _touristTaxAmount = State(initialValue: Self.fmtOpt(r?.amountTaxes))
         _cleaningFee      = State(initialValue: Self.fmtOpt(r?.amountCleaning))
         _withVat          = State(initialValue: false)
@@ -415,7 +417,7 @@ struct InvoiceCreationSheet: View {
                 .font(.bhCorps)
                 .foregroundStyle(Color.bhAttenue)
                 .multilineTextAlignment(.center)
-            Button("Fermer") { dismiss() }
+            Button("Fermer") { onCreated?(); dismiss() }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -459,6 +461,8 @@ struct InvoiceCreationSheet: View {
             let cleaningFee: Double
             let vatRate: Double?
             let sendEmail: Bool
+            let reservationUid: String?
+            let conversationId: Int?
         }
         struct Response: Decodable {
             let success: Bool?
@@ -487,7 +491,9 @@ struct InvoiceCreationSheet: View {
             touristTaxAmount:  parseAmount(touristTaxAmount),
             cleaningFee:       parseAmount(cleaningFee),
             vatRate:           withVat ? Double(vatRate) : nil,
-            sendEmail:         true
+            sendEmail:         true,
+            reservationUid:    arrivee.reservationUid.isEmpty ? nil : arrivee.reservationUid,
+            conversationId:    arrivee.conversationId
         )
         do {
             let resp: Response = try await APIClient.shared.post(Endpoint.createInvoice, body: body)

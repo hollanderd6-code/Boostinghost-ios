@@ -22,6 +22,8 @@ final class ReservationDetailViewModel {
     private(set) var hosterzzMissionState: HosterzzMissionState = .loading
     private(set) var didDelete   = false
     private(set) var deleteError: String? = nil
+    private(set) var invoiceCount: Int = 0
+    private(set) var invoiceCountLoaded: Bool = false
 
     init(arrivee: Arrivee) {
         self.arrivee = arrivee
@@ -35,6 +37,7 @@ final class ReservationDetailViewModel {
         async let responseResult    = fetchReservationsResponse()
         async let assignmentsResult = fetchAssignments()
         async let hosterzzResult    = fetchHosterzzMission()
+        async let invoiceResult     = fetchInvoiceCount(reservationUid: arrivee.reservationUid)
 
         let response      = await responseResult
         let assignments   = await assignmentsResult
@@ -66,7 +69,13 @@ final class ReservationDetailViewModel {
             hosterzzMissionState = .noMission
         }
 
+        invoiceCount = await invoiceResult
+        invoiceCountLoaded = true
         state = .loaded
+    }
+
+    func refreshInvoiceCount() async {
+        invoiceCount = await fetchInvoiceCount(reservationUid: arrivee.reservationUid)
     }
 
     // Called by the view after a successful POST /api/hosterzz/missions.
@@ -101,6 +110,18 @@ final class ReservationDetailViewModel {
     }
 
     // MARK: - Private fetch helpers
+
+    private func fetchInvoiceCount(reservationUid: String) async -> Int {
+        guard !reservationUid.isEmpty else { return 0 }
+        guard let resp: InvoiceHistoryResponse = try? await APIClient.shared.get(
+            Endpoint.invoiceHistory,
+            extraQueryItems: [URLQueryItem(name: "reservationUid", value: reservationUid)]
+        ) else { return 0 }
+        return resp.invoices.filter { inv in
+            guard let uid = inv.reservationUid, !uid.isEmpty else { return false }
+            return uid == reservationUid
+        }.count
+    }
 
     private func fetchReservationsResponse() async -> ReservationsResponse? {
         try? await APIClient.shared.get(Endpoint.reservations, agencyAll: true)

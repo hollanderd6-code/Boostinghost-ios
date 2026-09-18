@@ -72,6 +72,41 @@ struct Reservation: Decodable, Identifiable {
     // status == "hold" means the hold is active but not yet paid/confirmed.
     var isPending: Bool { status?.lowercased() == "hold" }
 
+    // True when amountTotal ≈ hostPayout: OTA stored the host net, not the guest gross.
+    var isNetAmounts: Bool {
+        guard let hp = hostPayout, let at = amountTotal, let oc = otaCommission else { return false }
+        return oc > 0 && abs(hp - at) < 0.01
+    }
+
+    /// Gross nightly amount to prefill "Loyer / Séjour" in invoice creation.
+    /// Priority:
+    ///   1. daysBreakdown sum — precise, valid for both net and gross reservations.
+    ///   2. amountRooms when clearly distinct from amountTotal (cleaning not folded in).
+    ///   3. Non-net fallback: amountTotal − amountCleaning (Booking-style).
+    /// Returns nil when amounts are ambiguous (net reservation without breakdown).
+    var invoiceRentAmount: Double? {
+        // 1. Breakdown sum
+        if let b = daysBreakdown, !b.isEmpty {
+            let sum = b.values.reduce(0, +)
+            if sum > 0 { return sum }
+        }
+        // Net without breakdown: cannot safely derive guest-facing nightly amount.
+        if isNetAmounts { return nil }
+        // 2. amountRooms distinct from amountTotal (cleaning not included)
+        if let rooms = amountRooms {
+            if let total = amountTotal, abs(rooms - total) < 0.01 {
+                // rooms ≈ total → cleaning is likely folded in; fall through to case 3
+            } else {
+                return rooms
+            }
+        }
+        // 3. amountTotal − cleaning (non-net, Booking-style)
+        if let total = amountTotal {
+            return total - (amountCleaning ?? 0)
+        }
+        return nil
+    }
+
     private static func bhNorm(_ raw: String?) -> String {
         (raw ?? "").lowercased()
                    .replacingOccurrences(of: " ", with: "")

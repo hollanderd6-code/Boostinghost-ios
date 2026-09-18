@@ -34,6 +34,11 @@ final class ReservationInvoiceViewModel {
     var resendingId: String? = nil
     var resendFeedback: ResendFeedback? = nil
 
+    // Envoi dans la conversation
+    var convConfirm: Invoice? = nil
+    var isSendingToConv: Bool = false
+    var convFeedback: (invoiceId: String, message: String, isError: Bool)? = nil
+
     // PDF
     var loadingPdfFor: String? = nil
     var pdfPayload: PdfPayload? = nil
@@ -50,14 +55,20 @@ final class ReservationInvoiceViewModel {
     func load() async {
         if case .loaded = loadState {} else { loadState = .loading }
         do {
-            let resp: InvoiceHistoryResponse = try await APIClient.shared.get(Endpoint.invoiceHistory)
+            // Server-side filter by reservationUid (BACKFIX). Legacy fallback handles older invoices.
+            let queryItems = reservationUid.isEmpty ? [] :
+                [URLQueryItem(name: "reservationUid", value: reservationUid)]
+            let resp: InvoiceHistoryResponse = try await APIClient.shared.get(
+                Endpoint.invoiceHistory,
+                extraQueryItems: queryItems
+            )
 
-            // Primary: reservationUid (populated only when sent via conversation).
-            // Fallback: propertyName + dates (email-only invoices have null reservationUid).
             invoices = resp.invoices.filter { inv in
+                // Primary: reservationUid match (server already filtered, but we confirm locally)
                 if let uid = inv.reservationUid, !uid.isEmpty {
                     return uid == reservationUid
                 }
+                // Legacy fallback for invoices created before reservationUid was stored
                 guard !startDate.isEmpty, !endDate.isEmpty else { return false }
                 return inv.propertyName == propertyName
                     && inv.checkinDate == startDate
@@ -67,6 +78,46 @@ final class ReservationInvoiceViewModel {
             loadState = .loaded
         } catch {
             loadState = .error((error as? APIError)?.userMessage ?? error.localizedDescription)
+        }
+    }
+
+    func triggerSendToConversation(_ invoice: Invoice) {
+        convConfirm = invoice
+    }
+
+    func sendToConversation(_ invoice: Invoice) async {
+        guard invoice.canSendToConversation else { return }
+        isSendingToConv = true
+        convFeedback = nil
+        defer { isSendingToConv = false }
+
+        struct ByConversation: Encodable { let conversationId: Int }
+        struct ByReservation: Encodable { let reservationUid: String }
+        struct SendResponse: Decodable { let invoiceNumber: String?; let message: String? }
+
+        do {
+            let resp: SendResponse
+            if let cid = invoice.conversationId {
+                resp = try await APIClient.shared.post(
+                    Endpoint.sendInvoiceToConversation,
+                    body: ByConversation(conversationId: cid),
+                    agencyAll: true
+                )
+            } else if let uid = invoice.reservationUid {
+                resp = try await APIClient.shared.post(
+                    Endpoint.sendInvoiceToConversation,
+                    body: ByReservation(reservationUid: uid),
+                    agencyAll: true
+                )
+            } else {
+                convFeedback = (invoice.id, "Aucune conversation liée à cette facture.", true)
+                return
+            }
+            convFeedback = (invoice.id, resp.message ?? "Facture envoyée dans la conversation.", false)
+        } catch {
+            convFeedback = (invoice.id,
+                            (error as? APIError)?.userMessage ?? error.localizedDescription,
+                            true)
         }
     }
 
@@ -108,7 +159,8 @@ final class ReservationInvoiceViewModel {
         defer { loadingPdfFor = nil }
         do {
             let data = try await APIClient.shared.getData(
-                Endpoint.invoiceDownloadByNumber(invoiceNumber)
+                Endpoint.invoiceDownloadByNumber(invoiceNumber),
+                agencyAll: true
             )
             pdfPayload = PdfPayload(id: invoiceNumber, data: data)
         } catch {
@@ -173,6 +225,23 @@ struct ReservationInvoiceSheet: View {
             if let email = vm.confirmResend?.clientEmail, !email.isEmpty {
                 Text("La facture sera envoyée à \(email).")
             }
+        }
+        .alert(
+            "Envoyer la facture dans la conversation ?",
+            isPresented: Binding(
+                get:  { vm.convConfirm != nil },
+                set:  { if !$0 { vm.convConfirm = nil } }
+            )
+        ) {
+            Button("Envoyer") {
+                if let inv = vm.convConfirm {
+                    vm.convConfirm = nil
+                    Task { await vm.sendToConversation(inv) }
+                }
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Le voyageur va recevoir un message dans le fil de la conversation. Cette action est irréversible.")
         }
         .sheet(item: $vm.pdfPayload) { payload in
             InvoicePdfSheet(data: payload.data, invoiceNumber: payload.id)
@@ -319,6 +388,13 @@ struct ReservationInvoiceSheet: View {
                     .foregroundStyle(fb.isError ? Color.bhTerracotta : Color.bhVert)
             }
 
+            // Résultat de l'envoi dans la conversation
+            if let fb = vm.convFeedback, fb.invoiceId == inv.id {
+                Text(fb.message)
+                    .font(.bhMeta)
+                    .foregroundStyle(fb.isError ? Color.bhTerracotta : Color.bhVert)
+            }
+
             // Erreur de téléchargement PDF
             if let errFor = vm.pdfErrorFor, errFor == inv.invoiceNumber,
                let err = vm.pdfError {
@@ -331,24 +407,70 @@ struct ReservationInvoiceSheet: View {
 
     @ViewBuilder
     private func invoiceActions(_ inv: Invoice) -> some View {
-        let isResending   = vm.resendingId == inv.id
-        let isLoadingPdf  = vm.loadingPdfFor == inv.invoiceNumber && inv.invoiceNumber != nil
-        let anyBusy       = isResending || isLoadingPdf
+        let isResending     = vm.resendingId == inv.id
+        let isSendingToConv = vm.isSendingToConv
+        let isLoadingPdf    = vm.loadingPdfFor == inv.invoiceNumber && inv.invoiceNumber != nil
+        let anyBusy         = isResending || isLoadingPdf || isSendingToConv
 
-        let hasPdf    = inv.invoiceNumber != nil
-        let hasResend = inv.canResend
+        let hasPdf     = inv.invoiceNumber != nil
+        let hasResend  = inv.canResend
+        let hasConv    = inv.canSendToConversation
 
-        if hasPdf || hasResend {
-            HStack(spacing: 8) {
-                if let number = inv.invoiceNumber {
-                    Button {
-                        Task { await vm.openPdf(invoiceNumber: number) }
-                    } label: {
+        if hasPdf || hasResend || hasConv {
+            VStack(spacing: 8) {
+                if hasPdf || hasResend {
+                    HStack(spacing: 8) {
+                        if let number = inv.invoiceNumber {
+                            Button {
+                                Task { await vm.openPdf(invoiceNumber: number) }
+                            } label: {
+                                Group {
+                                    if isLoadingPdf {
+                                        ProgressView()
+                                    } else {
+                                        Label("Voir le PDF", systemImage: "doc.pdf")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(Color.bhEncreDouce)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .glassEffect(in: .rect(cornerRadius: 12))
+                                .specularEdge(cornerRadius: 12)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(anyBusy)
+                        }
+
+                        if hasResend {
+                            Button { vm.triggerResend(inv) } label: {
+                                Group {
+                                    if isResending {
+                                        ProgressView().tint(.white)
+                                    } else {
+                                        Text("Renvoyer")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(.white)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(Color.bhVert,
+                                            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(anyBusy)
+                        }
+                    }
+                }
+
+                if hasConv {
+                    Button { vm.triggerSendToConversation(inv) } label: {
                         Group {
-                            if isLoadingPdf {
+                            if isSendingToConv {
                                 ProgressView()
                             } else {
-                                Label("Voir le PDF", systemImage: "doc.pdf")
+                                Text("Envoyer dans la conversation")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundStyle(Color.bhEncreDouce)
                             }
@@ -357,26 +479,6 @@ struct ReservationInvoiceSheet: View {
                         .padding(.vertical, 10)
                         .glassEffect(in: .rect(cornerRadius: 12))
                         .specularEdge(cornerRadius: 12)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(anyBusy)
-                }
-
-                if hasResend {
-                    Button { vm.triggerResend(inv) } label: {
-                        Group {
-                            if isResending {
-                                ProgressView().tint(.white)
-                            } else {
-                                Text("Renvoyer")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(.white)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Color.bhVert,
-                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                     .buttonStyle(.plain)
                     .disabled(anyBusy)

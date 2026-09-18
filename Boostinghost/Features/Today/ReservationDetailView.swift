@@ -62,7 +62,9 @@ struct ReservationDetailView: View {
             )
         }
         .sheet(isPresented: $showCreateInvoiceSheet) {
-            InvoiceCreationSheet(arrivee: arrivee, reservation: vm.reservation)
+            InvoiceCreationSheet(arrivee: arrivee, reservation: vm.reservation) {
+                Task { await vm.refreshInvoiceCount() }
+            }
         }
         .sheet(isPresented: $showEditSheet) {
             if let r = vm.reservation {
@@ -689,38 +691,33 @@ struct ReservationDetailView: View {
             SectionLabel(text: "Factures")
             ListCard {
                 VStack(spacing: 0) {
-                    CardRow(showSeparator: true) {
-                        Button { showInvoiceSheet = true } label: {
-                            HStack {
-                                Text("Historique")
-                                    .font(.bhTitreLigne)
-                                    .foregroundStyle(Color.bhEncre)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.bhAttenue)
-                            }
+                    if vm.invoiceCount > 0 {
+                        // Facture(s) existante(s) — ouvre l'historique, ne propose plus la création
+                        CardRow(showSeparator: false) {
+                            Button { showInvoiceSheet = true } label: { factureRowLink("Voir la facture") }
+                                .buttonStyle(.plain).contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
-                        .contentShape(Rectangle())
-                    }
-                    CardRow(showSeparator: false) {
-                        Button { showCreateInvoiceSheet = true } label: {
-                            HStack {
-                                Text("Générer une facture")
-                                    .font(.bhTitreLigne)
-                                    .foregroundStyle(Color.bhEncre)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.bhAttenue)
-                            }
+                    } else {
+                        // Aucune facture connue
+                        CardRow(showSeparator: false) {
+                            Button { showCreateInvoiceSheet = true } label: { factureRowLink("Générer une facture") }
+                                .buttonStyle(.plain).contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
-                        .contentShape(Rectangle())
                     }
                 }
             }
+        }
+    }
+
+    private func factureRowLink(_ title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.bhTitreLigne)
+                .foregroundStyle(Color.bhEncre)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.bhAttenue)
         }
     }
 
