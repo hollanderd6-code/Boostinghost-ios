@@ -14,6 +14,12 @@ import Foundation
 // TEST: block via source — isBlock true when source=="BLOCK" or "block" or "Block"
 // TEST: block via platform — isBlock true when platform=="BLOCK"
 // TEST: block via reservation_type — isBlock true when reservation_type=="block"
+// TEST: id fallback — {no _id/id/uid, property_id:"p1", start_date:"2026-09-18",
+//   end_date:"2026-09-20", source:"booking", guest_name:"Alice"}
+//   → id=="res:p1|2026-09-18|2026-09-20|booking|Alice"
+// TEST: id fallback minimal — {no _id/id/uid/source/guest, property_id:"p1",
+//   start_date:"2026-09-18", end_date:"2026-09-20"} → id=="res:p1|2026-09-18|2026-09-20||"
+// TEST: id stable — same JSON decoded twice → identical id value
 
 struct Reservation: Decodable, Identifiable {
     let id: String
@@ -152,10 +158,28 @@ struct Reservation: Decodable, Identifiable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id         = c.flexString(forKey: ._id) ?? c.flexString(forKey: .id) ?? ""
-        uid        = c.flexString(forKey: .uid)
-        propertyId = c.flexString(forKey: .propertyId) ?? ""
-        guestName  = try? c.decodeIfPresent(String.self, forKey: .guestName)
+
+        // Pre-decode fields needed for the id fallback — must resolve before id is computed.
+        let rawUid   = c.flexString(forKey: .uid)
+        let rawProp  = c.flexString(forKey: .propertyId) ?? ""
+        let rawStart = String(((try? c.decodeIfPresent(String.self, forKey: .startDate)) ?? "").prefix(10))
+        let rawEnd   = String(((try? c.decodeIfPresent(String.self, forKey: .endDate))   ?? "").prefix(10))
+        let rawSrc   = try? c.decodeIfPresent(String.self, forKey: .source)
+        let rawGuest = try? c.decodeIfPresent(String.self, forKey: .guestName)
+
+        // Identity hierarchy: _id > id (SQL) > uid (OTA) > deterministic composite.
+        // id is never "" — SwiftUI ForEach requires unique, stable identities per element.
+        id = c.flexString(forKey: ._id)
+          ?? c.flexString(forKey: .id)
+          ?? rawUid
+          ?? "res:\(rawProp)|\(rawStart)|\(rawEnd)|\(rawSrc ?? "")|\(rawGuest ?? "")"
+
+        uid        = rawUid
+        propertyId = rawProp
+        guestName  = rawGuest
+        startDate  = rawStart
+        endDate    = rawEnd
+        source     = rawSrc
 
         guestFirstName = try? c.decodeIfPresent(String.self, forKey: .guestFirstName)
         guestLastName  = try? c.decodeIfPresent(String.self, forKey: .guestLastName)
@@ -176,13 +200,7 @@ struct Reservation: Decodable, Identifiable {
         hostPayout     = c.flexDouble(forKey: .hostPayout)
         currency       = try? c.decodeIfPresent(String.self, forKey: .currency)
 
-        let rawStart = (try? c.decodeIfPresent(String.self, forKey: .startDate)) ?? ""
-        let rawEnd   = (try? c.decodeIfPresent(String.self, forKey: .endDate))   ?? ""
-        startDate    = String(rawStart.prefix(10))
-        endDate      = String(rawEnd.prefix(10))
-
         platform        = try? c.decodeIfPresent(String.self, forKey: .platform)
-        source          = try? c.decodeIfPresent(String.self, forKey: .source)
         otaName         = try? c.decodeIfPresent(String.self, forKey: .otaName)
         reservationType = try? c.decodeIfPresent(String.self, forKey: .reservationType)
         status          = try? c.decodeIfPresent(String.self, forKey: .status)
