@@ -98,6 +98,12 @@ struct AccountSheet: View {
             await authStore.fetchDelegations()
             await vm.load()
         }
+        // Retour de l'écran Notifications : relire les préférences pour que le
+        // compteur « x sur y actives » reflète les bascules qui viennent d'être faites.
+        .onChange(of: path) { _, newPath in
+            guard newPath.isEmpty else { return }
+            Task { vm.notificationPrefs = try? await APIClient.shared.get(Endpoint.notificationSettings) }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .navigateToToday)) { _ in
             dismiss()
         }
@@ -439,13 +445,10 @@ struct AccountSheet: View {
     }
 
     private var notificationsLabel: String? {
-        guard let s = vm.notificationSettings else { return nil }
-        let flags = [s.notifNewReservation, s.notifReservationCancelled, s.notifNewMessage,
-                     s.notifDailySummary, s.notifReminderJ1, s.notifCleaningAlert,
-                     s.notifChecklistDone, s.notifNewInvoice, s.notifTemplateFailed]
-        let active = flags.filter { $0 }.count
-        let total  = flags.count
-        return "\(active) sur \(total) active\(active == 1 ? "" : "s")"
+        guard let prefs = vm.notificationPrefs else { return nil }
+        let keys   = NotificationsViewModel.sections.flatMap { $0.items.map(\.key) }
+        let active = keys.filter { prefs.values[$0] ?? true }.count
+        return "\(active) sur \(keys.count) active\(active == 1 ? "" : "s")"
     }
 
     private var teamLabel: String? {

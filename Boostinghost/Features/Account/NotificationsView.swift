@@ -92,6 +92,7 @@ struct NotificationsView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             SectionLabel(text: section.title.uppercased())
                             prefCard(section)
+                            if section.id == "messages" { messageLevelCard }
                         }
                     }
                 }
@@ -102,9 +103,38 @@ struct NotificationsView: View {
         }
     }
 
+    // MARK: - Niveau des messages voyageurs
+
+    private var messageLevelCard: some View {
+        ListCard {
+            CardRow(showSeparator: false) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Quand prévenir")
+                        .font(.system(size: 15.5))
+                        .foregroundStyle(Color.bhEncre)
+
+                    Picker("Niveau", selection: Binding(
+                        get: { vm.messageLevel },
+                        set: { level in Task { await vm.setMessageLevel(level) } }
+                    )) {
+                        ForEach(NotificationsViewModel.MessageLevel.allCases) { level in
+                            Text(level.label).tag(level)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Text(vm.messageLevel.explanation)
+                        .font(.bhMeta)
+                        .foregroundStyle(Color.bhAttenue)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
     private func prefCard(_ section: NotificationsViewModel.Section) -> some View {
         ListCard {
-            ForEach(Array(section.items.enumerated()), id: \.offset) { idx, pref in
+            ForEach(Array(section.items.enumerated()), id: \.element.id) { idx, pref in
                 CardRow(showSeparator: idx < section.items.count - 1) {
                     HStack(alignment: .center, spacing: 12) {
                         VStack(alignment: .leading, spacing: 3) {

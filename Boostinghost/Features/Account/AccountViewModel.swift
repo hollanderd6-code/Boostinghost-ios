@@ -21,7 +21,7 @@ final class AccountViewModel {
     var templatesCount:          LoadedInt = .loading
     var managedPropertiesCount:  LoadedInt = .loading
 
-    var notificationSettings: NotificationSettings? = nil
+    var notificationPrefs: NotificationPrefs? = nil
 
     // MARK: - Paiements
 
@@ -41,13 +41,13 @@ final class AccountViewModel {
         async let cleanersTask:  CleanersListResponse     = APIClient.shared.get(Endpoint.cleaners, agencyAll: true)
         async let tplTask:       MessageTemplatesResponse = APIClient.shared.get(Endpoint.messageTemplates, agencyAll: true)
         async let propsTask:     PropertiesResponse       = APIClient.shared.get(Endpoint.properties, agencyAll: true)
-        async let notifTask:     NotificationSettings     = APIClient.shared.get(Endpoint.notificationSettings)
+        async let notifTask:     NotificationPrefs        = APIClient.shared.get(Endpoint.notificationSettings)
         async let cleanerTask:   CleanerAccessInfo        = APIClient.shared.get(Endpoint.cleaningMeAccess)
         async let stripeTask:    StripeStatusResponse     = APIClient.shared.get(Endpoint.stripeStatus)
 
         subscriptionStatus    = try? await subTask
         userProfile           = try? await profileTask
-        notificationSettings  = try? await notifTask
+        notificationPrefs     = try? await notifTask
         cleanerAccess         = try? await cleanerTask
         stripeStatus          = try? await stripeTask
 

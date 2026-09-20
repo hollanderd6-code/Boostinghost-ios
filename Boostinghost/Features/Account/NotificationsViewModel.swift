@@ -1,23 +1,14 @@
 import Foundation
 import Observation
 
-// Préférences de notifications.
+// Préférences de notifications — alignées sur la liste blanche réelle du
+// serveur (`BOOL_KEYS`, server.js:12571) et sur DEFAULT_NOTIFICATION_SETTINGS
+// (server.js:3503). Toute clé absente de cette liste blanche est ignorée
+// silencieusement par POST /api/settings/notifications : ne rien inventer ici.
 //
-// Deux changements par rapport à la version précédente :
-//
-// 1. Les valeurs sont décodées en dictionnaire tolérant (`[String: Bool]`) au
-//    lieu d'une struct à champs fixes. La réponse de
-//    GET /api/settings/notifications est un objet plat dont les clés sont les
-//    colonnes `notif_*` ; avec un dictionnaire, ajouter une préférence ne
-//    demande plus qu'une ligne dans `sections` — et une clé inconnue du serveur
-//    ne casse plus le décodage (c'était le piège CodingKeys/snake_case du
-//    CLAUDE.md).
-// 2. La liste est groupée en sections, et n'expose que des types réellement
-//    envoyés par le backend.
-//
-// Volontairement ABSENTS : `new_cleaning` et `cleaning_reminder` partent au
-// prestataire, et cet écran renvoie 401 pour un sous-compte — un interrupteur
-// que la personne concernée ne peut pas voir n'a pas sa place ici.
+// Les valeurs sont décodées en dictionnaire tolérant plutôt qu'en struct à
+// champs fixes : une clé ajoutée côté serveur n'exige plus de toucher au
+// décodeur, et le piège CodingKeys/convertFromSnakeCase du CLAUDE.md disparaît.
 
 @Observable
 @MainActor
@@ -25,40 +16,69 @@ final class NotificationsViewModel {
 
     enum ViewState { case loading, loaded, subAccountRestricted, failed }
 
+    struct Toggle: Identifiable {
+        let key: String
+        let label: String
+        let note: String?
+        var id: String { key }
+    }
+
     struct Section: Identifiable {
         let id: String
         let title: String
-        let items: [(key: String, label: String, note: String?)]
+        let items: [Toggle]
+    }
+
+    // Niveau de notification des messages voyageurs (`notif_message_level`).
+    enum MessageLevel: String, CaseIterable, Identifiable {
+        case all         = "all"
+        case aiOff       = "ai_off"
+        case escalation  = "escalation"
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .all:        return "Chaque message"
+            case .aiOff:      return "IA silencieuse"
+            case .escalation: return "Escalades"
+            }
+        }
+
+        var explanation: String {
+            switch self {
+            case .all:        return "Une notification pour chaque message reçu, même quand l'assistant a répondu."
+            case .aiOff:      return "Seulement quand l'assistant ne répond pas — le réglage par défaut."
+            case .escalation: return "Uniquement quand l'assistant passe la main."
+            }
+        }
     }
 
     var viewState: ViewState = .loading
     var values: [String: Bool] = [:]
+    var messageLevel: MessageLevel = .aiOff
     var saveError: String? = nil
 
-    // Ordre d'affichage. Les clés sont les noms de colonnes exacts attendus par
-    // POST /api/settings/notifications.
     static let sections: [Section] = [
         Section(id: "reservations", title: "Réservations", items: [
-            ("notif_new_reservation",       "Nouvelle réservation",     nil),
-            ("notif_reservation_cancelled", "Réservation annulée",      nil),
-            ("notif_daily_summary",         "Résumé quotidien (8 h)",   nil),
-            ("notif_reminder_j1",           "Rappel la veille (18 h)",  nil)
+            Toggle(key: "notif_new_reservation",       label: "Nouvelle réservation",    note: nil),
+            Toggle(key: "notif_reservation_cancelled", label: "Réservation annulée",     note: nil),
+            Toggle(key: "notif_daily_summary",         label: "Résumé quotidien (8 h)",  note: nil),
+            Toggle(key: "notif_reminder_j1",           label: "Rappel la veille (18 h)", note: nil)
         ]),
         Section(id: "messages", title: "Messagerie", items: [
-            ("notif_new_message",    "Nouveau message voyageur", nil),
-            ("notif_escalation",     "Conversation à reprendre", "L'assistant passe la main : ton de la conversation, demande hors périmètre."),
-            ("notif_host_question",  "Question à arbitrer",      "L'assistant demande ton accord avant de répondre."),
-            ("notif_template_failed", "Échec d'un message automatique", nil)
+            Toggle(key: "notif_new_message",     label: "Message voyageur", note: nil),
+            Toggle(key: "notif_template_failed", label: "Échec d'un message automatique", note: nil)
         ]),
         Section(id: "cleaning", title: "Ménage", items: [
-            ("notif_cleaning_alert",  "Ménage non commencé, arrivée proche", nil),
-            ("notif_checklist_done",  "Checklist ménage validée",            nil)
+            Toggle(key: "notif_cleaning_reminder",  label: "Rappel de ménage",  note: "La veille d'un départ."),
+            Toggle(key: "notif_cleaning_alert",     label: "Ménage non commencé, arrivée proche", note: nil),
+            Toggle(key: "notif_cleaning_completed", label: "Ménage terminé",    note: nil),
+            Toggle(key: "notif_checklist_done",     label: "Checklist validée", note: nil)
         ]),
         Section(id: "money", title: "Argent", items: [
-            ("notif_new_invoice",       "Nouvelle facture",                  nil),
-            ("notif_upsell_paid",       "Prestation payée par un voyageur",  nil),
-            ("notif_deposit_expiry",    "Caution proche de l'expiration",    "48 h avant la fin de l'empreinte bancaire."),
-            ("notif_deposit_released",  "Caution libérée automatiquement",   nil)
+            Toggle(key: "notif_new_invoice",     label: "Nouvelle facture",    note: nil),
+            Toggle(key: "notif_deposit_request", label: "Demande de caution",  note: nil)
         ])
     ]
 
@@ -69,6 +89,7 @@ final class NotificationsViewModel {
         do {
             let prefs: NotificationPrefs = try await APIClient.shared.get(Endpoint.notificationSettings)
             values = prefs.values
+            messageLevel = MessageLevel(rawValue: prefs.messageLevel ?? "") ?? .aiOff
             viewState = .loaded
         } catch APIError.unauthorized {
             viewState = .subAccountRestricted
@@ -79,27 +100,37 @@ final class NotificationsViewModel {
 
     // MARK: - Read
     //
-    // Une préférence absente de la réponse est considérée activée : c'est le
-    // comportement du serveur, qui n'envoie la colonne que si elle existe.
+    // Une préférence absente de la réponse vaut `true` : c'est la valeur par
+    // défaut de DEFAULT_NOTIFICATION_SETTINGS côté serveur.
 
     func value(for key: String) -> Bool {
         values[key] ?? true
     }
 
-    // MARK: - Toggle (optimiste, POST partiel)
+    // MARK: - Write (optimiste, POST partiel)
 
     func toggle(key: String) async {
         let previous = value(for: key)
-        let newValue = !previous
-        values[key] = newValue
+        values[key] = !previous
+        do {
+            try await APIClient.shared.postVoid(Endpoint.notificationSettings, body: [key: !previous])
+        } catch {
+            values[key] = previous
+            saveError = apiMessage(error)
+        }
+    }
 
+    func setMessageLevel(_ level: MessageLevel) async {
+        let previous = messageLevel
+        guard level != previous else { return }
+        messageLevel = level
         do {
             try await APIClient.shared.postVoid(
                 Endpoint.notificationSettings,
-                body: [key: newValue]
+                body: ["notif_message_level": level.rawValue]
             )
         } catch {
-            values[key] = previous
+            messageLevel = previous
             saveError = apiMessage(error)
         }
     }
@@ -120,11 +151,13 @@ final class NotificationsViewModel {
 
 // MARK: - Décodage tolérant
 //
-// Le backend renvoie tantôt des booléens, tantôt 0/1, tantôt "true" : on
-// accepte les trois et on ignore tout le reste (dates, objets imbriqués).
+// Le serveur renvoie des booléens, parfois 0/1 ou "true" selon l'historique de
+// la ligne JSON. On accepte les trois, on ignore le reste (chaînes libres comme
+// whatsappNumber), et `notif_message_level` est extrait à part.
 
 struct NotificationPrefs: Decodable {
     let values: [String: Bool]
+    let messageLevel: String?
 
     private struct AnyKey: CodingKey {
         let stringValue: String
@@ -136,7 +169,16 @@ struct NotificationPrefs: Decodable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: AnyKey.self)
         var out: [String: Bool] = [:]
+        var level: String? = nil
+
         for key in c.allKeys {
+            let name = Self.snakeCased(key.stringValue)
+
+            if name == "notif_message_level" {
+                level = try? c.decode(String.self, forKey: key)
+                continue
+            }
+
             let decoded: Bool?
             if let b = try? c.decode(Bool.self, forKey: key) {
                 decoded = b
@@ -148,14 +190,17 @@ struct NotificationPrefs: Decodable {
                 decoded = nil
             }
             guard let v = decoded else { continue }
-            // L'APIClient applique `convertFromSnakeCase`, y compris aux clés de
-            // dictionnaire (piège documenté dans CLAUDE.md) : `notif_new_message`
-            // arrive donc en `notifNewMessage`. On stocke les deux formes pour
-            // que la recherche par nom de colonne fonctionne dans les deux cas.
+
+            // L'APIClient applique convertFromSnakeCase, y compris aux clés de
+            // dictionnaire : `notif_new_message` arrive en `notifNewMessage`.
+            // On stocke les deux formes pour que la recherche par nom de
+            // colonne fonctionne dans les deux cas.
             out[key.stringValue] = v
-            out[Self.snakeCased(key.stringValue)] = v
+            out[name] = v
         }
+
         values = out
+        messageLevel = level
     }
 
     static func snakeCased(_ s: String) -> String {

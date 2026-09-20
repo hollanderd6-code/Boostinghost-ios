@@ -88,7 +88,7 @@ enum PushRoute {
     private static let messages: Set<String> = [
         "new_message", "new_chat_message", "new_guest_message",
         "chat_sms", "sms_reply", "upsell_paid", "negative_sentiment",
-        "template_failed"
+        "template_failed", "template_delivery_unknown"
     ]
 
     private static let messagesEscalated: Set<String> = [
@@ -97,18 +97,23 @@ enum PushRoute {
 
     private static let calendar: Set<String> = [
         "new_reservation", "new_booking", "new_booking_guest", "new_booking_channex",
-        "cancelled_reservation", "reservation_cancelled"
+        "cancelled_reservation", "reservation_cancelled", "cancelled_booking_channex",
+        "reservation_modified"
     ]
 
     private static let today: Set<String> = [
         "arrivals", "departures", "daily_arrivals", "check_in",
-        "daily_summary", "monthly_summary", "reminder_j1"
+        "daily_summary", "monthly_summary", "reminder_j1",
+        "hosterzz_mission"
     ]
 
     private static let cleaning: Set<String> = [
         "new_cleaning", "cleaning_reminder", "cleaning_alert", "cleaning_assigned",
-        "cleaning_completed", "cleaning_validated", "cleaning_recap", "cleaning_lastminute"
+        "cleaning_completed", "cleaning_validated", "cleaning_recap", "cleaning_lastminute",
+        "cleaning_complement", "consumable_restock", "restock_assigned"
     ]
+
+    private static let properties: Set<String> = ["smart_lock_battery"]
 
     private static let stays: Set<String> = [
         "new_deposit", "deposit_paid", "deposit_captured", "deposit_expiry_alert",
@@ -197,6 +202,13 @@ enum PushRoute {
         if contracts.contains(type) {
             router.pendingContractId = value(data, "contractId", "contract_id")
             router.pendingManageEntry = .owners
+            router.pendingTab = .manage
+            return
+        }
+
+        // Serrures connectées → Gestion ▸ Logements
+        if properties.contains(type) {
+            router.pendingManageEntry = .properties
             router.pendingTab = .manage
             return
         }
