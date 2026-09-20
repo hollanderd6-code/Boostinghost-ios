@@ -10,55 +10,57 @@ final class PushNotificationManager: NSObject {
 
     private(set) var fcmToken: String?
 
-    // Called on every transition to .authenticated (login, re-launch, account change).
-    // UNUserNotificationCenter shows the system dialog only once; subsequent calls
-    // silently renew the APNs registration — the recommended pattern at each launch.
+    // MARK: - Autorisation et jeton (inchangé)
+
     func requestAuthorization() async {
         let center = UNUserNotificationCenter.current()
         let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
         guard granted else { return }
         UIApplication.shared.registerForRemoteNotifications()
-        print("[DEBUG-SAVETOKEN] trigger=requestAuthorization fcmToken-in-memory=\(fcmToken?.prefix(20).description ?? "nil") sdk-cache=\(Messaging.messaging().fcmToken?.prefix(20).description ?? "nil")")
         await sendToken()
     }
 
-    // Sends the current FCM token to the backend bound to the authenticated user.
-    // identifierForVendor is stable for the lifetime of the app install on this device.
-    // The server deletes any previous row for this token on a different account before
-    // inserting, so re-calling after an account change is safe and idempotent.
     func sendToken() async {
-        // The in-memory copy is nil on launches where Firebase did not re-invoke the
-        // delegate (stable token, already known to the SDK). Fall back to the SDK's
-        // own cache so the token is always re-registered with the current user.
         let resolved = fcmToken ?? Messaging.messaging().fcmToken
-        guard let token = resolved else {
-            print("[DEBUG-SAVETOKEN] skip — fcmToken nil in memory and in SDK cache")
-            return
-        }
+        guard let token = resolved else { return }
         if fcmToken == nil { fcmToken = token }
 
         let deviceId = UIDevice.current.identifierForVendor?.uuidString
-        print("[DEBUG-SAVETOKEN] POST /api/save-token token=\(token.prefix(20))… device_id=\(deviceId ?? "nil") auth=\(await APIClient.shared.token != nil ? "set" : "nil")")
         let body = SaveTokenBody(token: token, device_type: "ios", device_id: deviceId)
-        do {
-            try await APIClient.shared.postVoid(Endpoint.saveToken, body: body)
-            print("[DEBUG-SAVETOKEN] ✅ success")
-        } catch {
-            print("[DEBUG-SAVETOKEN] ❌ \(error)")
-        }
+        try? await APIClient.shared.postVoid(Endpoint.saveToken, body: body)
+    }
+
+    // MARK: - Pastille et tiroir
+    //
+    // Le serveur n'envoie volontairement plus de `badge` dans le payload APNs
+    // (« le badge est piloté par l'app »). Personne ne le pilotait : à appeler
+    // au lancement, à chaque retour au premier plan et après chaque
+    // MessagesViewModel.load().
+
+    func refreshBadge(unread: Int) async {
+        try? await UNUserNotificationCenter.current().setBadgeCount(max(0, unread))
+    }
+
+    func clearDeliveredNotifications() {
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+    }
+
+    // MARK: - Historique in-app
+    //
+    // Équivalent iOS de logNotificationToHistory() du client web : sans cet
+    // appel, GET /api/notifications/history reste vide pour un utilisateur iOS.
+
+    private func logToHistory(title: String, body: String, type: String, data: [String: String]) async {
+        let payload = NotificationHistoryBody(title: title, body: body, type: type.isEmpty ? "push" : type, data: data)
+        try? await APIClient.shared.postVoid(Endpoint.notificationHistoryPush, body: payload)
     }
 }
 
 // MARK: - MessagingDelegate
 
 extension PushNotificationManager: MessagingDelegate {
-
-    // Firebase guarantees this is called on the main thread, but nonisolated
-    // keeps Swift 6 strict concurrency happy when bridging the ObjC protocol.
     nonisolated func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let token = fcmToken else { return }
-        print("[DEBUG-FCM] \(token)")
-        print("[DEBUG-SAVETOKEN] trigger=delegate")
         Task { @MainActor [weak self] in
             self?.fcmToken = token
             await self?.sendToken()
@@ -66,72 +68,198 @@ extension PushNotificationManager: MessagingDelegate {
     }
 }
 
+// MARK: - Table de routage
+//
+// Alignée sur ROUTES de public/js/push-notifications-handler.js (le routeur web
+// est la référence tenue à jour). Tout type ajouté côté serveur doit être ajouté
+// ici ; sinon il tombe dans le repli.
+
+enum PushRoute {
+
+    private static let messages: Set<String> = [
+        "new_message", "new_chat_message", "new_guest_message",
+        "chat_sms", "sms_reply", "upsell_paid", "negative_sentiment",
+        "template_failed"
+    ]
+
+    private static let messagesEscalated: Set<String> = [
+        "escalation", "escalade", "escalade_message", "escalade_reminder"
+    ]
+
+    private static let calendar: Set<String> = [
+        "new_reservation", "new_booking", "new_booking_guest", "new_booking_channex",
+        "cancelled_reservation", "reservation_cancelled"
+    ]
+
+    private static let today: Set<String> = [
+        "arrivals", "departures", "daily_arrivals", "check_in",
+        "daily_summary", "monthly_summary", "reminder_j1"
+    ]
+
+    private static let cleaning: Set<String> = [
+        "new_cleaning", "cleaning_reminder", "cleaning_alert", "cleaning_assigned",
+        "cleaning_completed", "cleaning_validated", "cleaning_recap", "cleaning_lastminute"
+    ]
+
+    private static let stays: Set<String> = [
+        "new_deposit", "deposit_paid", "deposit_captured", "deposit_expiry_alert",
+        "deposit_reminder", "deposit_auto_released", "caution", "payment_received",
+        "new_invoice"
+    ]
+
+    private static let contracts: Set<String> = ["contract_signed"]
+
+    // Le backend mélange snake_case et camelCase : toujours lire les deux.
+    static func string(_ userInfo: [AnyHashable: Any], _ keys: String...) -> String? {
+        for key in keys {
+            if let s = userInfo[key] as? String, !s.isEmpty { return s }
+            if let n = userInfo[key] as? NSNumber { return n.stringValue }
+        }
+        return nil
+    }
+
+    @MainActor
+    static func apply(_ userInfo: [AnyHashable: Any]) {
+        let router = NotificationRouter.shared
+        let type   = string(userInfo, "type") ?? ""
+        let conv   = string(userInfo, "conversation_id", "conversationId").flatMap { Int($0) }
+        let screen = string(userInfo, "screen") ?? ""
+
+        // Messagerie
+        if messages.contains(type) || messagesEscalated.contains(type) || screen == "messages" {
+            if let conv { router.pendingConversationId = conv }
+            if messagesEscalated.contains(type) { router.pendingMessagesFilter = .aReprendre }
+            router.pendingTab = .messages
+            return
+        }
+
+        // Question hôte : feuille modale, pas d'onglet
+        if type == "host_question" {
+            Task { await HostQuestionManager.shared.fetchPending() }
+            return
+        }
+
+        // Réservations → Calendrier à la date concernée
+        if calendar.contains(type) {
+            router.pendingCalendarDate = date(userInfo, "check_in", "start_date", "checkIn", "startDate")
+            router.calendarNeedsRefresh = true
+            router.pendingTab = .calendar
+            return
+        }
+
+        // Résumés et journée en cours → Aujourd'hui
+        if today.contains(type) {
+            router.calendarNeedsRefresh = true
+            router.pendingTab = .today
+            return
+        }
+
+        // Ménage → Gestion ▸ Ménage, et la checklist si l'id est fourni
+        if cleaning.contains(type) {
+            router.pendingChecklistId = string(userInfo, "checklistId", "checklist_id", "cleaning_id", "cleaningId")
+            router.pendingManageEntry = .cleaning
+            router.pendingTab = .manage
+            return
+        }
+
+        // Cautions et factures → Gestion ▸ Séjours
+        if stays.contains(type) {
+            router.pendingDepositId = string(userInfo, "depositId", "deposit_id")
+            router.pendingManageEntry = .stays
+            router.pendingTab = .manage
+            return
+        }
+
+        // Contrats → Gestion ▸ Propriétaires
+        if contracts.contains(type) {
+            router.pendingContractId = string(userInfo, "contractId", "contract_id")
+            router.pendingManageEntry = .owners
+            router.pendingTab = .manage
+            return
+        }
+
+        if type == "support" {
+            router.openSupport = true
+            return
+        }
+
+        // Repli du routeur web : un conversation_id sans type connu, c'est un message.
+        if let conv {
+            router.pendingConversationId = conv
+            router.pendingTab = .messages
+            return
+        }
+
+        router.pendingTab = .today
+    }
+
+    private static func date(_ userInfo: [AnyHashable: Any], _ keys: String...) -> Date? {
+        guard let raw = keys.compactMap({ string(userInfo, $0) }).first else { return nil }
+        let iso = ISO8601DateFormatter()
+        if let d = iso.date(from: raw) { return d }
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
+        df.timeZone = TimeZone(identifier: "Europe/Paris")
+        df.dateFormat = "yyyy-MM-dd"
+        return df.date(from: String(raw.prefix(10)))
+    }
+}
+
 // MARK: - UNUserNotificationCenterDelegate
 
 extension PushNotificationManager: UNUserNotificationCenterDelegate {
 
-    // Display banner + sound even when the app is in the foreground.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        completionHandler([.banner, .sound])
+        let content = notification.request.content
+        let title = content.title
+        let body  = content.body
+        let info  = content.userInfo
+        Task { @MainActor in
+            let type = PushRoute.string(info, "type") ?? "push"
+            let data = info.reduce(into: [String: String]()) { acc, pair in
+                if let k = pair.key as? String { acc[k] = String(describing: pair.value) }
+            }
+            await PushNotificationManager.shared.logToHistoryPublic(title: title, body: body, type: type, data: data)
+        }
+        completionHandler([.banner, .sound, .badge])
     }
 
-    // Route the tap to the appropriate tab or screen.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let userInfo = response.notification.request.content.userInfo
-        // Extract Sendable values before crossing the actor boundary.
-        let type    = userInfo["type"] as? String ?? ""
-        let convRaw = (userInfo["conversation_id"] as? String)
-                   ?? (userInfo["conversationId"]  as? String)
         Task { @MainActor in
-            let router = NotificationRouter.shared
-            switch type {
-
-            case "new_message", "new_guest_message",
-                 "escalation", "negative_sentiment",
-                 "upsell_paid":
-                if let convId = convRaw.flatMap({ Int($0) }) {
-                    router.pendingConversationId = convId
-                }
-                router.pendingTab = .messages
-
-            case "host_question":
-                await HostQuestionManager.shared.fetchPending()
-
-            case "new_cleaning", "cleaning_reminder", "cleaning_alert",
-                 "new_invoice",
-                 "contract_signed",
-                 "deposit_expiry_alert":
-                router.pendingTab = .manage
-
-            case "support":
-                router.openSupport = true
-
-            case "new_reservation", "new_booking", "new_booking_guest",
-                 "cancelled_reservation", "arrivals", "departures",
-                 "daily_arrivals", "daily_summary":
-                router.pendingTab = .today
-                NotificationCenter.default.post(name: .calendarShouldRefresh, object: nil)
-
-            default:
-                router.pendingTab = .today
-            }
+            PushRoute.apply(userInfo)
+            PushNotificationManager.shared.clearDeliveredNotifications()
         }
         completionHandler()
     }
 }
 
-// MARK: - Private
+// MARK: - Bodies
 
 private struct SaveTokenBody: Encodable {
     let token: String
     let device_type: String
     let device_id: String?
+}
+
+private struct NotificationHistoryBody: Encodable {
+    let title: String
+    let body: String
+    let type: String
+    let data: [String: String]
+}
+
+// `logToHistory` est private ; ce relais évite de l'exposer partout.
+extension PushNotificationManager {
+    func logToHistoryPublic(title: String, body: String, type: String, data: [String: String]) async {
+        await logToHistory(title: title, body: body, type: type, data: data)
+    }
 }
