@@ -87,24 +87,38 @@ struct NotificationsView: View {
 
         case .loaded:
             ScrollView(showsIndicators: false) {
-                prefList
-                    .padding(.horizontal, 18)
-                    .padding(.top, 20)
-                    .padding(.bottom, 40)
+                VStack(alignment: .leading, spacing: 20) {
+                    ForEach(NotificationsViewModel.sections) { section in
+                        VStack(alignment: .leading, spacing: 10) {
+                            SectionLabel(text: section.title.uppercased())
+                            prefCard(section)
+                        }
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
         }
     }
 
-    private var prefList: some View {
-        let prefs = NotificationsViewModel.preferences
-        return ListCard {
-            ForEach(Array(prefs.enumerated()), id: \.offset) { idx, pref in
-                CardRow(showSeparator: idx < prefs.count - 1) {
-                    HStack {
-                        Text(pref.label)
-                            .font(.system(size: 15.5))
-                            .foregroundStyle(Color.bhEncre)
-                        Spacer()
+    private func prefCard(_ section: NotificationsViewModel.Section) -> some View {
+        ListCard {
+            ForEach(Array(section.items.enumerated()), id: \.offset) { idx, pref in
+                CardRow(showSeparator: idx < section.items.count - 1) {
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(pref.label)
+                                .font(.system(size: 15.5))
+                                .foregroundStyle(Color.bhEncre)
+                            if let note = pref.note {
+                                Text(note)
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhAttenue)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        Spacer(minLength: 8)
                         Toggle("", isOn: Binding(
                             get: { vm.value(for: pref.key) },
                             set: { _ in Task { await vm.toggle(key: pref.key) } }
