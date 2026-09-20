@@ -32,6 +32,7 @@
 		56A0A46E304B00F3001E71EE /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */; };
 		56A0A471304B63FC001E71EE /* CleaningModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A46F304B63FC001E71EE /* CleaningModels.swift */; };
 		56A0A481304B63FC001E71EE /* CleaningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A0A480304B63FC001E71EE /* CleaningViewModel.swift */; };
+		56B030D5305FF6F40085CB12 /* NotificationRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B030D4305FF6F40085CB12 /* NotificationRouting.swift */; };
 		56D2B85C304FECFF00F5B146 /* MandatCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B859304FECFF00F5B146 /* MandatCreationView.swift */; };
 		56D2B85D304FECFF00F5B146 /* MandatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B85A304FECFF00F5B146 /* MandatModels.swift */; };
 		56D2B85E304FECFF00F5B146 /* MandatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D2B85B304FECFF00F5B146 /* MandatViewModel.swift */; };
@@ -147,14 +148,13 @@
 		AB0000000000000000000701 /* DayCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000700 /* DayCellActionSheet.swift */; };
 		AB0000000000000000000703 /* CreateReservationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000702 /* CreateReservationView.swift */; };
 		AB0000000000000000000705 /* CalendarBarLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000704 /* CalendarBarLayout.swift */; };
-		AB0000000000000000003003 /* ReservationLaneLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000003004 /* ReservationLaneLayout.swift */; };
 		AB0000000000000000000707 /* BHGuestHoldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000706 /* BHGuestHoldView.swift */; };
 		AB0000000000000000000709 /* BulkActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000708 /* BulkActionSheet.swift */; };
 		AB000000000000000000070B /* ScrollableFilterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070A /* ScrollableFilterBar.swift */; };
 		AB000000000000000000070C /* InvoiceDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070D /* InvoiceDetailSheet.swift */; };
 		AB000000000000000000070E /* InvoiceCreationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070F /* InvoiceCreationSheet.swift */; };
-		AB000000000000000000081E /* TrialExpirationBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000081F /* TrialExpirationBanner.swift */; };
 		AB0000000000000000000711 /* UpsellSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000710 /* UpsellSheet.swift */; };
+		AB000000000000000000081E /* TrialExpirationBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000081F /* TrialExpirationBanner.swift */; };
 		AB0000000000000000000F01 /* TemplatePickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F02 /* TemplatePickerSheet.swift */; };
 		AB0000000000000000000F03 /* NoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F04 /* NoteSheet.swift */; };
 		AB0000000000000000000F05 /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F06 /* BrandMark.swift */; };
@@ -170,6 +170,13 @@
 		AB0000000000000000002001 /* TipCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000002002 /* TipCoordinator.swift */; };
 		AB0000000000000000002003 /* ContextualTipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000002004 /* ContextualTipView.swift */; };
 		AB0000000000000000003001 /* PropertyAccessPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000003002 /* PropertyAccessPickerSheet.swift */; };
+		AB0000000000000000003003 /* ReservationLaneLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000003004 /* ReservationLaneLayout.swift */; };
+		AB0000000000000000003005 /* PropertyReorderSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000003006 /* PropertyReorderSheet.swift */; };
+		AB0000000000000000009021 /* CleaningStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009011 /* CleaningStateTests.swift */; };
+		AB0000000000000000009022 /* LaneAlgorithmTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009012 /* LaneAlgorithmTests.swift */; };
+		AB0000000000000000009023 /* CalendarViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009013 /* CalendarViewModelTests.swift */; };
+		AB0000000000000000009024 /* CalendarOrderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009014 /* CalendarOrderTests.swift */; };
+		AB0000000000000000009025 /* HostQuestionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009015 /* HostQuestionTests.swift */; };
 		B1C7E4920A3F4D5E82F6A3B1C9D02E47 /* TemplateEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */; };
 		BF11223344556677889900BA /* SupportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AA /* SupportModels.swift */; };
 		BF11223344556677889900BB /* SupportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AB /* SupportViewModel.swift */; };
@@ -189,12 +196,6 @@
 		BHSPL000000000000000002 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BHSPL000000000000000001 /* SplashView.swift */; };
 		CF000000000000000000AA01 /* PropertyICalSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF000000000000000000AA00 /* PropertyICalSectionView.swift */; };
 		CF000000000000000000AA11 /* ICalFluxSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF000000000000000000AA10 /* ICalFluxSheet.swift */; };
-		AB0000000000000000009021 /* CleaningStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009011 /* CleaningStateTests.swift */; };
-		AB0000000000000000009022 /* LaneAlgorithmTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009012 /* LaneAlgorithmTests.swift */; };
-		AB0000000000000000009023 /* CalendarViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009013 /* CalendarViewModelTests.swift */; };
-		AB0000000000000000003005 /* PropertyReorderSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000003006 /* PropertyReorderSheet.swift */; };
-		AB0000000000000000009024 /* CalendarOrderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009014 /* CalendarOrderTests.swift */; };
-		AB0000000000000000009025 /* HostQuestionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009015 /* HostQuestionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -224,6 +225,7 @@
 		56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
 		56A0A46F304B63FC001E71EE /* CleaningModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningModels.swift; sourceTree = "<group>"; };
 		56A0A480304B63FC001E71EE /* CleaningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningViewModel.swift; sourceTree = "<group>"; };
+		56B030D4305FF6F40085CB12 /* NotificationRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationRouting.swift; sourceTree = "<group>"; };
 		56D2B859304FECFF00F5B146 /* MandatCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MandatCreationView.swift; sourceTree = "<group>"; };
 		56D2B85A304FECFF00F5B146 /* MandatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MandatModels.swift; sourceTree = "<group>"; };
 		56D2B85B304FECFF00F5B146 /* MandatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MandatViewModel.swift; sourceTree = "<group>"; };
@@ -333,14 +335,13 @@
 		AB0000000000000000000700 /* DayCellActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayCellActionSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000702 /* CreateReservationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateReservationView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000704 /* CalendarBarLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarBarLayout.swift; sourceTree = "<group>"; };
-		AB0000000000000000003004 /* ReservationLaneLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationLaneLayout.swift; sourceTree = "<group>"; };
 		AB0000000000000000000706 /* BHGuestHoldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BHGuestHoldView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000708 /* BulkActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkActionSheet.swift; sourceTree = "<group>"; };
 		AB000000000000000000070A /* ScrollableFilterBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollableFilterBar.swift; sourceTree = "<group>"; };
 		AB000000000000000000070D /* InvoiceDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceDetailSheet.swift; sourceTree = "<group>"; };
 		AB000000000000000000070F /* InvoiceCreationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceCreationSheet.swift; sourceTree = "<group>"; };
-		AB000000000000000000081F /* TrialExpirationBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrialExpirationBanner.swift; sourceTree = "<group>"; };
 		AB0000000000000000000710 /* UpsellSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpsellSheet.swift; sourceTree = "<group>"; };
+		AB000000000000000000081F /* TrialExpirationBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrialExpirationBanner.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F02 /* TemplatePickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePickerSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F04 /* NoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F06 /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
@@ -356,6 +357,14 @@
 		AB0000000000000000002002 /* TipCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipCoordinator.swift; sourceTree = "<group>"; };
 		AB0000000000000000002004 /* ContextualTipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTipView.swift; sourceTree = "<group>"; };
 		AB0000000000000000003002 /* PropertyAccessPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyAccessPickerSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000003004 /* ReservationLaneLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationLaneLayout.swift; sourceTree = "<group>"; };
+		AB0000000000000000003006 /* PropertyReorderSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyReorderSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000009002 /* BoostinghostTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BoostinghostTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB0000000000000000009011 /* CleaningStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningStateTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009012 /* LaneAlgorithmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneAlgorithmTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009013 /* CalendarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModelTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009014 /* CalendarOrderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarOrderTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009015 /* HostQuestionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionTests.swift; sourceTree = "<group>"; };
 		B4D7291B8EFF4179AC8D6D7E /* ReservationEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationEditSheet.swift; sourceTree = "<group>"; };
 		BF11223344556677889900AA /* SupportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportModels.swift; sourceTree = "<group>"; };
 		BF11223344556677889900AB /* SupportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportViewModel.swift; sourceTree = "<group>"; };
@@ -379,13 +388,6 @@
 		CF000000000000000000AA10 /* ICalFluxSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICalFluxSheet.swift; sourceTree = "<group>"; };
 		E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEditView.swift; sourceTree = "<group>"; };
 		FCEFF6EA47A84ED5A7DC5BBF /* DiffusionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffusionViewModel.swift; sourceTree = "<group>"; };
-		AB0000000000000000009002 /* BoostinghostTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BoostinghostTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		AB0000000000000000009011 /* CleaningStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningStateTests.swift; sourceTree = "<group>"; };
-		AB0000000000000000009012 /* LaneAlgorithmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneAlgorithmTests.swift; sourceTree = "<group>"; };
-		AB0000000000000000009013 /* CalendarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModelTests.swift; sourceTree = "<group>"; };
-		AB0000000000000000003006 /* PropertyReorderSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyReorderSheet.swift; sourceTree = "<group>"; };
-		AB0000000000000000009014 /* CalendarOrderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarOrderTests.swift; sourceTree = "<group>"; };
-		AB0000000000000000009015 /* HostQuestionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -450,6 +452,7 @@
 				AB0000000000000000000151 /* NumericKeyboardModifier.swift */,
 				56A0A46D304B00F3001E71EE /* PushNotificationManager.swift */,
 				BF22334455667788990011AA /* NotificationRouter.swift */,
+				56B030D4305FF6F40085CB12 /* NotificationRouting.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -869,6 +872,7 @@
 				AB0000000000000000000001 /* BoostinghostApp.swift in Sources */,
 				AB0000000000000000000002 /* APIClient.swift in Sources */,
 				AB0000000000000000000003 /* AuthStore.swift in Sources */,
+				56B030D5305FF6F40085CB12 /* NotificationRouting.swift in Sources */,
 				AB0000000000000000000004 /* KeychainStore.swift in Sources */,
 				56A0A45230497C47001E71EE /* DayPrice.swift in Sources */,
 				56A0A45330497C47001E71EE /* Reservation.swift in Sources */,
@@ -1264,7 +1268,7 @@
 				DEVELOPMENT_TEAM = H5H2Y3S26J;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.boostinghost.app.tests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.boostinghost.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -1284,7 +1288,7 @@
 				DEVELOPMENT_TEAM = H5H2Y3S26J;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.boostinghost.app.tests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.boostinghost.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
