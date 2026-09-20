@@ -35,7 +35,9 @@ final class HostQuestionManager {
     func fetchPending() async {
         guard await APIClient.shared.token != nil else { return }
         do {
-            let r: HostQuestionsResponse = try await APIClient.shared.get(Endpoint.hostQuestionsPending)
+            let r: HostQuestionsResponse = try await APIClient.shared.get(
+                Endpoint.hostQuestionsPending, agencyAll: true
+            )
             pendingQuestion = r.questions.first
         } catch {
             // Polling silencieux — on ne déconnecte pas sur erreur réseau
@@ -50,7 +52,7 @@ final class HostQuestionManager {
     func answer(_ id: Int, answer: String, text: String? = nil) async throws {
         let body = HostQuestionAnswerBody(answer: answer, text: text?.isEmpty == false ? text : nil)
         let r: HostQuestionAnswerResponse = try await APIClient.shared.post(
-            Endpoint.hostQuestionAnswer(id), body: body
+            Endpoint.hostQuestionAnswer(id), body: body, agencyAll: true
         )
         if pendingQuestion?.id == id { pendingQuestion = nil }
         if answer != "self", let msg = r.message, !msg.isEmpty {
@@ -63,11 +65,4 @@ final class HostQuestionManager {
     func clearConfirmation() {
         lastConfirmation = nil
     }
-}
-
-// MARK: - Encodable body
-
-private struct HostQuestionAnswerBody: Encodable {
-    let answer: String
-    let text: String?
 }

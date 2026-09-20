@@ -29,8 +29,9 @@ enum Endpoint {
     static let shortLink                              = base.appending(path: "/api/short-link")
 
     // Properties
-    static let properties      = base.appending(path: "/api/properties")
-    static let propertyGroups  = base.appending(path: "/api/property-groups")
+    static let properties          = base.appending(path: "/api/properties")
+    static let propertyGroups      = base.appending(path: "/api/property-groups")
+    static let propertiesOrderBulk = base.appending(path: "/api/properties-order/bulk")
     static func property(_ id: String) -> URL       { base.appending(path: "/api/properties/\(id)") }
     static func sante(_ id: String) -> URL          { base.appending(path: "/api/properties/\(id)/sante") }
     static func propertyFacts(_ id: String) -> URL  { base.appending(path: "/api/properties/\(id)/facts") }
@@ -78,6 +79,14 @@ enum Endpoint {
     static func checklistValidate(_ id: String) -> URL   { base.appending(path: "/api/cleaning/checklists/\(id)/validate") }
     static func checklistReject(_ id: String) -> URL     { base.appending(path: "/api/cleaning/checklists/\(id)/reject") }
     static func checklistPdf(_ id: String) -> URL        { base.appending(path: "/api/cleaning/checklists/\(id)/pdf") }
+    static func checklistDraft(_ reservationKey: String) -> URL {
+        base.appending(path: "/api/cleaning/checklists/\(reservationKey)/draft")
+    }
+    static let checklistSubmit    = base.appending(path: "/api/cleaning/checklist")
+    static let cleaningMeAccess   = base.appending(path: "/api/cleaning/me/access")
+    static let cleaningConsumables = base.appending(path: "/api/cleaning/consumables")
+    static let cleaningMaintenance = base.appending(path: "/api/cleaning/maintenance")
+    static let cleaningPhotoUpload = base.appending(path: "/api/cleaning/photo-upload")
     static let maintenanceTickets  = base.appending(path: "/api/maintenance/tickets")
 
     // Owners / contracts / debours
@@ -125,8 +134,10 @@ enum Endpoint {
     static func channexPushAvailability(_ id: String) -> URL  { base.appending(path: "/api/channex/push-availability/\(id)") }
 
     // Host questions (arbitrage hôte)
-    static let hostQuestionsPending                    = base.appending(path: "/api/host-questions/pending")
-    static func hostQuestionAnswer(_ id: Int) -> URL   { base.appending(path: "/api/host-questions/\(id)/answer") }
+    static let hostQuestionsPending                         = base.appending(path: "/api/host-questions/pending")
+    static func hostQuestionAnswer(_ id: Int) -> URL        { base.appending(path: "/api/host-questions/\(id)/answer") }
+    static func hostQuestionsForConversation(_ id: Int) -> URL { base.appending(path: "/api/host-questions/conversation/\(id)") }
+    static func deescalate(_ id: Int) -> URL                { base.appending(path: "/api/chat/deescalate/\(id)") }
 
     // Push notifications
     static let saveToken = base.appending(path: "/api/save-token")
@@ -191,6 +202,15 @@ enum Endpoint {
 
     // Help content
     static let helpContent = base.appending(path: "/api/help/content")
+
+    // Welcome books (livret d'accueil unifié)
+    static let welcomeBookCreate = base.appending(path: "/api/welcome-books/create")
+    static func welcomeBookByProperty(_ propertyId: String) -> URL {
+        base.appending(path: "/api/welcome-books/by-property/\(propertyId)")
+    }
+    static func welcomeBookExtras(_ uniqueId: String) -> URL {
+        base.appending(path: "/api/welcome-books/by-unique/\(uniqueId)/extras")
+    }
 
     // Support — « Nous écrire »
     static let supportConversation = base.appending(path: "/api/support/conversation")

@@ -305,14 +305,7 @@ private struct TimelineRow: View {
             }
 
             // Barres de séjour et de blocage
-            ForEach(reservations) { r in
-                if let geo = barGeometry(for: r) {
-                    ReservationBar(reservation: r, width: geo.width, barHeight: barHeight) {
-                        onTapReservation(r)
-                    }
-                    .offset(x: geo.x, y: CalBarLayout.tlBarTop)
-                }
-            }
+            barsView()
         }
         .frame(width: totalWidth, height: rowHeight)
         .clipped()
@@ -332,7 +325,21 @@ private struct TimelineRow: View {
         return tlCal.component(.weekday, from: d) == 1
     }
 
-    private func barGeometry(for r: Reservation) -> (x: CGFloat, width: CGFloat)? {
+    @ViewBuilder
+    private func barsView() -> some View {
+        let lanes = ReservationLaneLayout.compute(reservations)
+        ForEach(reservations) { r in
+            let lane = lanes[r.id] ?? BarLane(laneIndex: 0, laneCount: 1)
+            if let geo = barGeometry(for: r, lane: lane) {
+                ReservationBar(reservation: r, width: geo.width, barHeight: geo.barH) {
+                    onTapReservation(r)
+                }
+                .offset(x: geo.x, y: geo.y)
+            }
+        }
+    }
+
+    private func barGeometry(for r: Reservation, lane: BarLane) -> (x: CGFloat, width: CGFloat, y: CGFloat, barH: CGFloat)? {
         guard let s = r.startDayDate, let e = r.endDayDate else { return nil }
         let startOff = tlCal.dateComponents([.day], from: firstDay, to: s).day ?? 0
         let endOff   = tlCal.dateComponents([.day], from: firstDay, to: e).day ?? 0
@@ -340,7 +347,17 @@ private struct TimelineRow: View {
         let rightX = min(totalWidth, (CGFloat(endOff)   + 0.5) * colWidth)
         let w = rightX - leftX
         guard w > 0.5 else { return nil }
-        return (leftX, w)
+        let (y, h) = laneVertical(index: lane.laneIndex, count: lane.laneCount)
+        return (leftX, w, y, h)
+    }
+
+    private func laneVertical(index: Int, count: Int) -> (y: CGFloat, height: CGFloat) {
+        guard count > 1 else { return (CalBarLayout.tlBarTop, barHeight) }
+        let pad: CGFloat = CalBarLayout.lanePad
+        let gap: CGFloat = CalBarLayout.laneGap
+        let h = (rowHeight - 2 * pad - CGFloat(count - 1) * gap) / CGFloat(count)
+        let y = pad + CGFloat(index) * (h + gap)
+        return (y, h)
     }
 }
 
@@ -462,3 +479,50 @@ private struct HatchedBar: View {
         .frame(width: width, height: height)
     }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+private func _previewRes(_ id: String, _ start: String, _ end: String,
+                         platform: String = "booking") -> Reservation {
+    let json = "{\"id\":\"\(id)\",\"property_id\":\"p\",\"start_date\":\"\(start)\",\"end_date\":\"\(end)\",\"platform\":\"\(platform)\",\"guest_name\":\"\(id)\"}"
+        .data(using: .utf8)!
+    let d = JSONDecoder()
+    d.keyDecodingStrategy = .convertFromSnakeCase
+    return try! d.decode(Reservation.self, from: json)
+}
+
+#Preview("CALOVERLAP — lanes") {
+    let firstDay = Reservation.parseDay("2026-09-01")!
+    let scenarios: [[Reservation]] = [
+        // CDG5 : deux Booking.com, même date d'arrivée
+        [_previewRes("A", "2026-09-18", "2026-09-23"),
+         _previewRes("B", "2026-09-18", "2026-09-20")],
+        // Adjacentes (non-régression — une seule lane)
+        [_previewRes("X", "2026-09-18", "2026-09-23"),
+         _previewRes("Y", "2026-09-23", "2026-09-28")],
+        // Triple chevauchement
+        [_previewRes("P", "2026-09-01", "2026-09-10"),
+         _previewRes("Q", "2026-09-05", "2026-09-15"),
+         _previewRes("R", "2026-09-08", "2026-09-20")],
+    ]
+    return ScrollView(.horizontal) {
+        VStack(spacing: 0) {
+            ForEach(scenarios.indices, id: \.self) { i in
+                TimelineRow(
+                    reservations:      scenarios[i],
+                    daysInMonth:       30,
+                    firstDay:          firstDay,
+                    propData:          nil,
+                    isRowHighlighted:  false,
+                    highlightedColumn: nil,
+                    onTapReservation:  { _ in },
+                    onTapFreeCell:     { _ in }
+                )
+            }
+        }
+        .frame(width: CGFloat(30) * colWidth)
+    }
+    .environment(AuthStore())
+}
+#endif

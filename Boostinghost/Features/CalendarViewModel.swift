@@ -682,6 +682,35 @@ final class CalendarViewModel {
         return try await APIClient.shared.post(Endpoint.guestHold, body: body)
     }
 
+    // MARK: Network — Property reorder
+
+    private struct PropertyOrderBody: Encodable {
+        let order: [String]
+    }
+
+    // Saves a new property order to the backend, then applies it directly.
+    // Does NOT rely on a second GET: the backend cache is per-process on Render.com,
+    // so a subsequent GET might hit a different process with a stale PROPERTIES array
+    // and silently return the old order — leaving vm.properties unchanged.
+    // The PUT response (200) confirms the DB commit; we trust the caller's newOrder.
+    func reorderProperties(_ newOrder: [PropertySummary]) async throws {
+        #if DEBUG
+        print("[CALORDER] before = \(properties.map(\.displayName))")
+        print("[CALORDER] submit = \(newOrder.map(\.displayName))")
+        #endif
+        let body = PropertyOrderBody(order: newOrder.map(\.id))
+        try await APIClient.shared.putVoid(Endpoint.propertiesOrderBulk, body: body)
+        // PUT confirmed (200): DB commit done, backend cache refreshed.
+        // Apply directly — no second GET that could return a stale order.
+        properties = newOrder
+        buildReservationIndex()
+        occupancyCache = [:]
+        monthResCache  = [:]
+        #if DEBUG
+        print("[CALORDER] after  = \(properties.map(\.displayName))")
+        #endif
+    }
+
     func reloadMonthData() async {
         await reload()
         await loadCalendar()

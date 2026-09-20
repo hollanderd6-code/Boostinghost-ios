@@ -51,6 +51,10 @@ struct SubAccount: Decodable, Identifiable, Hashable {
     let canAssignCleaning: Bool
     let canManageCleaningStaff: Bool
 
+    // MARK: Logements accessibles
+
+    let accessibleProperties: [String]  // [] = tous les logements
+
     // MARK: Logements
 
     let canViewProperties: Bool
@@ -108,6 +112,7 @@ struct SubAccount: Decodable, Identifiable, Hashable {
         lastLogin      = try? c.decodeIfPresent(String.self,  forKey: .lastLogin)
         parentUserId   = try? c.decodeIfPresent(String.self,  forKey: .parentUserId)
         parentUserName = try? c.decodeIfPresent(String.self,  forKey: .parentUserName)
+        accessibleProperties = (try? c.decodeIfPresent([String].self, forKey: .accessibleProperties)) ?? []
 
         func b(_ k: CodingKeys) -> Bool { (try? c.decodeIfPresent(Bool.self, forKey: k)) ?? false }
 
@@ -164,6 +169,7 @@ struct SubAccount: Decodable, Identifiable, Hashable {
     private enum CodingKeys: CodingKey {
         case id, email, firstName, lastName, role, isActive, createdAt, lastLogin
         case parentUserId, parentUserName
+        case accessibleProperties
         case canViewCalendar, canEditReservations, canCreateReservations, canDeleteReservations
         case canViewMessages, canSendMessages, canViewTemplates, canManageTemplates
         case canViewCleaning, canAssignCleaning, canManageCleaningStaff
@@ -247,6 +253,7 @@ extension SubAccount {
 // MARK: - État local pour l'édition des droits
 
 struct PermissionsEditState {
+    var accessibleProperties: [String]
     var canViewCalendar: Bool
     var canEditReservations: Bool
     var canCreateReservations: Bool
@@ -290,6 +297,7 @@ struct PermissionsEditState {
     var notifSubDailySummary: Bool
 
     init(from m: SubAccount) {
+        accessibleProperties      = m.accessibleProperties
         canViewCalendar           = m.canViewCalendar
         canEditReservations       = m.canEditReservations
         canCreateReservations     = m.canCreateReservations
@@ -383,7 +391,7 @@ struct PermissionsEditState {
                 notifSubNewMessage:          notifSubNewMessage,
                 notifSubDailySummary:        notifSubDailySummary
             ),
-            propertyIds: []
+            propertyIds: accessibleProperties
         )
     }
 }
@@ -398,7 +406,7 @@ struct SubAccountUpdateRequest: Encodable {
     let role: String
     let permissions: PermissionsPayload
     let notifications: NotificationsPayload
-    let propertyIds: [Int]
+    let propertyIds: [String]
 
     struct PermissionsPayload: Encodable {
         var canViewReservations: Bool

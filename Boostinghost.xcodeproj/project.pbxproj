@@ -67,7 +67,6 @@
 		AB0000000000000000000015 /* ListCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000125 /* ListCard.swift */; };
 		AB0000000000000000000016 /* SheetHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000126 /* SheetHandle.swift */; };
 		AB0000000000000000000017 /* GlassNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000127 /* GlassNavBar.swift */; };
-		AB0000000000000000000F05 /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F06 /* BrandMark.swift */; };
 		AB0000000000000000000018 /* GlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000128 /* GlassTabBar.swift */; };
 		AB0000000000000000000019 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000129 /* LoginViewModel.swift */; };
 		AB0000000000000000000020 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000130 /* LoginView.swift */; };
@@ -137,6 +136,7 @@
 		AB0000000000000000000432 /* HostQuestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000431 /* HostQuestion.swift */; };
 		AB0000000000000000000434 /* HostQuestionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000433 /* HostQuestionManager.swift */; };
 		AB0000000000000000000436 /* HostQuestionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000435 /* HostQuestionSheet.swift */; };
+		AB000000000000000000043A /* HostQuestionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000439 /* HostQuestionCard.swift */; };
 		AB0000000000000000000454 /* DepositDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000453 /* DepositDetailSheet.swift */; };
 		AB0000000000000000000501 /* SearchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000500 /* SearchModels.swift */; };
 		AB0000000000000000000503 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000502 /* SearchViewModel.swift */; };
@@ -147,6 +147,7 @@
 		AB0000000000000000000701 /* DayCellActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000700 /* DayCellActionSheet.swift */; };
 		AB0000000000000000000703 /* CreateReservationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000702 /* CreateReservationView.swift */; };
 		AB0000000000000000000705 /* CalendarBarLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000704 /* CalendarBarLayout.swift */; };
+		AB0000000000000000003003 /* ReservationLaneLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000003004 /* ReservationLaneLayout.swift */; };
 		AB0000000000000000000707 /* BHGuestHoldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000706 /* BHGuestHoldView.swift */; };
 		AB0000000000000000000709 /* BulkActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000708 /* BulkActionSheet.swift */; };
 		AB000000000000000000070B /* ScrollableFilterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000070A /* ScrollableFilterBar.swift */; };
@@ -156,17 +157,19 @@
 		AB0000000000000000000711 /* UpsellSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000710 /* UpsellSheet.swift */; };
 		AB0000000000000000000F01 /* TemplatePickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F02 /* TemplatePickerSheet.swift */; };
 		AB0000000000000000000F03 /* NoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F04 /* NoteSheet.swift */; };
+		AB0000000000000000000F05 /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F06 /* BrandMark.swift */; };
 		AB0000000000000000000F07 /* SetupModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F08 /* SetupModels.swift */; };
 		AB0000000000000000000F09 /* SetupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F0A /* SetupViewModel.swift */; };
 		AB0000000000000000000F0B /* SetupCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F0C /* SetupCardView.swift */; };
 		AB0000000000000000000F0D /* PropertyPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F0E /* PropertyPickerSheet.swift */; };
 		AB0000000000000000000F0F /* StripeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F10 /* StripeSettingsView.swift */; };
 		AB0000000000000000001001 /* OnboardingCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001002 /* OnboardingCoordinator.swift */; };
-		AB0000000000000000002001 /* TipCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000002002 /* TipCoordinator.swift */; };
-		AB0000000000000000002003 /* ContextualTipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000002004 /* ContextualTipView.swift */; };
 		AB0000000000000000001003 /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001004 /* OnboardingFlowView.swift */; };
 		AB0000000000000000001005 /* OnboardingGuidedFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */; };
 		AB0000000000000000001007 /* AppTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001008 /* AppTourView.swift */; };
+		AB0000000000000000002001 /* TipCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000002002 /* TipCoordinator.swift */; };
+		AB0000000000000000002003 /* ContextualTipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000002004 /* ContextualTipView.swift */; };
+		AB0000000000000000003001 /* PropertyAccessPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000003002 /* PropertyAccessPickerSheet.swift */; };
 		B1C7E4920A3F4D5E82F6A3B1C9D02E47 /* TemplateEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */; };
 		BF11223344556677889900BA /* SupportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AA /* SupportModels.swift */; };
 		BF11223344556677889900BB /* SupportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AB /* SupportViewModel.swift */; };
@@ -179,6 +182,9 @@
 		BF55667788990011223344BB /* AttestationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF55667788990011223344AA /* AttestationModels.swift */; };
 		BF66778899001122334455BB /* AttestationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF66778899001122334455AA /* AttestationViewModel.swift */; };
 		BF77889900112233445566BB /* AttestationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF77889900112233445566AA /* AttestationView.swift */; };
+		BF8899001122334455667788AA /* WelcomeBookModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF8899001122334455667788AAA /* WelcomeBookModels.swift */; };
+		BF9900112233445566778899AA /* WelcomeBookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9900112233445566778899AAA /* WelcomeBookViewModel.swift */; };
+		BFAA112233445566778899001AA /* WelcomeBookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAA112233445566778899001AAA /* WelcomeBookView.swift */; };
 		BHLNCH000000000000000002 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BHLNCH000000000000000001 /* LaunchScreen.storyboard */; };
 		BHSPL000000000000000002 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BHSPL000000000000000001 /* SplashView.swift */; };
 		CF000000000000000000AA01 /* PropertyICalSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF000000000000000000AA00 /* PropertyICalSectionView.swift */; };
@@ -186,6 +192,9 @@
 		AB0000000000000000009021 /* CleaningStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009011 /* CleaningStateTests.swift */; };
 		AB0000000000000000009022 /* LaneAlgorithmTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009012 /* LaneAlgorithmTests.swift */; };
 		AB0000000000000000009023 /* CalendarViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009013 /* CalendarViewModelTests.swift */; };
+		AB0000000000000000003005 /* PropertyReorderSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000003006 /* PropertyReorderSheet.swift */; };
+		AB0000000000000000009024 /* CalendarOrderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009014 /* CalendarOrderTests.swift */; };
+		AB0000000000000000009025 /* HostQuestionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009015 /* HostQuestionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -245,7 +254,6 @@
 		AB0000000000000000000125 /* ListCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListCard.swift; sourceTree = "<group>"; };
 		AB0000000000000000000126 /* SheetHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetHandle.swift; sourceTree = "<group>"; };
 		AB0000000000000000000127 /* GlassNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassNavBar.swift; sourceTree = "<group>"; };
-		AB0000000000000000000F06 /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
 		AB0000000000000000000128 /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
 		AB0000000000000000000129 /* LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000130 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -314,6 +322,7 @@
 		AB0000000000000000000431 /* HostQuestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestion.swift; sourceTree = "<group>"; };
 		AB0000000000000000000433 /* HostQuestionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionManager.swift; sourceTree = "<group>"; };
 		AB0000000000000000000435 /* HostQuestionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000439 /* HostQuestionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionCard.swift; sourceTree = "<group>"; };
 		AB0000000000000000000453 /* DepositDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositDetailSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000500 /* SearchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchModels.swift; sourceTree = "<group>"; };
 		AB0000000000000000000502 /* SearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewModel.swift; sourceTree = "<group>"; };
@@ -324,6 +333,7 @@
 		AB0000000000000000000700 /* DayCellActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayCellActionSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000702 /* CreateReservationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateReservationView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000704 /* CalendarBarLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarBarLayout.swift; sourceTree = "<group>"; };
+		AB0000000000000000003004 /* ReservationLaneLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationLaneLayout.swift; sourceTree = "<group>"; };
 		AB0000000000000000000706 /* BHGuestHoldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BHGuestHoldView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000708 /* BulkActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkActionSheet.swift; sourceTree = "<group>"; };
 		AB000000000000000000070A /* ScrollableFilterBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollableFilterBar.swift; sourceTree = "<group>"; };
@@ -333,17 +343,19 @@
 		AB0000000000000000000710 /* UpsellSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpsellSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F02 /* TemplatePickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePickerSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F04 /* NoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F06 /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F08 /* SetupModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupModels.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F0A /* SetupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F0C /* SetupCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupCardView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F0E /* PropertyPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyPickerSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000F10 /* StripeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripeSettingsView.swift; sourceTree = "<group>"; };
 		AB0000000000000000001002 /* OnboardingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinator.swift; sourceTree = "<group>"; };
-		AB0000000000000000002002 /* TipCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipCoordinator.swift; sourceTree = "<group>"; };
-		AB0000000000000000002004 /* ContextualTipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTipView.swift; sourceTree = "<group>"; };
 		AB0000000000000000001004 /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
 		AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingGuidedFlowView.swift; sourceTree = "<group>"; };
 		AB0000000000000000001008 /* AppTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTourView.swift; sourceTree = "<group>"; };
+		AB0000000000000000002002 /* TipCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipCoordinator.swift; sourceTree = "<group>"; };
+		AB0000000000000000002004 /* ContextualTipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTipView.swift; sourceTree = "<group>"; };
+		AB0000000000000000003002 /* PropertyAccessPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyAccessPickerSheet.swift; sourceTree = "<group>"; };
 		B4D7291B8EFF4179AC8D6D7E /* ReservationEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationEditSheet.swift; sourceTree = "<group>"; };
 		BF11223344556677889900AA /* SupportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportModels.swift; sourceTree = "<group>"; };
 		BF11223344556677889900AB /* SupportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportViewModel.swift; sourceTree = "<group>"; };
@@ -356,6 +368,9 @@
 		BF55667788990011223344AA /* AttestationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttestationModels.swift; sourceTree = "<group>"; };
 		BF66778899001122334455AA /* AttestationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttestationViewModel.swift; sourceTree = "<group>"; };
 		BF77889900112233445566AA /* AttestationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttestationView.swift; sourceTree = "<group>"; };
+		BF8899001122334455667788AAA /* WelcomeBookModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeBookModels.swift; sourceTree = "<group>"; };
+		BF9900112233445566778899AAA /* WelcomeBookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeBookViewModel.swift; sourceTree = "<group>"; };
+		BFAA112233445566778899001AAA /* WelcomeBookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeBookView.swift; sourceTree = "<group>"; };
 		BHLNCH000000000000000001 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BHSPL000000000000000001 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		C4412B458E86403FB373BAFC /* CleanersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanersViewModel.swift; sourceTree = "<group>"; };
@@ -368,6 +383,9 @@
 		AB0000000000000000009011 /* CleaningStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningStateTests.swift; sourceTree = "<group>"; };
 		AB0000000000000000009012 /* LaneAlgorithmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneAlgorithmTests.swift; sourceTree = "<group>"; };
 		AB0000000000000000009013 /* CalendarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModelTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000003006 /* PropertyReorderSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyReorderSheet.swift; sourceTree = "<group>"; };
+		AB0000000000000000009014 /* CalendarOrderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarOrderTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009015 /* HostQuestionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -483,8 +501,10 @@
 				AB0000000000000000000700 /* DayCellActionSheet.swift */,
 				AB0000000000000000000702 /* CreateReservationView.swift */,
 				AB0000000000000000000704 /* CalendarBarLayout.swift */,
+				AB0000000000000000003004 /* ReservationLaneLayout.swift */,
 				AB0000000000000000000706 /* BHGuestHoldView.swift */,
 				AB0000000000000000000708 /* BulkActionSheet.swift */,
+				AB0000000000000000003006 /* PropertyReorderSheet.swift */,
 				AB0000000000000000000145 /* RevenusView.swift */,
 				AB0000000000000000000600 /* CalendarModels.swift */,
 				AB0000000000000000000602 /* JourView.swift */,
@@ -494,26 +514,6 @@
 				AB0000000000000000002000 /* Tips */,
 			);
 			path = Features;
-			sourceTree = "<group>";
-		};
-		AB0000000000000000001000 /* Onboarding */ = {
-			isa = PBXGroup;
-			children = (
-				AB0000000000000000001002 /* OnboardingCoordinator.swift */,
-				AB0000000000000000001004 /* OnboardingFlowView.swift */,
-				AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */,
-				AB0000000000000000001008 /* AppTourView.swift */,
-			);
-			path = Onboarding;
-			sourceTree = "<group>";
-		};
-		AB0000000000000000002000 /* Tips */ = {
-			isa = PBXGroup;
-			children = (
-				AB0000000000000000002002 /* TipCoordinator.swift */,
-				AB0000000000000000002004 /* ContextualTipView.swift */,
-			);
-			path = Tips;
 			sourceTree = "<group>";
 		};
 		AB0000000000000000000207 /* Auth */ = {
@@ -664,6 +664,9 @@
 				BF55667788990011223344AA /* AttestationModels.swift */,
 				BF66778899001122334455AA /* AttestationViewModel.swift */,
 				BF77889900112233445566AA /* AttestationView.swift */,
+				BF8899001122334455667788AAA /* WelcomeBookModels.swift */,
+				BF9900112233445566778899AAA /* WelcomeBookViewModel.swift */,
+				BFAA112233445566778899001AAA /* WelcomeBookView.swift */,
 			);
 			path = Manage;
 			sourceTree = "<group>";
@@ -681,6 +684,7 @@
 				56A0A45D3049E473001E71EE /* TeamMemberDetailView.swift */,
 				56A0A45E3049E473001E71EE /* TeamModels.swift */,
 				56A0A45F3049E473001E71EE /* TeamViewModel.swift */,
+				AB0000000000000000003002 /* PropertyAccessPickerSheet.swift */,
 				519D6B78F2B444D6AFDDA223 /* DiffusionModels.swift */,
 				FCEFF6EA47A84ED5A7DC5BBF /* DiffusionViewModel.swift */,
 				68C46651E57046E7AB257F58 /* DiffusionView.swift */,
@@ -705,6 +709,7 @@
 			isa = PBXGroup;
 			children = (
 				AB0000000000000000000433 /* HostQuestionManager.swift */,
+				AB0000000000000000000439 /* HostQuestionCard.swift */,
 				AB0000000000000000000435 /* HostQuestionSheet.swift */,
 			);
 			path = HostQuestions;
@@ -728,12 +733,34 @@
 			path = Upsell;
 			sourceTree = "<group>";
 		};
+		AB0000000000000000001000 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000001002 /* OnboardingCoordinator.swift */,
+				AB0000000000000000001004 /* OnboardingFlowView.swift */,
+				AB0000000000000000001006 /* OnboardingGuidedFlowView.swift */,
+				AB0000000000000000001008 /* AppTourView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000002000 /* Tips */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000002002 /* TipCoordinator.swift */,
+				AB0000000000000000002004 /* ContextualTipView.swift */,
+			);
+			path = Tips;
+			sourceTree = "<group>";
+		};
 		AB0000000000000000009001 /* BoostinghostTests */ = {
 			isa = PBXGroup;
 			children = (
 				AB0000000000000000009011 /* CleaningStateTests.swift */,
 				AB0000000000000000009012 /* LaneAlgorithmTests.swift */,
 				AB0000000000000000009013 /* CalendarViewModelTests.swift */,
+				AB0000000000000000009014 /* CalendarOrderTests.swift */,
+				AB0000000000000000009015 /* HostQuestionTests.swift */,
 			);
 			path = BoostinghostTests;
 			sourceTree = "<group>";
@@ -854,13 +881,16 @@
 				AB0000000000000000000701 /* DayCellActionSheet.swift in Sources */,
 				AB0000000000000000000703 /* CreateReservationView.swift in Sources */,
 				AB0000000000000000000705 /* CalendarBarLayout.swift in Sources */,
+				AB0000000000000000003003 /* ReservationLaneLayout.swift in Sources */,
 				AB0000000000000000000707 /* BHGuestHoldView.swift in Sources */,
 				AB0000000000000000000709 /* BulkActionSheet.swift in Sources */,
+				AB0000000000000000003005 /* PropertyReorderSheet.swift in Sources */,
 				56A0A44C30497C07001E71EE /* CalendarViewModel.swift in Sources */,
 				56A0A4603049E473001E71EE /* TeamViewModel.swift in Sources */,
 				56A0A4613049E473001E71EE /* TeamMemberDetailView.swift in Sources */,
 				56A0A4623049E473001E71EE /* TeamModels.swift in Sources */,
 				56A0A4633049E473001E71EE /* TeamListView.swift in Sources */,
+				AB0000000000000000003001 /* PropertyAccessPickerSheet.swift in Sources */,
 				56D2B8623050585F00F5B146 /* DebourModels.swift in Sources */,
 				56D2B8633050585F00F5B146 /* DebourViewModel.swift in Sources */,
 				56D2B8643050585F00F5B146 /* DebourView.swift in Sources */,
@@ -868,6 +898,9 @@
 				BF55667788990011223344BB /* AttestationModels.swift in Sources */,
 				BF66778899001122334455BB /* AttestationViewModel.swift in Sources */,
 				BF77889900112233445566BB /* AttestationView.swift in Sources */,
+				BF8899001122334455667788AA /* WelcomeBookModels.swift in Sources */,
+				BF9900112233445566778899AA /* WelcomeBookViewModel.swift in Sources */,
+				BFAA112233445566778899001AA /* WelcomeBookView.swift in Sources */,
 				56A0A44D30497C07001E71EE /* MonthGridView.swift in Sources */,
 				56A0A44E30497C07001E71EE /* CalendarView.swift in Sources */,
 				56A0A46E304B00F3001E71EE /* PushNotificationManager.swift in Sources */,
@@ -948,6 +981,7 @@
 				AB0000000000000000000432 /* HostQuestion.swift in Sources */,
 				AB0000000000000000000434 /* HostQuestionManager.swift in Sources */,
 				AB0000000000000000000436 /* HostQuestionSheet.swift in Sources */,
+				AB000000000000000000043A /* HostQuestionCard.swift in Sources */,
 				AB0000000000000000000042 /* NumericKeyboardModifier.swift in Sources */,
 				AB0000000000000000000043 /* DepositsModels.swift in Sources */,
 				AB0000000000000000000044 /* DepositsViewModel.swift in Sources */,
@@ -1017,6 +1051,8 @@
 				AB0000000000000000009021 /* CleaningStateTests.swift in Sources */,
 				AB0000000000000000009022 /* LaneAlgorithmTests.swift in Sources */,
 				AB0000000000000000009023 /* CalendarViewModelTests.swift in Sources */,
+				AB0000000000000000009024 /* CalendarOrderTests.swift in Sources */,
+				AB0000000000000000009025 /* HostQuestionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1163,7 +1199,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Boostinghost;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Boostinghost utilise l'appareil photo pour ajouter les photos de contrôle lors des interventions de ménage.";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "Face ID permet d'accéder à votre espace sans ressaisir votre mot de passe.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Accédez à votre espace Boostinghost sans ressaisir votre mot de passe.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Utilisé pour joindre une photo ou un document à un débours.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -1173,7 +1209,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.0;
+				MARKETING_VERSION = 6.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.boostinghost.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1198,7 +1234,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Boostinghost;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Boostinghost utilise l'appareil photo pour ajouter les photos de contrôle lors des interventions de ménage.";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "Face ID permet d'accéder à votre espace sans ressaisir votre mot de passe.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Accédez à votre espace Boostinghost sans ressaisir votre mot de passe.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Utilisé pour joindre une photo ou un document à un débours.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -1208,7 +1244,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.0;
+				MARKETING_VERSION = 6.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.boostinghost.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

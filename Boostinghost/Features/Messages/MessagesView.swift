@@ -38,23 +38,26 @@ struct MessagesView: View {
         .task {
             // Skip if MainTabView already started or completed the load.
             if case .loading = vm.state { return }
-            if case .loaded  = vm.state { return }
+            if case .loaded  = vm.state { consumePendingConversationIfPossible(); return }
             await reload()
+            consumePendingConversationIfPossible()
+        }
+        // FIX-2/3: pendingConversationId may have been set before this view mounted
+        // (cold start, background with Messages tab never opened). onAppear fires
+        // synchronously when the view enters the hierarchy — handles the case where
+        // onChange would have missed the already-set value.
+        .onAppear {
+            #if DEBUG
+            if let convId = router.pendingConversationId {
+                print("[PUSHREQ] MessagesView appeared with pendingConversationId=\(convId)")
+            }
+            #endif
+            if case .loaded = vm.state { consumePendingConversationIfPossible() }
         }
         .onChange(of: authStore.agencyContext) { Task { await reload() } }
         .onChange(of: router.pendingConversationId) { _, convId in
-            guard let convId else { return }
-            NotificationRouter.shared.pendingConversationId = nil
-            if let conv = vm.conversations.first(where: { $0.id == convId }) {
-                path.append(conv)
-            } else {
-                Task {
-                    await reload()
-                    if let conv = vm.conversations.first(where: { $0.id == convId }) {
-                        path.append(conv)
-                    }
-                }
-            }
+            guard convId != nil else { return }
+            consumePendingConversationIfPossible()
         }
         .sheet(isPresented: $showAccount) {
             AccountSheet().environment(setupVM)
@@ -67,6 +70,55 @@ struct MessagesView: View {
     private func reload() async {
         vm.agencyAll = authStore.agencyAll
         await vm.load()
+    }
+
+    // Opens the conversation matching router.pendingConversationId, if loaded.
+    // Only clears the ID after successful navigation or explicit give-up (not-found
+    // after one reload), so the deep-link survives cold start and lazy tab mounting.
+    private func consumePendingConversationIfPossible() {
+        guard let convId = router.pendingConversationId else { return }
+        guard case .loaded = vm.state else {
+            #if DEBUG
+            print("[PUSHREQ] waiting for conversation id=\(convId) — state not loaded yet")
+            #endif
+            return
+        }
+        #if DEBUG
+        print("[PUSHREQ] conversations loaded count=\(vm.conversations.count), looking for id=\(convId)")
+        #endif
+        if let conv = vm.conversations.first(where: { $0.id == convId }) {
+            #if DEBUG
+            print("[PUSHREQ] found conversation id=\(convId)")
+            print("[PUSHREQ] opening conversation id=\(convId)")
+            #endif
+            NotificationRouter.shared.pendingConversationId = nil
+            path.append(conv)
+            #if DEBUG
+            print("[PUSHREQ] consumed conversation id=\(convId)")
+            #endif
+        } else {
+            #if DEBUG
+            print("[PUSHREQ] conversation id=\(convId) not found in \(vm.conversations.count) loaded convs — reloading once")
+            #endif
+            Task {
+                await reload()
+                // Verify the ID was not consumed by another path during reload.
+                guard let stillId = router.pendingConversationId, stillId == convId else { return }
+                if let conv = vm.conversations.first(where: { $0.id == convId }) {
+                    #if DEBUG
+                    print("[PUSHREQ] found conversation id=\(convId) after reload")
+                    print("[PUSHREQ] opening conversation id=\(convId)")
+                    #endif
+                    NotificationRouter.shared.pendingConversationId = nil
+                    path.append(conv)
+                    #if DEBUG
+                    print("[PUSHREQ] consumed conversation id=\(convId)")
+                    #endif
+                } else {
+                    NotificationRouter.shared.pendingConversationId = nil
+                }
+            }
+        }
     }
 
     // MARK: - Barre de navigation + filtres

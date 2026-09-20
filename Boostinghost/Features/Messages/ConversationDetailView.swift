@@ -200,20 +200,35 @@ struct ConversationDetailView: View {
                             .multilineTextAlignment(.center)
                             .padding(.top, 40)
                     }
-                    ForEach(groupedMessages, id: \.dayKey) { group in
+                    ForEach(groupedItems, id: \.dayKey) { group in
                         DateSeparatorView(label: group.dayLabel)
                             .padding(.top, 16)
                             .padding(.bottom, 8)
-                        ForEach(group.messages) { msg in
-                            MessageBubbleView(
-                                message: msg,
-                                isLastSent: msg.id == lastSentId,
-                                onRetry: (msg.isOutgoing && msg.delivered == false && msg.deliveryError?.isEmpty == false)
-                                    ? { vm.retryMessage(msg) } : nil
-                            )
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 6)
-                            .id(msg.id)
+                        ForEach(group.items) { item in
+                            switch item {
+                            case .message(let msg):
+                                MessageBubbleView(
+                                    message: msg,
+                                    isLastSent: msg.id == lastSentId,
+                                    onRetry: (msg.isOutgoing && msg.delivered == false && msg.deliveryError?.isEmpty == false)
+                                        ? { vm.retryMessage(msg) } : nil
+                                )
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 6)
+                                .id("msg_\(msg.id)")
+                            case .hostQuestion(let q):
+                                HostQuestionCard(question: q) { answer, text in
+                                    try await vm.answerHostQuestion(q.id, answer: answer, text: text)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 10)
+                                .id("hq_\(q.id)")
+                                .onAppear {
+                                    #if DEBUG
+                                    print("[HOSTQ-LIVE3] RENDER HostQuestionCard id=\(q.id) status=\(q.status ?? "nil")")
+                                    #endif
+                                }
+                            }
                         }
                     }
                 }
@@ -221,8 +236,8 @@ struct ConversationDetailView: View {
                 .padding(.bottom, 16)
             }
             .defaultScrollAnchor(.bottom)
-            .onChange(of: vm.messages.count) { old, new in
-                guard new > 0, let lastId = vm.messages.last?.id else { return }
+            .onChange(of: vm.mergedItems.count) { old, new in
+                guard new > 0, let lastId = vm.mergedItems.last?.id else { return }
                 if old == 0 {
                     // Initial load: defaultScrollAnchor may not anchor correctly when
                     // LazyVStack content appears after the ScrollView was already created
@@ -242,39 +257,51 @@ struct ConversationDetailView: View {
     private struct DayGroup: Identifiable {
         let dayKey: String     // "yyyy-MM-dd" — stable pour ForEach
         let dayLabel: String
-        let messages: [Message]
+        let items: [ConversationItem]
         var id: String { dayKey }
     }
 
-    private var groupedMessages: [DayGroup] {
+    private var groupedItems: [DayGroup] {
         var result: [DayGroup] = []
         var currentKey = ""
-        var currentMsgs: [Message] = []
+        var currentItems: [ConversationItem] = []
 
-        for msg in vm.messages {
-            let date = parseISO(msg.createdAt) ?? Date()
+        for item in vm.mergedItems {
+            let date = parseISO(item.sortKey) ?? Date()
             let key = dayKey(date)
             if key == currentKey {
-                currentMsgs.append(msg)
+                currentItems.append(item)
             } else {
-                if !currentMsgs.isEmpty {
+                if !currentItems.isEmpty {
                     result.append(DayGroup(
                         dayKey: currentKey,
                         dayLabel: dayLabel(for: currentKey),
-                        messages: currentMsgs
+                        items: currentItems
                     ))
                 }
                 currentKey = key
-                currentMsgs = [msg]
+                currentItems = [item]
             }
         }
-        if !currentMsgs.isEmpty {
+        if !currentItems.isEmpty {
             result.append(DayGroup(
                 dayKey: currentKey,
                 dayLabel: dayLabel(for: currentKey),
-                messages: currentMsgs
+                items: currentItems
             ))
         }
+        #if DEBUG
+        print("[HOSTQ-LIVE3] groupedItems — \(result.count) groups")
+        for g in result {
+            let types = g.items.map { item -> String in
+                switch item {
+                case .message:      return "msg"
+                case .hostQuestion: return "hq"
+                }
+            }.joined(separator: ",")
+            print("[HOSTQ-LIVE3]   day=\(g.dayKey) count=\(g.items.count) types=[\(types)]")
+        }
+        #endif
         return result
     }
 
@@ -600,33 +627,39 @@ private struct MessageBubbleView: View {
     private var isOwner: Bool { message.isOutgoing }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 0) {
-            if isOwner { Spacer(minLength: 0) }
+        Group {
+            if message.isInternalNote {
+                internalNoteView
+            } else {
+                HStack(alignment: .bottom, spacing: 0) {
+                    if isOwner { Spacer(minLength: 0) }
 
-            VStack(alignment: isOwner ? .trailing : .leading, spacing: 3) {
-                if message.isSystem {
-                    systemMessage
-                } else {
-                    bubble
+                    VStack(alignment: isOwner ? .trailing : .leading, spacing: 3) {
+                        if message.isSystem {
+                            systemMessage
+                        } else {
+                            bubble
+                        }
+
+                        originCapsule
+                        deliveryStatus
+
+                        Text(formattedTime)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.bhAttenue)
+                            .padding(.horizontal, 4)
+                    }
+                    .frame(maxWidth: UIScreen.main.bounds.width * 0.78,
+                           alignment: isOwner ? .trailing : .leading)
+
+                    if !isOwner { Spacer(minLength: 0) }
                 }
-
-                originCapsule
-                deliveryStatus
-
-                Text(formattedTime)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.bhAttenue)
-                    .padding(.horizontal, 4)
+                .alert("Erreur de transmission", isPresented: $showErrorAlert) {
+                    Button("OK") { }
+                } message: {
+                    Text(message.deliveryError ?? "")
+                }
             }
-            .frame(maxWidth: UIScreen.main.bounds.width * 0.78,
-                   alignment: isOwner ? .trailing : .leading)
-
-            if !isOwner { Spacer(minLength: 0) }
-        }
-        .alert("Erreur de transmission", isPresented: $showErrorAlert) {
-            Button("OK") { }
-        } message: {
-            Text(message.deliveryError ?? "")
         }
     }
 
@@ -677,6 +710,21 @@ private struct MessageBubbleView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
             .background(Capsule().fill(Color.bhVert.opacity(0.82)))
+    }
+
+    private var internalNoteView: some View {
+        Text(message.displayMessage)
+            .font(.system(size: 13))
+            .foregroundStyle(Color.bhOr)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(
+                Capsule()
+                    .fill(Color.bhOr.opacity(0.10))
+                    .overlay { Capsule().stroke(Color.bhOr.opacity(0.30), lineWidth: 1) }
+            )
+            .frame(maxWidth: .infinity)
     }
 
     private var bubble: some View {

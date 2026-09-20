@@ -12,6 +12,16 @@ extension KeyedDecodingContainer {
         return nil
     }
 
+    // Int-or-String → Int  (throws if missing or not a valid integer)
+    func flexIntRequired(forKey key: Key) throws -> Int {
+        if let i = try? decode(Int.self,    forKey: key) { return i }
+        if let s = try? decode(String.self, forKey: key), let i = Int(s) { return i }
+        throw DecodingError.typeMismatch(Int.self, DecodingError.Context(
+            codingPath: [key],
+            debugDescription: "Expected Int or numeric String for '\(key.stringValue)'"
+        ))
+    }
+
     // Double-or-Int-or-String → Double?
     func flexDouble(forKey key: Key) -> Double? {
         if let d = try? decodeIfPresent(Double.self, forKey: key) { return d }

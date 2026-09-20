@@ -11,8 +11,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Accédez à votre espace Boostinghost sans ressaisir votre mot de passe.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

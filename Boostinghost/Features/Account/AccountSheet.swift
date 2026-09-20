@@ -27,6 +27,7 @@ struct AccountSheet: View {
     @State private var path: NavigationPath
     @State private var vm = AccountViewModel()
     @State private var showSwitcher = false
+    @State private var showPIN      = false
 
     init(initialDestination: AccountDestination? = nil) {
         self.initialDestination = initialDestination
@@ -50,6 +51,7 @@ struct AccountSheet: View {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 16) {
                             profileCard
+                            cleanerAccessCard
                             if !isSubAccount {
                                 group1
                                 group2
@@ -98,6 +100,9 @@ struct AccountSheet: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .navigateToToday)) { _ in
             dismiss()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .setupShouldRefresh)) { _ in
+            Task { await vm.silentRefreshPayments() }
         }
         .sheet(isPresented: $showSwitcher) {
             AccountSwitcherSheet { showSwitcher = false; dismiss() }
@@ -188,6 +193,64 @@ struct AccountSheet: View {
         }
     }
 
+    // MARK: - Carte Mon accès ménage (sous-compte cleaner uniquement)
+
+    @ViewBuilder
+    private var cleanerAccessCard: some View {
+        if isSubAccount, let access = vm.cleanerAccess {
+            ListCard {
+                CardRow(showSeparator: true) {
+                    HStack(spacing: 10) {
+                        Text("Code PIN")
+                            .font(.system(size: 14.5, weight: .medium))
+                            .foregroundStyle(Color.bhEncre)
+                        Spacer(minLength: 4)
+                        Text(showPIN ? access.pinCode : String(repeating: "●", count: max(access.pinCode.count, 4)))
+                            .font(.system(size: 15).monospacedDigit())
+                            .foregroundStyle(Color.bhEncre)
+                        Button(showPIN ? "Masquer" : "Afficher") { showPIN.toggle() }
+                            .font(.system(size: 13.5, weight: .medium))
+                            .foregroundStyle(Color.bhVert)
+                            .buttonStyle(.plain)
+                        Button {
+                            UIPasteboard.general.string = access.pinCode
+                        } label: {
+                            Image(systemName: "doc.on.doc")
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color.bhVert)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                CardRow(showSeparator: false) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 10) {
+                            Text("Accès web")
+                                .font(.system(size: 14.5, weight: .medium))
+                                .foregroundStyle(Color.bhEncre)
+                            Spacer(minLength: 4)
+                            if let url = URL(string: access.accessUrl), !access.accessUrl.isEmpty {
+                                Button("Ouvrir") { UIApplication.shared.open(url) }
+                                    .font(.system(size: 13.5, weight: .medium))
+                                    .foregroundStyle(Color.bhVert)
+                                    .buttonStyle(.plain)
+                                ShareLink(item: url) {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 15))
+                                        .foregroundStyle(Color.bhVert)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        Text("Remplissez vos tâches depuis un navigateur.")
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(Color(hex: "#5E6B63"))
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Groupe 1 — Organisation
 
     private var group1: some View {
@@ -225,7 +288,8 @@ struct AccountSheet: View {
             // Paiements — Stripe et passerelle
             CardRow(showSeparator: true) {
                 NavigationLink(value: AccountDestination.payments) {
-                    rowContent(icon: "banknote", title: "Paiements")
+                    rowContent(icon: "banknote", title: "Paiements",
+                               value: paymentsLabel)
                 }
                 .buttonStyle(.plain)
             }
@@ -425,5 +489,13 @@ struct AccountSheet: View {
         case .failed:           return "—"
         case .loaded(let n):    return n > 0 ? "\(n) modèle\(n == 1 ? "" : "s")" : nil
         }
+    }
+
+    private var paymentsLabel: String? {
+        guard let profile = vm.userProfile else { return nil }
+        if profile.useBhStripe { return "Stripe Boostinghost" }
+        guard let s = vm.stripeStatus else { return nil }
+        if s.connected && s.canCharge { return "Stripe personnel" }
+        return "À configurer"
     }
 }

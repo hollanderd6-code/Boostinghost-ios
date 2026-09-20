@@ -17,14 +17,28 @@ struct Message: Decodable, Identifiable {
     let delivered: Bool?
     let deliveryError: String?
 
-    var isFromOwner: Bool { senderType == "owner" || senderType == "property" }
+    var isFromOwner: Bool   { senderType == "owner" || senderType == "property" }
     // "system" is the actual sender_type the backend uses for AI-generated responses.
     // is_bot_response / is_auto_response are always false in practice — do not rely on them.
-    var isBot: Bool      { senderType == "system" }
+    var isBot: Bool         { senderType == "system" }
     // Templates are sent as "property" messages with a sender_name prefixed "tpl_".
-    var isTemplate: Bool { senderType == "property" && senderName?.hasPrefix("tpl_") == true }
-    var isOutgoing: Bool { isFromOwner || isBot }
-    var isSystem: Bool   { false }
+    var isTemplate: Bool    { senderType == "property" && senderName?.hasPrefix("tpl_") == true }
+    var isOutgoing: Bool    { isFromOwner || isBot }
+    // Stored as sender_type='internal_note' with a sentinel prefix — host-only context notes.
+    var isInternalNote: Bool { senderType == "internal_note" }
+    var isSystem: Bool      { false }
+
+    // Returns the display text: strips the sentinel prefix for internal notes.
+    private static let sentinel = "⟦NOTE_INTERNE⟧ "
+    var displayMessage: String {
+        isInternalNote ? message.deletingPrefix(Message.sentinel) : message
+    }
+}
+
+private extension String {
+    func deletingPrefix(_ prefix: String) -> String {
+        hasPrefix(prefix) ? String(dropFirst(prefix.count)) : self
+    }
 }
 
 // MARK: - Response wrappers

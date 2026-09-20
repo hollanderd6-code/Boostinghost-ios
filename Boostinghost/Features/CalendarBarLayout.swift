@@ -19,4 +19,10 @@ enum CalBarLayout {
     // -- SemaineView (ZStack layout, price behind bar) --
     /// Y offset of the guest-name overlay — aligns with top of centered bar
     static let swOverlayY: CGFloat = (rowH - barH) / 2  // = 10
+
+    // -- Lane layout (Mensuel, chevauchement de réservations) --
+    /// Gap between lanes when laneCount > 1
+    static let laneGap: CGFloat = 2
+    /// Padding above lane 0 and below last lane when laneCount > 1
+    static let lanePad: CGFloat = 4
 }

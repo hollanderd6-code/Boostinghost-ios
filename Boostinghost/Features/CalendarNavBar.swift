@@ -9,8 +9,10 @@ struct CalendarNavBar: View {
 
     @Environment(TipCoordinator.self) private var tipCoordinator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(AuthStore.self) private var authStore
 
     @State private var showBulkAction = false
+    @State private var showReorder    = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +28,14 @@ struct CalendarNavBar: View {
                             ForEach(vm.properties) { prop in
                                 Button(prop.displayName) {
                                     vm.displayMode = .single(prop.id)
+                                }
+                            }
+                            if !(authStore.session?.isSubAccount ?? false) {
+                                Divider()
+                                Button {
+                                    showReorder = true
+                                } label: {
+                                    Label("Réorganiser les logements", systemImage: "line.3.horizontal")
                                 }
                             }
                         }
@@ -111,6 +121,9 @@ struct CalendarNavBar: View {
         }
         .sheet(isPresented: $showBulkAction) {
             BulkActionSheet(vm: vm)
+        }
+        .sheet(isPresented: $showReorder) {
+            PropertyReorderSheet(vm: vm)
         }
     }
 

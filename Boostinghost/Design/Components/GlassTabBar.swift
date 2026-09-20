@@ -48,10 +48,6 @@ struct MainTabView: View {
     @State private var calendarVM = CalendarViewModel()
     @State private var messagesVM = MessagesViewModel()
     @State private var showSupportSheet = false
-    // Host questions
-    @State private var hostQuestion: HostQuestion? = nil
-    @State private var showHostConfirmation = false
-    @State private var hostConfirmationText = ""
 
     private var router: NotificationRouter { NotificationRouter.shared }
     private var hostQM: HostQuestionManager { HostQuestionManager.shared }
@@ -95,7 +91,6 @@ struct MainTabView: View {
         .task {
             messagesVM.agencyAll = authStore.agencyAll
             await messagesVM.load()
-            hostQuestion = hostQM.pendingQuestion
             hostQM.startPolling()
         }
         .onChange(of: scenePhase) { _, phase in
@@ -109,17 +104,19 @@ struct MainTabView: View {
                 hostQM.stopPolling()
             }
         }
-        .onChange(of: hostQM.pendingQuestion) { _, q in
-            hostQuestion = q
-        }
-        .onChange(of: hostQM.lastConfirmation) { _, msg in
-            guard let msg else { return }
-            hostConfirmationText = msg
-            showHostConfirmation = true
-            hostQM.clearConfirmation()
-        }
         .onChange(of: authStore.accountSwitchTrigger) {
             selectedTab = .today
+        }
+        // Cold start / background: pendingTab may have been set before this view mounted.
+        // onChange only fires on *changes*, so also consume on appear.
+        .onAppear {
+            if let tab = router.pendingTab, tab.isVisible(for: session) {
+                #if DEBUG
+                print("[PUSHREQ] applying pendingTab=\(tab.rawValue) on appear (cold start)")
+                #endif
+                selectedTab = tab
+                NotificationRouter.shared.pendingTab = nil
+            }
         }
         .onChange(of: router.pendingTab) { _, tab in
             guard let tab else { return }
@@ -138,15 +135,6 @@ struct MainTabView: View {
             AccountSheet(initialDestination: .support)
                 .environment(authStore)
                 .environment(setupVM)
-        }
-        .sheet(item: $hostQuestion) { q in
-            HostQuestionSheet(question: q)
-                .interactiveDismissDisabled()
-        }
-        .alert("Réponse transmise", isPresented: $showHostConfirmation) {
-            Button("OK") {}
-        } message: {
-            Text(hostConfirmationText)
         }
         .onDisappear { hostQM.stopPolling() }
     }

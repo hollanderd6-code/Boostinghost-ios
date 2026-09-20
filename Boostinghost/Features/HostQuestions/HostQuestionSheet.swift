@@ -135,7 +135,7 @@ struct HostQuestionSheet: View {
 
     private func scheduleBlock(meta: HostQuestionMeta) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            let typeLabel = meta.type == "early_checkin" ? "Arrivée anticipée" : "Départ tardif"
+            let typeLabel = meta.type == .early ? "Arrivée anticipée" : "Départ tardif"
             Text(typeLabel)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.bhOr)

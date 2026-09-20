@@ -9,17 +9,20 @@ struct PropertyDetailView: View {
 
     let vm: PropertiesViewModel
     @State private var property: Property
+    @StateObject private var welcomeBookVM: WelcomeBookViewModel
 
     init(property: Property, vm: PropertiesViewModel) {
         self.vm = vm
         self._property = State(initialValue: property)
+        self._welcomeBookVM = StateObject(wrappedValue: WelcomeBookViewModel(propertyId: property.id))
     }
 
     private enum BlockNav: Hashable {
-        case identite, sejour, argent, prestations, acces, quartier, equipements, ia, plateformes
+        case identite, sejour, argent, prestations, acces, quartier, equipements, ia, plateformes, welcomeBook
     }
     @State private var activeBlock: BlockNav? = nil
 
+    @State private var showLivretPreview   = false
     @State private var showDuplicateSheet  = false
     @State private var showConnectSheet    = false
     @State private var showDisconnectAlert = false
@@ -61,6 +64,9 @@ struct PropertyDetailView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showLivretPreview) {
+            if let url = welcomeBookVM.publicUrl { SafariView(url: url) }
+        }
         .sheet(isPresented: $showDuplicateSheet) {
             DuplicatePropertySheet(source: property) {
                 Task { await vm.load() }
@@ -84,6 +90,7 @@ struct PropertyDetailView: View {
             Task { await loadConnectedChannels() }
         }
         .task { await loadConnectedChannels() }
+        .task { await welcomeBookVM.fetch() }
         .alert("Déconnecter la diffusion ?", isPresented: $showDisconnectAlert) {
             Button("Déconnecter quand même", role: .destructive) {
                 Task { await disconnect() }
@@ -160,6 +167,11 @@ struct PropertyDetailView: View {
                 }
             case .plateformes:
                 PlateformesBlockView(property: property) { updated in
+                    property = updated
+                    vm.updateProperty(updated)
+                }
+            case .welcomeBook:
+                WelcomeBookView(vm: welcomeBookVM, property: property) { updated in
                     property = updated
                     vm.updateProperty(updated)
                 }
@@ -252,9 +264,9 @@ struct PropertyDetailView: View {
 
     // MARK: - Carte Livret d'accueil
 
+    @ViewBuilder
     private var livretCard: some View {
-        let filled = livretFilled
-        return ListCard {
+        ListCard {
             CardRow(showSeparator: false) {
                 HStack(alignment: .top, spacing: 14) {
                     ZStack {
@@ -265,59 +277,111 @@ struct PropertyDetailView: View {
                             .font(.system(size: 19, weight: .medium))
                             .foregroundStyle(Color.bhVert)
                     }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(alignment: .center) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Livret d'accueil")
-                                    .font(.system(size: 15.5, weight: .semibold))
-                                    .foregroundStyle(Color.bhEncre)
-                                Text("\(filled) bloc\(filled == 1 ? "" : "s") sur 3 rempli\(filled == 1 ? "" : "s")")
-                                    .font(.system(size: 12.5))
-                                    .foregroundStyle(Color.bhAttenue)
-                            }
-                            Spacer()
-                            Button { openWelcomeBook() } label: {
-                                Text("Voir")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Color.bhVert)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 7)
-                                    .glassEffect(in: .rect(cornerRadius: 12))
-                                    .specularEdge(cornerRadius: 12)
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        // Barre de progression 5px
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 2.5, style: .continuous)
-                                    .fill(Color.white.opacity(0.4))
-                                if filled > 0 {
-                                    RoundedRectangle(cornerRadius: 2.5, style: .continuous)
-                                        .fill(Color.bhOccupe)
-                                        .frame(width: geo.size.width * CGFloat(filled) / 3.0)
-                                }
-                            }
-                        }
-                        .frame(height: 5)
-
-                        Text("Il se remplit à partir des blocs Accès, Le quartier et Équipements & règles. Rien à ressaisir.")
-                            .font(.system(size: 12))
-                            .foregroundStyle(Color.bhAttenue)
-                    }
+                    livretCardContent
                 }
             }
         }
     }
 
-    private var livretFilled: Int { property.welcomeBookCompletionBlocks }
+    @ViewBuilder
+    private var livretCardContent: some View {
+        switch welcomeBookVM.state {
+        case .idle, .loading:
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Livret d'accueil")
+                    .font(.system(size: 15.5, weight: .semibold))
+                    .foregroundStyle(Color.bhEncre)
+                ProgressView().tint(Color.bhAttenue).scaleEffect(0.85)
+            }
 
-    private func openWelcomeBook() {
-        guard let urlStr = property.welcomeBookUrl, !urlStr.isEmpty,
-              let url = URL(string: urlStr) else { return }
-        openURL(url)
+        case .notCreated:
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Livret d'accueil")
+                        .font(.system(size: 15.5, weight: .semibold))
+                        .foregroundStyle(Color.bhEncre)
+                    Text("Créez le guide pratique de vos voyageurs.")
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Color.bhAttenue)
+                }
+                Spacer()
+                Button {
+                    Task {
+                        await welcomeBookVM.create()
+                        if welcomeBookVM.isLoaded { activeBlock = .welcomeBook }
+                    }
+                } label: {
+                    Text("Créer")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.bhVert)
+                        .padding(.horizontal, 14).padding(.vertical, 7)
+                        .glassEffect(in: .rect(cornerRadius: 12))
+                        .specularEdge(cornerRadius: 12)
+                }
+                .buttonStyle(.plain)
+            }
+
+        case .creating:
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Livret d'accueil")
+                    .font(.system(size: 15.5, weight: .semibold))
+                    .foregroundStyle(Color.bhEncre)
+                Text("Création en cours…")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Color.bhAttenue)
+            }
+
+        case .loaded, .saving:
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Livret d'accueil")
+                            .font(.system(size: 15.5, weight: .semibold))
+                            .foregroundStyle(Color.bhEncre)
+                        Text("Publié · accessible aux voyageurs")
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(Color.bhAttenue)
+                    }
+                    Spacer()
+                    Button { activeBlock = .welcomeBook } label: {
+                        Text("Modifier")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Color.bhVert)
+                            .padding(.horizontal, 14).padding(.vertical, 7)
+                            .glassEffect(in: .rect(cornerRadius: 12))
+                            .specularEdge(cornerRadius: 12)
+                    }
+                    .buttonStyle(.plain)
+                }
+                HStack(spacing: 16) {
+                    Spacer()
+                    if let url = welcomeBookVM.publicUrl {
+                        Button { showLivretPreview = true } label: {
+                            Label("Aperçu", systemImage: "safari")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Color.bhAttenue)
+                        }
+                        .buttonStyle(.plain)
+                        ShareLink(item: url) {
+                            Label("Partager", systemImage: "square.and.arrow.up")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Color.bhAttenue)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+
+        case .failed:
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Livret d'accueil")
+                    .font(.system(size: 15.5, weight: .semibold))
+                    .foregroundStyle(Color.bhEncre)
+                Button("Réessayer") { Task { await welcomeBookVM.refresh() } }
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Color.bhVert)
+            }
+        }
     }
 
     // MARK: - Les 9 blocs

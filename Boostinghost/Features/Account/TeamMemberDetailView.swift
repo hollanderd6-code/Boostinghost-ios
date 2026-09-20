@@ -11,6 +11,7 @@ struct TeamMemberDetailView: View {
     @State private var editState: PermissionsEditState
     @State private var isSaving = false
     @State private var saveError: String?
+    @State private var showPropertyPicker = false
 
     init(member: SubAccount, teamVM: TeamViewModel) {
         self.member  = member
@@ -51,6 +52,13 @@ struct TeamMemberDetailView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
+        .task { await teamVM.loadProperties() }
+        .sheet(isPresented: $showPropertyPicker) {
+            PropertyAccessPickerSheet(
+                selectedIds: $editState.accessibleProperties,
+                properties: teamVM.properties
+            )
+        }
     }
 
     // MARK: - Barre de navigation
@@ -177,6 +185,7 @@ struct TeamMemberDetailView: View {
             if teamVM.isAgencyMode, let parentName = member.parentUserName, !parentName.isEmpty {
                 parentAccountSection(name: parentName)
             }
+            accessiblePropertiesReadSection
             if !isCustomRole {
                 fixedRoleBanner
             }
@@ -225,6 +234,43 @@ struct TeamMemberDetailView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(Color.bhOr.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    // MARK: - Logements accessibles (lecture)
+
+    private var accessiblePropertiesReadSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionLabel(text: "Logements accessibles")
+            ListCard {
+                CardRow(showSeparator: false) {
+                    HStack {
+                        Text("Périmètre")
+                            .font(.system(size: 14.5, weight: .medium))
+                            .foregroundStyle(Color.bhEncre)
+                        Spacer()
+                        Text(accessiblePropertiesDisplayLabel)
+                            .font(.system(size: 14.5))
+                            .foregroundStyle(Color.bhAttenue)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+            }
+        }
+    }
+
+    private var accessiblePropertiesDisplayLabel: String {
+        let ids = member.accessibleProperties
+        if ids.isEmpty { return "Tous les logements" }
+        let n = ids.count
+        guard !teamVM.properties.isEmpty else {
+            return "\(n) logement\(n == 1 ? "" : "s")"
+        }
+        let names = ids.compactMap { id -> String? in
+            teamVM.properties.first { $0.id == id }.map { $0.internalName ?? $0.name }
+        }
+        guard !names.isEmpty else { return "\(n) logement\(n == 1 ? "" : "s")" }
+        if names.count <= 2 { return names.joined(separator: ", ") }
+        return "\(names.count) logements"
     }
 
     // MARK: - Groupe de permissions (lecture)
@@ -278,8 +324,39 @@ struct TeamMemberDetailView: View {
 
     // MARK: - Contenu édition
 
+    private var editPropertyPickerLabel: String {
+        if editState.accessibleProperties.isEmpty { return "Tous les logements" }
+        let n = editState.accessibleProperties.count
+        return "\(n) logement\(n == 1 ? "" : "s")"
+    }
+
     @ViewBuilder
     private var editContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionLabel(text: "Logements accessibles")
+            ListCard {
+                CardRow(showSeparator: false) {
+                    Button { showPropertyPicker = true } label: {
+                        HStack(spacing: 10) {
+                            Text("Périmètre")
+                                .font(.system(size: 14.5, weight: .medium))
+                                .foregroundStyle(Color.bhEncre)
+                            Spacer(minLength: 8)
+                            Text(editPropertyPickerLabel)
+                                .font(.system(size: 14.5))
+                                .foregroundStyle(Color.bhAttenue)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minHeight: 44)
+                }
+            }
+        }
         editSection(title: "Calendrier", entries: [
             ("Voir le calendrier",             false, $editState.canViewCalendar),
             ("Modifier les réservations",      true,  $editState.canEditReservations),

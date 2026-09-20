@@ -73,6 +73,29 @@ struct UserProfile: Codable {
     }
 }
 
+// MARK: - Accès ménage du sous-compte cleaner (GET /api/cleaning/me/access)
+
+struct CleanerAccessInfo: Decodable {
+    let cleanerId: String
+    let name:      String
+    let pinCode:   String
+    let accessUrl: String
+    let isActive:  Bool
+
+    private enum CodingKeys: CodingKey {
+        case cleanerId, name, pinCode, accessUrl, isActive
+    }
+
+    init(from decoder: Decoder) throws {
+        let c      = try decoder.container(keyedBy: CodingKeys.self)
+        cleanerId  = (try? c.decodeIfPresent(String.self, forKey: .cleanerId)) ?? ""
+        name       = (try? c.decodeIfPresent(String.self, forKey: .name))      ?? ""
+        pinCode    = (try? c.decodeIfPresent(String.self, forKey: .pinCode))   ?? ""
+        accessUrl  = (try? c.decodeIfPresent(String.self, forKey: .accessUrl)) ?? ""
+        isActive   = (try? c.decodeIfPresent(Bool.self,   forKey: .isActive))  ?? false
+    }
+}
+
 // MARK: - Sub-accounts (GET /api/sub-accounts/list)
 // Relevé dans sub-accounts-routes.js:811 — res.json({ success, subAccounts: [...] })
 
@@ -284,6 +307,7 @@ struct SubAccountCreateBody: Encodable {
     let lastName:     String
     let role:         String
     let targetUserId: String?
+    let propertyIds:  [String]
 }
 
 // Réponse 201 : le champ exact varie ; on lit juste success pour confirmer.

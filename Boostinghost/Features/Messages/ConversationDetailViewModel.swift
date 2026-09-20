@@ -14,6 +14,7 @@ final class ConversationDetailViewModel {
 
     private(set) var loadState: LoadState = .idle
     private(set) var messages: [Message] = []
+    private(set) var hostQuestions: [HostQuestion] = []
 
     // AI state — mutable so takeOver() and load() can update independently of the
     // immutable `conversation` struct. The server can auto-de-escalate while the
@@ -64,10 +65,96 @@ final class ConversationDetailViewModel {
             return
         }
 
+        // Load host questions in parallel (non-blocking — failure is silent)
+        async let questionsTask: () = loadHostQuestions()
+        _ = await questionsTask
+
         if conversation.hasSuggestion == true && !suggestionFetched {
             suggestionFetched = true
             await fetchSuggestion()
         }
+    }
+
+    func loadHostQuestions() async {
+        #if DEBUG
+        let _ep = Endpoint.hostQuestionsForConversation(conversation.id)
+        print("[HOSTQ-LIVE3] loadHostQuestions — convId=\(conversation.id) url=\(_ep.absoluteString) agencyAll=true")
+        #endif
+        do {
+            let r: HostQuestionsResponse = try await APIClient.shared.get(
+                Endpoint.hostQuestionsForConversation(conversation.id),
+                agencyAll: true
+            )
+            hostQuestions = r.questions
+            #if DEBUG
+            print("[HOSTQ-LIVE3] GET OK — questions.count=\(r.questions.count)")
+            for q in r.questions {
+                let tid   = q.triggerMessageId.map { "\($0)" } ?? "nil"
+                let mtype = q.meta?.type.map { "\($0)" } ?? "nil"
+                print("[HOSTQ-LIVE3]   id=\(q.id) convId=\(q.conversationId) kind=\(q.kind ?? "nil") status=\(q.status ?? "nil") triggerMsgId=\(tid) createdAt=\(q.createdAt ?? "nil") meta.type=\(mtype) meta.reqLabel=\(q.meta?.reqLabel ?? "nil")")
+            }
+            let merged = mergedItems
+            print("[HOSTQ-LIVE3] mergedItems — messages=\(messages.count) hostQ=\(hostQuestions.count) total=\(merged.count)")
+            for item in merged {
+                switch item {
+                case .message(let m):      print("[HOSTQ-LIVE3]   .message(id=\(m.id) createdAt=\(m.createdAt ?? "nil"))")
+                case .hostQuestion(let q): print("[HOSTQ-LIVE3]   .hostQuestion(id=\(q.id) status=\(q.status ?? "nil") createdAt=\(q.createdAt ?? "nil"))")
+                }
+            }
+            #endif
+        } catch {
+            #if DEBUG
+            print("[HOSTQ-LIVE3] GET ERROR — \(error)")
+            switch error {
+            case APIError.server(let code, let msg):
+                print("[HOSTQ-LIVE3]   HTTP \(code) — \(msg ?? "(no message)")")
+            case APIError.unauthorized:
+                print("[HOSTQ-LIVE3]   401 Unauthorized")
+            case APIError.decoding(let de):
+                print("[HOSTQ-LIVE3]   Decoding: \(de)")
+            case APIError.network(let ne):
+                print("[HOSTQ-LIVE3]   Network: \(ne)")
+            default:
+                print("[HOSTQ-LIVE3]   Unknown: \(error)")
+            }
+            #endif
+        }
+    }
+
+    // Interleave messages and host questions in chronological order.
+    // A question with a triggerMessageId is placed immediately after that message;
+    // otherwise it is inserted by createdAt.
+    var mergedItems: [ConversationItem] {
+        var result: [ConversationItem] = messages.map { .message($0) }
+        for q in hostQuestions {
+            if let tid = q.triggerMessageId,
+               let idx = result.firstIndex(where: {
+                   if case .message(let m) = $0 { return m.id == tid }
+                   return false
+               }) {
+                result.insert(.hostQuestion(q), at: idx + 1)
+            } else {
+                let qDate = q.createdAt ?? ""
+                let pos = result.firstIndex(where: { ($0.sortKey) > qDate }) ?? result.endIndex
+                result.insert(.hostQuestion(q), at: pos)
+            }
+        }
+        return result
+    }
+
+    // MARK: - Host question answer
+
+    func answerHostQuestion(_ id: Int, answer: String, text: String?) async throws {
+        let body = HostQuestionAnswerBody(answer: answer, text: text)
+        let _: HostQuestionAnswerResponse = try await APIClient.shared.post(
+            Endpoint.hostQuestionAnswer(id), body: body, agencyAll: true
+        )
+        // Refresh questions inline (409 = already answered → still refresh)
+        await loadHostQuestions()
+        // Trigger HostQuestionManager to refresh polling state
+        await HostQuestionManager.shared.fetchPending()
+        // Reload messages to pick up the bot reply
+        await load()
     }
 
     // MARK: - Reprendre la main
@@ -160,15 +247,26 @@ final class ConversationDetailViewModel {
             }
             draftText = ""
             suggestionText = nil
-            // Implicit take-over: re-enable AI when human replies while escalated+paused.
-            // Uses mutable vars — safe even when takeOver() was already called this session.
-            if isEscalated && isAiDisabled {
-                isEscalated  = false
-                isAiDisabled = false
-                Task {
-                    try? await APIClient.shared.postVoid(
-                        Endpoint.toggleAI(conversation.id), body: EmptyBody()
-                    )
+            // Implicit take-over after escalation:
+            //   • Temporary escalation (host question "self" path): escalated=true, aiDisabled=false
+            //     → de-escalate only; the AI was not explicitly disabled, keep it enabled.
+            //   • AI explicitly disabled by the owner AND escalated: re-enable the AI.
+            if isEscalated {
+                if !isAiDisabled {
+                    isEscalated = false
+                    Task {
+                        try? await APIClient.shared.postVoid(
+                            Endpoint.deescalate(conversation.id), body: EmptyBody()
+                        )
+                    }
+                } else {
+                    isEscalated  = false
+                    isAiDisabled = false
+                    Task {
+                        try? await APIClient.shared.postVoid(
+                            Endpoint.toggleAI(conversation.id), body: EmptyBody()
+                        )
+                    }
                 }
             }
             await load()

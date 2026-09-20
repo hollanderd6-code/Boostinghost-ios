@@ -200,15 +200,25 @@ private struct SubAccountCreateSheet: View {
     @State private var email            = ""
     @State private var password         = ""
     @State private var selectedTargetId = ""
-    @State private var isLoadingTargets = true
-    @State private var isSaving         = false
+    @State private var isLoadingTargets      = true
+    @State private var isSaving              = false
     @State private var error: String?
+    @State private var selectedPropertyIds   = [String]()
+    @State private var showPropertyPicker    = false
 
     // Affiché seulement si le serveur renvoie plusieurs comptes à choisir.
     private var showSelector: Bool { !isLoadingTargets && vm.targetAccounts.count > 1 }
 
+    private var propertiesReady: Bool {
+        switch vm.propertiesLoadState {
+        case .loaded: return true
+        default: return false
+        }
+    }
+
     private var isFormValid: Bool {
-        !isLoadingTargets
+        propertiesReady
+        && !isLoadingTargets
         && (!showSelector || !selectedTargetId.isEmpty)
         && !firstName.trimmingCharacters(in: .whitespaces).isEmpty
         && !lastName.trimmingCharacters(in: .whitespaces).isEmpty
@@ -235,6 +245,7 @@ private struct SubAccountCreateSheet: View {
                         }
                         targetSection
                         formFields
+                        propertiesAreaSection
                         PrimaryButton(title: "Créer le sous-compte") {
                             Task { await save() }
                         }
@@ -253,6 +264,14 @@ private struct SubAccountCreateSheet: View {
             if vm.targetAccounts.count == 1 {
                 selectedTargetId = vm.targetAccounts[0].userId
             }
+            await vm.loadProperties()
+        }
+        .onChange(of: selectedTargetId) { selectedPropertyIds = [] }
+        .sheet(isPresented: $showPropertyPicker) {
+            PropertyAccessPickerSheet(
+                selectedIds: $selectedPropertyIds,
+                properties: vm.properties
+            )
         }
     }
 
@@ -284,6 +303,86 @@ private struct SubAccountCreateSheet: View {
                 .specularEdge(cornerRadius: 0)
                 .chromeShadow()
                 .ignoresSafeArea(edges: .top)
+        }
+    }
+
+    // MARK: - Section logements (loading / error / picker)
+
+    @ViewBuilder
+    private var propertiesAreaSection: some View {
+        switch vm.propertiesLoadState {
+        case .idle, .loading:
+            ListCard {
+                CardRow(showSeparator: false) {
+                    HStack {
+                        Text("Logements accessibles")
+                            .font(.system(size: 14.5, weight: .medium))
+                            .foregroundStyle(Color.bhEncre)
+                        Spacer()
+                        ProgressView().tint(Color.bhAttenue).scaleEffect(0.85)
+                    }
+                }
+            }
+        case .loaded:
+            if !vm.properties.isEmpty {
+                propertiesSection
+            }
+        case .failed:
+            ListCard {
+                CardRow(showSeparator: false) {
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Logements accessibles")
+                                .font(.system(size: 14.5, weight: .medium))
+                                .foregroundStyle(Color.bhEncre)
+                            Text("Impossible de charger les logements.")
+                                .font(.bhMeta)
+                                .foregroundStyle(Color.bhAttenue)
+                        }
+                        Spacer()
+                        Button("Réessayer") {
+                            Task { await vm.reloadProperties() }
+                        }
+                        .font(.system(size: 13.5, weight: .medium))
+                        .foregroundStyle(Color.bhVert)
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+    }
+
+    // MARK: - Sélecteur de logements accessibles
+
+    private var propertyPickerLabel: String {
+        if selectedPropertyIds.isEmpty { return "Tous les logements" }
+        let n = selectedPropertyIds.count
+        return "\(n) logement\(n == 1 ? "" : "s")"
+    }
+
+    private var propertiesSection: some View {
+        ListCard {
+            CardRow(showSeparator: false) {
+                Button { showPropertyPicker = true } label: {
+                    HStack(spacing: 10) {
+                        Text("Logements accessibles")
+                            .font(.system(size: 14.5, weight: .medium))
+                            .foregroundStyle(Color.bhEncre)
+                        Spacer(minLength: 8)
+                        Text(propertyPickerLabel)
+                            .font(.system(size: 14.5))
+                            .foregroundStyle(Color.bhAttenue)
+                            .lineLimit(1)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .frame(minHeight: 44)
+            }
         }
     }
 
@@ -385,7 +484,8 @@ private struct SubAccountCreateSheet: View {
                 password:     password,
                 firstName:    firstName.trimmingCharacters(in: .whitespaces),
                 lastName:     lastName.trimmingCharacters(in: .whitespaces),
-                targetUserId: target
+                targetUserId: target,
+                propertyIds:  selectedPropertyIds
             )
             dismiss()
         } catch APIError.server(_, let msg) {

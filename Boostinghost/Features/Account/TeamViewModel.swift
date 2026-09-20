@@ -6,11 +6,14 @@ import Observation
 final class TeamViewModel {
 
     enum LoadState { case idle, loading, loaded, failed(String) }
+    enum PropertyLoadState { case idle, loading, loaded, failed }
 
     var members: [SubAccount] = []
     var loadState: LoadState  = .idle
     var showCreateSheet = false
     private(set) var targetAccounts: [TargetAccount] = []
+    private(set) var properties: [Property] = []
+    private(set) var propertiesLoadState: PropertyLoadState = .idle
 
     var isAgencyMode: Bool { targetAccounts.count > 1 }
 
@@ -46,6 +49,25 @@ final class TeamViewModel {
 
     // MARK: - Target accounts (GET /api/agency/target-accounts)
 
+    func loadProperties() async {
+        guard propertiesLoadState == .idle else { return }
+        propertiesLoadState = .loading
+        do {
+            let resp: PropertiesResponse = try await APIClient.shared.get(
+                Endpoint.properties, agencyAll: true
+            )
+            properties = resp.properties ?? []
+            propertiesLoadState = .loaded
+        } catch {
+            propertiesLoadState = .failed
+        }
+    }
+
+    func reloadProperties() async {
+        propertiesLoadState = .idle
+        await loadProperties()
+    }
+
     func loadTargetAccounts() async {
         do {
             let r: TargetAccountsResponse = try await APIClient.shared.get(Endpoint.targetAccounts)
@@ -60,10 +82,12 @@ final class TeamViewModel {
 
     func createSubAccount(email: String, password: String,
                           firstName: String, lastName: String,
-                          targetUserId: String?) async throws {
+                          targetUserId: String?,
+                          propertyIds: [String] = []) async throws {
         let body = SubAccountCreateBody(email: email, password: password,
                                         firstName: firstName, lastName: lastName,
-                                        role: "custom", targetUserId: targetUserId)
+                                        role: "custom", targetUserId: targetUserId,
+                                        propertyIds: propertyIds)
         let _: SubAccountCreateResponse = try await APIClient.shared.post(
             Endpoint.subAccountsCreate, body: body, agencyAll: true
         )
