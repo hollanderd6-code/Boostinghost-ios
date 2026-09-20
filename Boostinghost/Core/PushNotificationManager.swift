@@ -10,7 +10,7 @@ final class PushNotificationManager: NSObject {
 
     private(set) var fcmToken: String?
 
-    // MARK: - Autorisation et jeton (inchangé)
+    // MARK: - Autorisation et jeton
 
     func requestAuthorization() async {
         let center = UNUserNotificationCenter.current()
@@ -50,8 +50,13 @@ final class PushNotificationManager: NSObject {
     // Équivalent iOS de logNotificationToHistory() du client web : sans cet
     // appel, GET /api/notifications/history reste vide pour un utilisateur iOS.
 
-    private func logToHistory(title: String, body: String, type: String, data: [String: String]) async {
-        let payload = NotificationHistoryBody(title: title, body: body, type: type.isEmpty ? "push" : type, data: data)
+    func logToHistory(title: String, body: String, type: String, data: [String: String]) async {
+        let payload = NotificationHistoryBody(
+            title: title,
+            body: body,
+            type: type.isEmpty ? "push" : type,
+            data: data
+        )
         try? await APIClient.shared.postVoid(Endpoint.notificationHistoryPush, body: payload)
     }
 }
@@ -73,6 +78,10 @@ extension PushNotificationManager: MessagingDelegate {
 // Alignée sur ROUTES de public/js/push-notifications-handler.js (le routeur web
 // est la référence tenue à jour). Tout type ajouté côté serveur doit être ajouté
 // ici ; sinon il tombe dans le repli.
+//
+// Le payload est aplati en [String: String] AVANT de traverser vers le
+// MainActor : [AnyHashable: Any] n'est pas Sendable et Swift 6 refuse de le
+// capturer dans une closure isolée.
 
 enum PushRoute {
 
@@ -109,21 +118,35 @@ enum PushRoute {
 
     private static let contracts: Set<String> = ["contract_signed"]
 
+    /// Aplatit le userInfo APNs en dictionnaire Sendable.
+    static func flatten(_ userInfo: [AnyHashable: Any]) -> [String: String] {
+        var out: [String: String] = [:]
+        for (key, value) in userInfo {
+            guard let k = key as? String else { continue }
+            switch value {
+            case let s as String:    out[k] = s
+            case let n as NSNumber:  out[k] = n.stringValue
+            case let b as Bool:      out[k] = b ? "true" : "false"
+            default:                 continue   // aps, dictionnaires imbriqués : ignorés
+            }
+        }
+        return out
+    }
+
     // Le backend mélange snake_case et camelCase : toujours lire les deux.
-    static func string(_ userInfo: [AnyHashable: Any], _ keys: String...) -> String? {
+    static func value(_ data: [String: String], _ keys: String...) -> String? {
         for key in keys {
-            if let s = userInfo[key] as? String, !s.isEmpty { return s }
-            if let n = userInfo[key] as? NSNumber { return n.stringValue }
+            if let s = data[key], !s.isEmpty { return s }
         }
         return nil
     }
 
     @MainActor
-    static func apply(_ userInfo: [AnyHashable: Any]) {
+    static func apply(_ data: [String: String]) {
         let router = NotificationRouter.shared
-        let type   = string(userInfo, "type") ?? ""
-        let conv   = string(userInfo, "conversation_id", "conversationId").flatMap { Int($0) }
-        let screen = string(userInfo, "screen") ?? ""
+        let type   = value(data, "type") ?? ""
+        let conv   = value(data, "conversation_id", "conversationId").flatMap { Int($0) }
+        let screen = value(data, "screen") ?? ""
 
         // Messagerie
         if messages.contains(type) || messagesEscalated.contains(type) || screen == "messages" {
@@ -141,7 +164,7 @@ enum PushRoute {
 
         // Réservations → Calendrier à la date concernée
         if calendar.contains(type) {
-            router.pendingCalendarDate = date(userInfo, "check_in", "start_date", "checkIn", "startDate")
+            router.pendingCalendarDate = date(data, "check_in", "start_date", "checkIn", "startDate")
             router.calendarNeedsRefresh = true
             router.pendingTab = .calendar
             return
@@ -156,7 +179,7 @@ enum PushRoute {
 
         // Ménage → Gestion ▸ Ménage, et la checklist si l'id est fourni
         if cleaning.contains(type) {
-            router.pendingChecklistId = string(userInfo, "checklistId", "checklist_id", "cleaning_id", "cleaningId")
+            router.pendingChecklistId = value(data, "checklistId", "checklist_id", "cleaning_id", "cleaningId")
             router.pendingManageEntry = .cleaning
             router.pendingTab = .manage
             return
@@ -164,7 +187,7 @@ enum PushRoute {
 
         // Cautions et factures → Gestion ▸ Séjours
         if stays.contains(type) {
-            router.pendingDepositId = string(userInfo, "depositId", "deposit_id")
+            router.pendingDepositId = value(data, "depositId", "deposit_id")
             router.pendingManageEntry = .stays
             router.pendingTab = .manage
             return
@@ -172,7 +195,7 @@ enum PushRoute {
 
         // Contrats → Gestion ▸ Propriétaires
         if contracts.contains(type) {
-            router.pendingContractId = string(userInfo, "contractId", "contract_id")
+            router.pendingContractId = value(data, "contractId", "contract_id")
             router.pendingManageEntry = .owners
             router.pendingTab = .manage
             return
@@ -193,8 +216,8 @@ enum PushRoute {
         router.pendingTab = .today
     }
 
-    private static func date(_ userInfo: [AnyHashable: Any], _ keys: String...) -> Date? {
-        guard let raw = keys.compactMap({ string(userInfo, $0) }).first else { return nil }
+    private static func date(_ data: [String: String], _ keys: String...) -> Date? {
+        guard let raw = keys.compactMap({ data[$0] }).first(where: { !$0.isEmpty }) else { return nil }
         let iso = ISO8601DateFormatter()
         if let d = iso.date(from: raw) { return d }
         let df = DateFormatter()
@@ -217,13 +240,14 @@ extension PushNotificationManager: UNUserNotificationCenterDelegate {
         let content = notification.request.content
         let title = content.title
         let body  = content.body
-        let info  = content.userInfo
+        // Valeurs Sendable extraites AVANT de traverser vers le MainActor.
+        let data  = PushRoute.flatten(content.userInfo)
+        let type  = PushRoute.value(data, "type") ?? "push"
+
         Task { @MainActor in
-            let type = PushRoute.string(info, "type") ?? "push"
-            let data = info.reduce(into: [String: String]()) { acc, pair in
-                if let k = pair.key as? String { acc[k] = String(describing: pair.value) }
-            }
-            await PushNotificationManager.shared.logToHistoryPublic(title: title, body: body, type: type, data: data)
+            await PushNotificationManager.shared.logToHistory(
+                title: title, body: body, type: type, data: data
+            )
         }
         completionHandler([.banner, .sound, .badge])
     }
@@ -233,9 +257,10 @@ extension PushNotificationManager: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        let userInfo = response.notification.request.content.userInfo
+        let data = PushRoute.flatten(response.notification.request.content.userInfo)
+
         Task { @MainActor in
-            PushRoute.apply(userInfo)
+            PushRoute.apply(data)
             PushNotificationManager.shared.clearDeliveredNotifications()
         }
         completionHandler()
@@ -255,11 +280,4 @@ private struct NotificationHistoryBody: Encodable {
     let body: String
     let type: String
     let data: [String: String]
-}
-
-// `logToHistory` est private ; ce relais évite de l'exposer partout.
-extension PushNotificationManager {
-    func logToHistoryPublic(title: String, body: String, type: String, data: [String: String]) async {
-        await logToHistory(title: title, body: body, type: type, data: data)
-    }
 }

@@ -141,6 +141,8 @@ enum Endpoint {
 
     // Push notifications
     static let saveToken = base.appending(path: "/api/save-token")
+    // Historique in-app des notifications reçues (alimenté par PushNotificationManager).
+    static let notificationHistoryPush = base.appending(path: "/api/notifications/history/push")
 
     // BHGuest hold
     static let guestHold = base.appending(path: "/api/guest/hold")
@@ -218,3 +220,4 @@ enum Endpoint {
     static let supportUpload       = base.appending(path: "/api/support/upload")
     static func supportMessages(_ id: String) -> URL { base.appending(path: "/api/support/messages/\(id)") }
 }
+
