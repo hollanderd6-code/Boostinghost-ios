@@ -18,6 +18,7 @@ final class ReservationDetailViewModel {
     private(set) var state: LoadState = .loading
     private(set) var reservation: Reservation? = nil
     private(set) var propertySummary: PropertySummary? = nil
+    private(set) var properties: [PropertySummary] = []
     private(set) var cleanerName: String? = nil
     private(set) var hosterzzMissionState: HosterzzMissionState = .loading
     private(set) var didDelete   = false
@@ -45,6 +46,9 @@ final class ReservationDetailViewModel {
 
         let found = (response?.reservations ?? []).first { $0.uid == arrivee.reservationUid }
         reservation = found
+        // Liste complète des logements : la feuille de modification en a
+        // besoin pour proposer de déplacer la réservation.
+        properties = response?.properties ?? []
 
         if let r = found {
             let bdSum = r.daysBreakdown.map { $0.values.reduce(0, +) }

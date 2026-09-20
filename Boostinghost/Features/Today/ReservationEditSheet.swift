@@ -1,25 +1,41 @@
 import SwiftUI
 
 // MARK: - Feuille de modification d'une réservation
+//
+// Trois modes, dictés par ce que le backend accepte réellement :
+//
+//  • manual  → PUT /api/reservations/manual/:uid
+//              logement, dates, voyageur, nationalité, 5 montants, plateforme, notes
+//  • bhGuest → POST /api/guest/modify-reservation
+//              logement, dates, voyageurs, montant total, notes
+//              (l'identité du voyageur vient du parcours de paiement : non modifiable)
+//  • otaOnly → PATCH /api/reservations/:uid/note
+//              notes seulement — le reste appartient à la plateforme
+//
+// ⚠️ Le changement de logement est vérifié côté serveur (409 si les dates sont
+// déjà prises sur le logement cible) et déplace la conversation associée.
 
 struct ReservationEditSheet: View {
     let reservation: Reservation
+    let properties:  [PropertySummary]
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var isSaving     = false
     @State private var errorMessage: String? = nil
 
-    // Champ commun
+    // Champs communs
+    @State private var propertyId: String
     @State private var notes: String
-
-    // Champs manuel / direct
     @State private var startDate: Date
     @State private var endDate:   Date
+
+    // Champs manuel / direct
     @State private var guestName: String
     @State private var adultsStr: String
     @State private var phone:     String
     @State private var email:     String
+    @State private var country:   String
     @State private var platform:  String
     @State private var priceStr:    String
     @State private var roomsStr:    String
@@ -41,15 +57,27 @@ struct ReservationEditSheet: View {
         return .manual
     }
 
+    // Le sélecteur n'a de sens qu'avec au moins deux logements, et jamais en OTA
+    // (la réservation appartient au calendrier de la plateforme).
+    private var canMoveProperty: Bool {
+        mode != .otaOnly && properties.count > 1
+    }
+
+    private var propertyChanged: Bool {
+        propertyId != reservation.propertyId
+    }
+
     // MARK: - Init
 
-    init(reservation: Reservation, onSaved: @escaping () -> Void) {
+    init(reservation: Reservation, properties: [PropertySummary] = [], onSaved: @escaping () -> Void) {
         self.reservation = reservation
+        self.properties  = properties
         self.onSaved     = onSaved
 
         let s = Self.localDate(from: reservation.startDate) ?? Date()
         let e = Self.localDate(from: reservation.endDate)   ?? Date()
 
+        _propertyId     = State(initialValue: reservation.propertyId)
         _notes          = State(initialValue: reservation.notes ?? "")
         _startDate      = State(initialValue: s)
         _endDate        = State(initialValue: e)
@@ -57,6 +85,7 @@ struct ReservationEditSheet: View {
         _adultsStr      = State(initialValue: reservation.occupancyAdults.map(String.init) ?? "")
         _phone          = State(initialValue: reservation.guestPhone ?? "")
         _email          = State(initialValue: reservation.guestEmail ?? "")
+        _country        = State(initialValue: reservation.guestCountry ?? "")
         _platform       = State(initialValue: reservation.platform ?? "MANUEL")
         _priceStr       = State(initialValue: Self.fmtD(reservation.amountTotal))
         _roomsStr       = State(initialValue: Self.fmtD(reservation.amountRooms))
@@ -86,6 +115,7 @@ struct ReservationEditSheet: View {
                             Text(err)
                                 .font(.bhMeta)
                                 .foregroundStyle(Color.bhTerracotta)
+                                .fixedSize(horizontal: false, vertical: true)
                                 .padding(.horizontal, 4)
                         }
 
@@ -142,6 +172,49 @@ struct ReservationEditSheet: View {
         }
     }
 
+    // MARK: - Bloc Logement (manuel + BHGuest)
+
+    @ViewBuilder
+    private var logementSection: some View {
+        if canMoveProperty {
+            SectionLabel(text: "Logement")
+            ListCard {
+                VStack(spacing: 0) {
+                    CardRow(showSeparator: propertyChanged) {
+                        HStack {
+                            Text("Logement")
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color.bhAttenue)
+                            Spacer(minLength: 8)
+                            Picker("Logement", selection: $propertyId) {
+                                ForEach(properties) { p in
+                                    Text(p.displayName).tag(p.id)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .labelsHidden()
+                            .tint(Color.bhVert)
+                        }
+                    }
+                    if propertyChanged {
+                        CardRow(showSeparator: false) {
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: "arrow.left.arrow.right")
+                                    .imageScale(.small)
+                                    .foregroundStyle(Color.bhTerracotta)
+                                    .padding(.top, 1)
+                                Text("La réservation change de logement. La conversation du voyageur suit, et le ménage devra être réassigné.")
+                                    .font(.bhMeta)
+                                    .foregroundStyle(Color.bhAttenue)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Contenu OTA (note uniquement)
 
     private var otaContent: some View {
@@ -153,7 +226,7 @@ struct ReservationEditSheet: View {
                             .imageScale(.small)
                             .foregroundStyle(Color.bhAttenue)
                             .padding(.top, 1)
-                        Text("Les dates et montants viennent de la plateforme et ne peuvent pas être modifiés depuis l'app.")
+                        Text("Les dates, le logement et les montants viennent de la plateforme et ne peuvent pas être modifiés depuis l'app.")
                             .font(.bhMeta)
                             .foregroundStyle(Color.bhAttenue)
                             .fixedSize(horizontal: false, vertical: true)
@@ -169,6 +242,8 @@ struct ReservationEditSheet: View {
 
     private var bhGuestContent: some View {
         VStack(alignment: .leading, spacing: 14) {
+            logementSection
+
             SectionLabel(text: "Séjour")
             ListCard {
                 VStack(spacing: 0) {
@@ -203,6 +278,22 @@ struct ReservationEditSheet: View {
                     }
                 }
             }
+
+            ListCard {
+                CardRow(showSeparator: false) {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "info.circle")
+                            .imageScale(.small)
+                            .foregroundStyle(Color.bhAttenue)
+                            .padding(.top, 1)
+                        Text("Le nom et les coordonnées viennent du parcours de réservation BHGuest. Modifier le montant ne modifie pas le paiement déjà encaissé.")
+                            .font(.bhMeta)
+                            .foregroundStyle(Color.bhAttenue)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
             SectionLabel(text: "Notes")
             notesField
         }
@@ -212,6 +303,8 @@ struct ReservationEditSheet: View {
 
     private var manualContent: some View {
         VStack(alignment: .leading, spacing: 14) {
+            logementSection
+
             SectionLabel(text: "Séjour")
             ListCard {
                 VStack(spacing: 0) {
@@ -258,12 +351,30 @@ struct ReservationEditSheet: View {
                             .foregroundStyle(Color.bhEncre)
                             .keyboardType(.phonePad)
                     }
-                    CardRow(showSeparator: false) {
+                    CardRow(showSeparator: true) {
                         TextField("E-mail", text: $email)
                             .font(.system(size: 15))
                             .foregroundStyle(Color.bhEncre)
                             .keyboardType(.emailAddress)
                             .textInputAutocapitalization(.never)
+                    }
+                    // Nationalité : le serveur écrase guest_country à chaque
+                    // UPDATE. Sans ce champ, la valeur saisie sur le web était
+                    // effacée à la première modification depuis l'app.
+                    CardRow(showSeparator: false) {
+                        HStack {
+                            Text("Nationalité")
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color.bhAttenue)
+                            Spacer(minLength: 8)
+                            TextField("FR", text: $country)
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color.bhEncre)
+                                .multilineTextAlignment(.trailing)
+                                .textInputAutocapitalization(.characters)
+                                .autocorrectionDisabled()
+                                .frame(width: 70)
+                        }
                     }
                 }
             }
@@ -340,6 +451,12 @@ struct ReservationEditSheet: View {
 
     private func save() async {
         errorMessage = nil
+
+        guard endDate > startDate else {
+            errorMessage = "Le départ doit être après l'arrivée."
+            return
+        }
+
         isSaving = true
         defer { isSaving = false }
 
@@ -356,6 +473,7 @@ struct ReservationEditSheet: View {
             case .bhGuest:
                 let body = BHGuestModifyBody(
                     uid:         uid,
+                    propertyId:  propertyChanged ? propertyId : nil,
                     checkin:     Self.isoDate(startDate),
                     checkout:    Self.isoDate(endDate),
                     guests:      Int(guestsStr),
@@ -366,13 +484,14 @@ struct ReservationEditSheet: View {
 
             case .manual:
                 let body = ManualEditBody(
-                    propertyId:      reservation.propertyId,
+                    propertyId:      propertyId,
                     start:           Self.isoDate(startDate),
                     end:             Self.isoDate(endDate),
                     guestName:       guestName,
                     notes:           notes,
                     phone:           phone,
                     email:           email,
+                    guestCountry:    country.trimmingCharacters(in: .whitespaces).uppercased(),
                     platform:        platform.isEmpty ? "MANUEL" : platform,
                     price:           parseD(priceStr),
                     occupancyAdults: Int(adultsStr),
@@ -392,8 +511,23 @@ struct ReservationEditSheet: View {
             dismiss()
 
         } catch {
-            errorMessage = (error as? APIError)?.userMessage ?? error.localizedDescription
+            errorMessage = saveErrorMessage(error)
         }
+    }
+
+    // Le 409 du serveur est le cas le plus fréquent quand on déplace une
+    // réservation : le dire en clair plutôt que de renvoyer un code.
+    private func saveErrorMessage(_ error: Error) -> String {
+        if let api = error as? APIError, case .server(let status, let msg) = api {
+            if status == 409 {
+                let cible = properties.first { $0.id == propertyId }?.displayName
+                return propertyChanged && cible != nil
+                    ? "Ces dates sont déjà prises sur \(cible!)."
+                    : "Ces dates sont déjà prises."
+            }
+            if let msg, !msg.isEmpty { return msg }
+        }
+        return (error as? APIError)?.userMessage ?? error.localizedDescription
     }
 
     // MARK: - Helpers
@@ -430,8 +564,11 @@ private struct OTANoteBody: Encodable {
     let notes: String?
 }
 
+// propertyId n'est envoyé que s'il change : la route ne touche à la colonne
+// (et ne déplace la conversation) que lorsque la clé est présente.
 private struct BHGuestModifyBody: Encodable {
     let uid: String
+    let propertyId: String?
     let checkin: String
     let checkout: String
     let guests: Int?
@@ -439,7 +576,7 @@ private struct BHGuestModifyBody: Encodable {
     let amountTotal: Double?
 
     enum CodingKeys: String, CodingKey {
-        case uid, checkin, checkout, guests, notes
+        case uid, propertyId, checkin, checkout, guests, notes
         case amountTotal = "amount_total"
     }
 }
@@ -447,6 +584,10 @@ private struct BHGuestModifyBody: Encodable {
 // Le serveur met toujours à jour tous les champs dans un UPDATE complet.
 // Les types String non-optionnels garantissent que les champs existants
 // ne sont pas effacés si l'utilisateur ne les modifie pas.
+//
+// ⚠️ guest_address et guest_zip restent absents de ce corps : l'app ne les
+// connaît pas. Sans le COALESCE côté serveur (voir SERVEUR-RESA.md), ils sont
+// remis à NULL à chaque enregistrement depuis iOS.
 private struct ManualEditBody: Encodable {
     let propertyId: String
     let start: String
@@ -455,6 +596,7 @@ private struct ManualEditBody: Encodable {
     let notes: String
     let phone: String
     let email: String
+    let guestCountry: String
     let platform: String
     let price: Double?
     let occupancyAdults: Int?
@@ -465,6 +607,7 @@ private struct ManualEditBody: Encodable {
 
     enum CodingKeys: String, CodingKey {
         case propertyId, start, end, guestName, notes, phone, email, platform, price
+        case guestCountry    = "guest_country"
         case occupancyAdults = "occupancy_adults"
         case amountRooms     = "amount_rooms"
         case amountCleaning  = "amount_cleaning"

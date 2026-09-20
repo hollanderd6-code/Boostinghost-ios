@@ -68,7 +68,7 @@ struct ReservationDetailView: View {
         }
         .sheet(isPresented: $showEditSheet) {
             if let r = vm.reservation {
-                ReservationEditSheet(reservation: r) {
+                ReservationEditSheet(reservation: r, properties: vm.properties) {
                     Task {
                         await vm.load()
                         await calendarVM.silentRefresh()
