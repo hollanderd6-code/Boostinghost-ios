@@ -381,15 +381,7 @@ struct AssistantIABlockView: View {
                 HStack(alignment: .center, spacing: 8) {
                     Text(fact.question).font(.system(size: 14.5)).foregroundStyle(Color.bhEncre)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    if fact.answer == true {
-                        Label("Oui", systemImage: "checkmark.circle.fill")
-                            .font(.system(size: 13.5)).foregroundStyle(Color.bhOccupe).fixedSize()
-                    } else if fact.answer == false {
-                        Label("Non", systemImage: "xmark.circle.fill")
-                            .font(.system(size: 13.5)).foregroundStyle(Color.bhAttenue).fixedSize()
-                    } else {
-                        Text("—").font(.system(size: 13.5)).foregroundStyle(Color.bhAttenue)
-                    }
+                    answerBadge(fact.answer)
                 }
                 if let detail = fact.detail, !detail.isEmpty {
                     Text(detail).font(.system(size: 12.5)).lineSpacing(3).foregroundStyle(Color.bhAttenue)
@@ -403,6 +395,33 @@ struct AssistantIABlockView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // Colonne de largeur fixe : sans elle, le badge est aligne a droite en tant
+    // que bloc et la position de l'icone suit la largeur du libelle — « Oui » et
+    // « Non » ne mesurant pas pareil, les coches n'etaient pas sur une colonne.
+    @ViewBuilder
+    private func answerBadge(_ answer: Bool?) -> some View {
+        HStack(spacing: 6) {
+            switch answer {
+            case .some(true):
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 13.5)).foregroundStyle(Color.bhOccupe)
+                Text("Oui")
+                    .font(.system(size: 13.5)).foregroundStyle(Color.bhOccupe)
+            case .some(false):
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 13.5)).foregroundStyle(Color.bhAttenue)
+                Text("Non")
+                    .font(.system(size: 13.5)).foregroundStyle(Color.bhAttenue)
+            case .none:
+                Image(systemName: "minus.circle")
+                    .font(.system(size: 13.5)).foregroundStyle(Color.bhAttenue)
+                Text("—")
+                    .font(.system(size: 13.5)).foregroundStyle(Color.bhAttenue)
+            }
+        }
+        .frame(width: 58, alignment: .leading)
     }
 
     private var newFactForm: some View {
