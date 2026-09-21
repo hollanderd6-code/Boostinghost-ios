@@ -261,11 +261,37 @@ struct CustomAutoResponse: Decodable {
 
 // MARK: - PropertyFact (table property_facts — GET /api/properties/:id/facts)
 
-struct PropertyFact: Decodable {
+struct PropertyFact: Decodable, Identifiable {
     let id: Int
     let question: String
     let answer: Bool?
     let detail: String?
+
+    // La route renvoie `"id": "12"` — une chaine, pas un nombre. Avec le
+    // decodeur synthetise (`let id: Int`) le decodage levait, et le `try?`
+    // de AssistantIABlockView laissait la liste vide : l'ecran affichait
+    // « Aucun fait memorise » alors que la base en contenait.
+    // Meme decodage tolerant que le reste du fichier.
+    private enum CodingKeys: String, CodingKey { case id, question, answer, detail }
+
+    init(from decoder: Decoder) throws {
+        let c    = try decoder.container(keyedBy: CodingKeys.self)
+        id       = c.flexInt(forKey: .id) ?? 0
+        question = (try? c.decodeIfPresent(String.self, forKey: .question)) ?? ""
+        detail   = try? c.decodeIfPresent(String.self, forKey: .detail)
+
+        // `answer` est un booleen PG, mais un enregistrement ancien peut
+        // remonter 0/1 ou "true" : on accepte les trois.
+        if let b = try? c.decodeIfPresent(Bool.self, forKey: .answer) {
+            answer = b
+        } else if let i = c.flexInt(forKey: .answer) {
+            answer = i != 0
+        } else if let str = try? c.decodeIfPresent(String.self, forKey: .answer) {
+            answer = (str == "true" || str == "1")
+        } else {
+            answer = nil
+        }
+    }
 }
 
 struct PropertyFactsResponse: Decodable {
