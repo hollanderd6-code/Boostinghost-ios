@@ -41,12 +41,25 @@ struct Conversation: Decodable, Identifiable {
     // Non-null → Airbnb/Booking reservation; route d'envoi = send-platform
     let channexBookingId: String?
 
+    // Reservation details — present in GET /api/chat/conversations but not previously decoded
+    let reservationEndDate: String?
+    let guestPhone: String?
+    let guestEmail: String?
+    let guestCountry: String?
+    let occupancyAdults: Int?
+    let occupancyChildren: Int?
+    let amountTotal: Double?
+    let currency: String?
+
     private enum CodingKeys: String, CodingKey {
         case id, status, escalated, aiDisabled, platform
         case guestDisplayName, guestInitial, propertyId, propertyName
         case reservationUid, notes
-        case reservationStartDate, unreadCount, lastMessage, lastMessageTime
+        case reservationStartDate, reservationEndDate, unreadCount, lastMessage, lastMessageTime
         case hasSuggestion, channexBookingId
+        case guestPhone, guestEmail, guestCountry
+        case occupancyAdults, occupancyChildren
+        case amountTotal, currency
     }
 
     init(from decoder: any Decoder) throws {
@@ -68,6 +81,14 @@ struct Conversation: Decodable, Identifiable {
         lastMessageTime = try c.decodeIfPresent(String.self, forKey: .lastMessageTime)
         hasSuggestion = try c.decodeIfPresent(Bool.self, forKey: .hasSuggestion)
         channexBookingId = try c.decodeIfPresent(String.self, forKey: .channexBookingId)
+        reservationEndDate = try c.decodeIfPresent(String.self, forKey: .reservationEndDate)
+        guestPhone = try c.decodeIfPresent(String.self, forKey: .guestPhone)
+        guestEmail = try c.decodeIfPresent(String.self, forKey: .guestEmail)
+        guestCountry = try c.decodeIfPresent(String.self, forKey: .guestCountry)
+        occupancyAdults = c.flexInt(forKey: .occupancyAdults)
+        occupancyChildren = c.flexInt(forKey: .occupancyChildren)
+        amountTotal = c.flexDouble(forKey: .amountTotal)
+        currency = try c.decodeIfPresent(String.self, forKey: .currency)
     }
 }
 
@@ -94,6 +115,14 @@ extension Conversation {
         self.lastMessageTime     = nil
         self.hasSuggestion       = nil
         self.channexBookingId    = nil
+        self.reservationEndDate  = nil
+        self.guestPhone          = nil
+        self.guestEmail          = nil
+        self.guestCountry        = nil
+        self.occupancyAdults     = nil
+        self.occupancyChildren   = nil
+        self.amountTotal         = nil
+        self.currency            = nil
     }
 }
 

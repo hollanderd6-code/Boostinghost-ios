@@ -12,6 +12,8 @@ struct ConversationDetailView: View {
     @State private var showTemplateSheet  = false
     @State private var showNoteSheet      = false
     @State private var showHandBackAlert  = false
+    @State private var reservationExpanded = false
+    @State private var whatsappAvailable   = false
 
     init(conversation: Conversation, ownerName: String) {
         _vm = State(wrappedValue: ConversationDetailViewModel(
@@ -29,6 +31,7 @@ struct ConversationDetailView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .task {
+            whatsappAvailable = UIApplication.shared.canOpenURL(URL(string: "whatsapp://")!)
             await messagesVM.markConversationRead(vm.conversation.id)
             await vm.load()
             tryPresentConversationTip()
@@ -151,6 +154,7 @@ struct ConversationDetailView: View {
                 )
                 .transition(.opacity)
             }
+            reservationBanner
         }
         .animation(.easeInOut(duration: 0.25), value: tipCoordinator.presentedTip)
         .background {
@@ -349,6 +353,7 @@ struct ConversationDetailView: View {
                     .padding(.top, 8)
                     .transition(.opacity)
                 }
+                contactBar
                 actionBar
             }
             HStack(alignment: .bottom, spacing: 10) {
@@ -600,6 +605,204 @@ struct ConversationDetailView: View {
             return "L'IA reprend dans \(h) h \(String(format: "%02d", m))"
         }
         return "L'IA reprend dans \(m) min"
+    }
+
+    // MARK: - Bandeau réservation
+
+    @ViewBuilder
+    private var reservationBanner: some View {
+        let startStr = vm.conversation.reservationStartDate ?? ""
+        let endStr   = vm.conversation.reservationEndDate   ?? ""
+        if !startStr.isEmpty, !endStr.isEmpty {
+            let start  = Formatters.dayShort(startStr)
+            let end    = Formatters.dayShort(endStr)
+            let nights = nightsCount(from: startStr, to: endStr)
+            let guests = (vm.conversation.occupancyAdults ?? 0) + (vm.conversation.occupancyChildren ?? 0)
+
+            VStack(spacing: 0) {
+                Divider().opacity(0.35)
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { reservationExpanded.toggle() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color.bhVert)
+                        Text(bannerCompact(start: start, end: end, nights: nights, guests: guests))
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(Color.bhEncre)
+                            .lineLimit(1)
+                        Spacer(minLength: 4)
+                        Image(systemName: reservationExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Color.bhAttenue)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                if reservationExpanded {
+                    Divider().opacity(0.25).padding(.horizontal, 12)
+                    HStack(alignment: .top, spacing: 0) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Arrivée")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color.bhAttenue)
+                            Text(Formatters.day(startStr))
+                                .font(.system(size: 12.5, weight: .medium))
+                                .foregroundStyle(Color.bhEncre)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Départ")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color.bhAttenue)
+                            Text(Formatters.day(endStr))
+                                .font(.system(size: 12.5, weight: .medium))
+                                .foregroundStyle(Color.bhEncre)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        if let total = vm.conversation.amountTotal, total > 0 {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("Montant")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(Color.bhAttenue)
+                                Text(Formatters.amount(total))
+                                    .font(.system(size: 12.5, weight: .semibold))
+                                    .foregroundStyle(Color.bhEncre)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                }
+            }
+        }
+    }
+
+    private func bannerCompact(start: String, end: String, nights: Int?, guests: Int) -> String {
+        var parts = ["\(start) → \(end)"]
+        if let n = nights { parts.append(n == 1 ? "1 nuit" : "\(n) nuits") }
+        if guests > 0 { parts.append(guests == 1 ? "1 voyageur" : "\(guests) voyageurs") }
+        return parts.joined(separator: " · ")
+    }
+
+    private func nightsCount(from start: String, to end: String) -> Int? {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(identifier: "Europe/Paris") ?? .current
+        guard let d1 = f.date(from: String(start.prefix(10))),
+              let d2 = f.date(from: String(end.prefix(10))) else { return nil }
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "Europe/Paris") ?? .current
+        let n = cal.dateComponents([.day], from: d1, to: d2).day ?? 0
+        return n > 0 ? n : nil
+    }
+
+    // MARK: - Barre de contact
+
+    @ViewBuilder
+    private var contactBar: some View {
+        let rawPhone = (vm.conversation.guestPhone ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if rawPhone.isEmpty {
+            Text("Coordonnées non communiquées par la plateforme")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.bhAttenue)
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.08))
+                .overlay(alignment: .bottom) { Divider().opacity(0.4) }
+        } else {
+            let e164 = normalizePhone(rawPhone, country: vm.conversation.guestCountry) ?? rawPhone
+            let waDigits = e164.filter { $0.isNumber }
+            HStack(spacing: 0) {
+                contactActionButton(icon: "phone.fill", label: "Appeler") {
+                    if let url = URL(string: "tel:\(e164)") {
+                        Task { await UIApplication.shared.open(url) }
+                    }
+                }
+                Divider().frame(height: 24).opacity(0.4)
+                contactActionButton(icon: "message.fill", label: "SMS") {
+                    if let url = URL(string: "sms:\(e164)") {
+                        Task { await UIApplication.shared.open(url) }
+                    }
+                }
+                if whatsappAvailable, !waDigits.isEmpty,
+                   let waURL = URL(string: "https://wa.me/\(waDigits)") {
+                    Divider().frame(height: 24).opacity(0.4)
+                    contactActionButton(icon: "arrow.up.forward.app.fill", label: "WhatsApp") {
+                        Task { await UIApplication.shared.open(waURL) }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(Color.bhOccupe.opacity(0.07))
+            .overlay(alignment: .bottom) { Divider().opacity(0.4) }
+        }
+    }
+
+    @ViewBuilder
+    private func contactActionButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundStyle(Color.bhVert)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Normalisation numéro de téléphone
+
+    private func normalizePhone(_ raw: String, country: String?) -> String? {
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return nil }
+        if s.hasPrefix("+") {
+            let cleaned = "+" + s.dropFirst().filter { $0.isNumber }
+            return cleaned.count >= 5 ? cleaned : nil
+        }
+        if s.hasPrefix("00") {
+            let cleaned = "+" + String(s.dropFirst(2)).filter { $0.isNumber }
+            return cleaned.count >= 5 ? cleaned : nil
+        }
+        let digits = s.filter { $0.isNumber }
+        guard digits.count >= 7 else { return nil }
+        if digits.hasPrefix("0") {
+            return dialCode(for: country) + String(digits.dropFirst())
+        }
+        return dialCode(for: country) + digits
+    }
+
+    private func dialCode(for country: String?) -> String {
+        switch country?.uppercased() {
+        case "BE": return "+32"
+        case "CH": return "+41"
+        case "GB", "UK": return "+44"
+        case "DE": return "+49"
+        case "ES": return "+34"
+        case "IT": return "+39"
+        case "NL": return "+31"
+        case "PT": return "+351"
+        case "US", "CA": return "+1"
+        case "LU": return "+352"
+        case "MC": return "+377"
+        case "MA": return "+212"
+        case "DZ": return "+213"
+        case "TN": return "+216"
+        default:   return "+33"
+        }
     }
 }
 

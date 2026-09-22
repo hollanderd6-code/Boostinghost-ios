@@ -150,6 +150,14 @@ extension Conversation {
         lastMessageTime      = nil
         hasSuggestion        = nil
         channexBookingId     = nil
+        reservationEndDate   = nil
+        guestPhone           = nil
+        guestEmail           = nil
+        guestCountry         = nil
+        occupancyAdults      = nil
+        occupancyChildren    = nil
+        amountTotal          = nil
+        currency             = nil
     }
 }
 
