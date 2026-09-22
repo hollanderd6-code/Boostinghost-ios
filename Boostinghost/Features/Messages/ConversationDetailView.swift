@@ -706,7 +706,7 @@ struct ConversationDetailView: View {
 
     @ViewBuilder
     private var contactBar: some View {
-        let rawPhone = (vm.conversation.guestPhone ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let rawPhone = (vm.guestPhone ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if rawPhone.isEmpty {
             Text("Coordonnées non communiquées par la plateforme")
                 .font(.system(size: 11))
@@ -718,7 +718,7 @@ struct ConversationDetailView: View {
                 .background(Color.white.opacity(0.08))
                 .overlay(alignment: .bottom) { Divider().opacity(0.4) }
         } else {
-            let e164 = normalizePhone(rawPhone, country: vm.conversation.guestCountry) ?? rawPhone
+            let e164 = normalizePhone(rawPhone, country: vm.guestCountry) ?? rawPhone
             let waDigits = e164.filter { $0.isNumber }
             HStack(spacing: 0) {
                 contactActionButton(icon: "phone.fill", label: "Appeler") {

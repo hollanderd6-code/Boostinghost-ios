@@ -22,6 +22,11 @@ final class ConversationDetailViewModel {
     private(set) var isEscalated: Bool
     private(set) var isAiDisabled: Bool
 
+    // Contact info — may be absent when conversation is opened from Today/notifications
+    // (minimal Conversation init). load() refreshes guestPhone from the messages response.
+    private(set) var guestPhone: String?
+    private(set) var guestCountry: String?
+
     // Suggestion
     private(set) var suggestionText: String? = nil
     private(set) var suggestionActive: Bool = false
@@ -41,6 +46,8 @@ final class ConversationDetailViewModel {
         self.isEscalated  = conversation.escalated  ?? false
         self.isAiDisabled = conversation.aiDisabled ?? false
         self.currentNote  = conversation.notes.flatMap { $0.isEmpty ? nil : $0 }
+        self.guestPhone   = conversation.guestPhone.flatMap { $0.isEmpty ? nil : $0 }
+        self.guestCountry = conversation.guestCountry
     }
 
     // MARK: - Load
@@ -54,10 +61,12 @@ final class ConversationDetailViewModel {
                 Endpoint.messages(conversation.id)
             )
             messages = (r.messages ?? []).sorted { ($0.createdAt ?? "") < ($1.createdAt ?? "") }
-            // Refresh AI state from server (auto-de-escalation possible server-side)
+            // Refresh mutable state from server
             if let conv = r.conversation {
                 if let v = conv.escalated  { isEscalated  = v }
                 if let v = conv.aiDisabled { isAiDisabled = v }
+                // guest_phone is returned here; fills the gap when opened from Today/notifications
+                if let p = conv.guestPhone, !p.isEmpty { guestPhone = p }
             }
             loadState = .loaded
         } catch {
@@ -281,9 +290,14 @@ final class ConversationDetailViewModel {
     // MARK: - Template
 
     func sendTemplate(id: Int) async throws {
+        // agencyAll: la route lit la conversation avec
+        // `WHERE id = $1 AND user_id = ANY($2)`, et getAgencyUserIds n'inclut
+        // les comptes delegues que si la requete porte ?agency=all. Sans lui,
+        // l'envoi echoue sur toute conversation d'un compte delegue.
         let _: TemplateSendResponse = try await APIClient.shared.post(
             Endpoint.messageTemplateSend(id),
-            body: TemplateSendBody(conversationId: conversation.id)
+            body: TemplateSendBody(conversationId: conversation.id),
+            agencyAll: true
         )
         await load()
     }
