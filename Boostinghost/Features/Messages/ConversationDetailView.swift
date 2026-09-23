@@ -240,17 +240,18 @@ struct ConversationDetailView: View {
                 .padding(.bottom, 16)
             }
             .defaultScrollAnchor(.bottom)
-            .onChange(of: vm.mergedItems.count) { old, new in
-                guard new > 0, let lastId = vm.mergedItems.last?.id else { return }
-                if old == 0 {
-                    // Initial load: defaultScrollAnchor may not anchor correctly when
-                    // LazyVStack content appears after the ScrollView was already created
-                    // (messages loaded asynchronously). Scroll explicitly without animation.
+            .onAppear {
+                // Messages are already loaded when loadedList appears (set before
+                // loadState = .loaded), so onChange(old==0) never fires. Explicit
+                // scroll here covers both the Messages tab and search-sheet contexts.
+                if let lastId = vm.mergedItems.last?.id {
                     proxy.scrollTo(lastId, anchor: .bottom)
-                } else if new > old {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        proxy.scrollTo(lastId, anchor: .bottom)
-                    }
+                }
+            }
+            .onChange(of: vm.mergedItems.count) { old, new in
+                guard new > old, let lastId = vm.mergedItems.last?.id else { return }
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    proxy.scrollTo(lastId, anchor: .bottom)
                 }
             }
         }

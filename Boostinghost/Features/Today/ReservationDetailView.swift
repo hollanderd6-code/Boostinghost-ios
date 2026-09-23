@@ -118,6 +118,11 @@ struct ReservationDetailView: View {
         }
     }
 
+    // Falls back to propertySummary once the API response arrives (search path sets propertyName = "")
+    private var effectivePropertyName: String {
+        arrivee.propertyName.isEmpty ? (vm.propertySummary?.displayName ?? "") : arrivee.propertyName
+    }
+
     // MARK: - Barre de navigation
 
     private var navBar: some View {
@@ -135,7 +140,7 @@ struct ReservationDetailView: View {
             .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(arrivee.propertyName)
+                Text(effectivePropertyName)
                     .font(.bhSurTitre)
                     .foregroundStyle(Color.bhAttenue)
                     .lineLimit(1)
@@ -307,7 +312,7 @@ struct ReservationDetailView: View {
 
                 CardRow(showSeparator: hasTimesRow) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(arrivee.propertyName)
+                        Text(effectivePropertyName)
                             .font(.bhTitreLigne)
                             .foregroundStyle(Color.bhEncre)
                         if let addr = arrivee.propertyAddress, !addr.isEmpty {
