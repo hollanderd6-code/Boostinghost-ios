@@ -23,7 +23,7 @@ enum Endpoint {
     static func sendPlatform(_ id: Int) -> URL       { base.appending(path: "/api/chat/conversations/\(id)/send-platform") }
     static let send                                  = base.appending(path: "/api/chat/send")
     static func suggestion(_ id: Int) -> URL         { base.appending(path: "/api/chat/conversations/\(id)/suggestion") }
-    static func suggestionStatus(_ id: Int) -> URL   { base.appending(path: "/api/chat/conversations/\(id)/suggestion/status") }
+    static func suggestionDismiss(_ id: Int) -> URL  { base.appending(path: "/api/chat/conversations/\(id)/suggestion/dismiss") }
     static func suggestionRegen(_ id: Int) -> URL    { base.appending(path: "/api/chat/conversations/\(id)/suggestion/regenerate") }
     static func quickContext(_ id: Int) -> URL        { base.appending(path: "/api/chat/conversations/\(id)/quick-context") }
     static let shortLink                              = base.appending(path: "/api/short-link")

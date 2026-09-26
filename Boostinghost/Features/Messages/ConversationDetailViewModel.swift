@@ -195,7 +195,7 @@ final class ConversationDetailViewModel {
         suggestionText = nil
         Task {
             try? await APIClient.shared.postVoid(
-                Endpoint.suggestionStatus(conversation.id),
+                Endpoint.suggestionDismiss(conversation.id),
                 body: SuggestionStatusBody(status: "dismissed")
             )
         }
@@ -231,20 +231,29 @@ final class ConversationDetailViewModel {
             suggestionActive = false
             Task {
                 try? await APIClient.shared.postVoid(
-                    Endpoint.suggestionStatus(conversation.id),
+                    Endpoint.suggestionDismiss(conversation.id),
                     body: SuggestionStatusBody(status: "used")
                 )
             }
         }
 
         do {
-            if let channexId = conversation.channexBookingId, !channexId.isEmpty {
-                let _: GenericSuccess = try await APIClient.shared.post(
+            // Conversation OTA si channexBookingId est connu OU si la plateforme n'est pas directe.
+            // Ouverte depuis Today/notifications, la Conversation minimale n'a pas channexBookingId :
+            // send-platform retrouve lui-même la réservation côté serveur.
+            let isOTA: Bool = {
+                if let id = conversation.channexBookingId, !id.isEmpty { return true }
+                let p = (conversation.platform ?? "").lowercased()
+                return !p.isEmpty && !["direct", "manuel", "manual", "bhguest", "bhguest_hold"].contains(p)
+            }()
+            let result: SendResult
+            if isOTA {
+                result = try await APIClient.shared.post(
                     Endpoint.sendPlatform(conversation.id),
                     body: SendPlatformBody(message: text)
                 )
             } else {
-                let _: GenericSuccess = try await APIClient.shared.post(
+                result = try await APIClient.shared.post(
                     Endpoint.send,
                     body: SendDirectBody(
                         conversationId: conversation.id,
@@ -256,6 +265,9 @@ final class ConversationDetailViewModel {
             }
             draftText = ""
             suggestionText = nil
+            if result.notDelivered {
+                sendError = "Message non délivré sur la plateforme — renvoyez-le ou répondez depuis l'extranet."
+            }
             // Implicit take-over after escalation:
             //   • Temporary escalation (host question "self" path): escalated=true, aiDisabled=false
             //     → de-escalate only; the AI was not explicitly disabled, keep it enabled.
@@ -404,3 +416,22 @@ final class ConversationDetailViewModel {
         draftText = message.message
     }
 }
+
+// Réponse d'envoi : send-platform renvoie `delivered` à la racine,
+// /api/chat/send le renvoie dans `message`. Décodage tolérant (champs absents = inconnu).
+private struct SendResult: Decodable {
+    let delivered: Bool?
+    let messageDelivered: Bool?
+
+    private enum Keys: String, CodingKey { case delivered, message }
+    private struct Inner: Decodable { let delivered: Bool? }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        delivered        = try? c.decodeIfPresent(Bool.self, forKey: .delivered)
+        messageDelivered = (try? c.decodeIfPresent(Inner.self, forKey: .message))??.delivered
+    }
+
+    var notDelivered: Bool { (delivered ?? messageDelivered) == false }
+}
+
