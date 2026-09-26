@@ -46,7 +46,13 @@ final class MessagesViewModel {
 
     func updateConversation(_ id: Int, _ mutate: (inout Conversation) -> Void) {
         guard let idx = conversations.firstIndex(where: { $0.id == id }) else { return }
-        mutate(&conversations[idx])
+        // Explicit copy-modify-write : l'assignation conversations = updated passe par le setter
+        // @Observable et déclenche withMutation, garantissant la notification SwiftUI.
+        // mutate(&conversations[idx]) via inout ne déclenche pas withMutation (subscript _modify
+        // bypasse le setter du registrar).
+        var updated = conversations
+        mutate(&updated[idx])
+        conversations = updated
     }
 
     // MARK: - Mark read (optimistic, with explicit rollback)
