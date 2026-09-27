@@ -128,6 +128,14 @@ extension Conversation {
 
 
 extension Conversation: Hashable {
-    static func == (lhs: Conversation, rhs: Conversation) -> Bool { lhs.id == rhs.id }
+    // Include mutable display fields so SwiftUI re-renders rows when in-memory state changes.
+    // hash stays id-only (valid: equal objects share the same id → same hash).
+    static func == (lhs: Conversation, rhs: Conversation) -> Bool {
+        lhs.id           == rhs.id
+        && lhs.hasSuggestion == rhs.hasSuggestion
+        && lhs.escalated     == rhs.escalated
+        && lhs.aiDisabled    == rhs.aiDisabled
+        && lhs.unreadCount   == rhs.unreadCount
+    }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
