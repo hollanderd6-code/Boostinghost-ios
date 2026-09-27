@@ -34,6 +34,9 @@ struct ConversationDetailView: View {
             whatsappAvailable = UIApplication.shared.canOpenURL(URL(string: "whatsapp://")!)
             await messagesVM.markConversationRead(vm.conversation.id)
             await vm.load()
+            if vm.loadState == .loaded && vm.conversation.hasSuggestion == true && !vm.suggestionActive {
+                syncSuggestionDismissed()
+            }
             tryPresentConversationTip()
         }
         .onDisappear {
@@ -120,6 +123,8 @@ struct ConversationDetailView: View {
                 }
 
                 Spacer(minLength: 8)
+
+                contactMenu
 
                 Menu {
                     Button {
@@ -354,7 +359,6 @@ struct ConversationDetailView: View {
                     .padding(.top, 8)
                     .transition(.opacity)
                 }
-                contactBar
                 actionBar
             }
             HStack(alignment: .bottom, spacing: 10) {
@@ -703,66 +707,53 @@ struct ConversationDetailView: View {
         return n > 0 ? n : nil
     }
 
-    // MARK: - Barre de contact
+    // MARK: - Contact (menu natif dans la barre du haut)
 
+    // Bouton verre à côté du « … » : ouvre un menu système Appeler / SMS / WhatsApp.
+    // Masqué quand la plateforme n'a pas communiqué de numéro.
     @ViewBuilder
-    private var contactBar: some View {
+    private var contactMenu: some View {
         let rawPhone = (vm.guestPhone ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if rawPhone.isEmpty {
-            Text("Coordonnées non communiquées par la plateforme")
-                .font(.system(size: 11))
-                .foregroundStyle(Color.bhAttenue)
-                .frame(maxWidth: .infinity)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.white.opacity(0.08))
-                .overlay(alignment: .bottom) { Divider().opacity(0.4) }
-        } else {
+        if !rawPhone.isEmpty {
             let e164 = normalizePhone(rawPhone, country: vm.guestCountry) ?? rawPhone
             let waDigits = e164.filter { $0.isNumber }
-            HStack(spacing: 0) {
-                contactActionButton(icon: "phone.fill", label: "Appeler") {
-                    if let url = URL(string: "tel:\(e164)") {
-                        Task { await UIApplication.shared.open(url) }
+            Menu {
+                Section(e164) {
+                    Button {
+                        if let url = URL(string: "tel:\(e164)") { Task { await UIApplication.shared.open(url) } }
+                    } label: {
+                        Label("Appeler", systemImage: "phone")
+                    }
+                    Button {
+                        if let url = URL(string: "sms:\(e164)") { Task { await UIApplication.shared.open(url) } }
+                    } label: {
+                        Label("SMS", systemImage: "message")
+                    }
+                    if whatsappAvailable, !waDigits.isEmpty,
+                       let waURL = URL(string: "https://wa.me/\(waDigits)") {
+                        Button {
+                            Task { await UIApplication.shared.open(waURL) }
+                        } label: {
+                            Label("WhatsApp", systemImage: "arrow.up.forward.app")
+                        }
                     }
                 }
-                Divider().frame(height: 24).opacity(0.4)
-                contactActionButton(icon: "message.fill", label: "SMS") {
-                    if let url = URL(string: "sms:\(e164)") {
-                        Task { await UIApplication.shared.open(url) }
-                    }
+                Button {
+                    UIPasteboard.general.string = e164
+                } label: {
+                    Label("Copier le numéro", systemImage: "doc.on.doc")
                 }
-                if whatsappAvailable, !waDigits.isEmpty,
-                   let waURL = URL(string: "https://wa.me/\(waDigits)") {
-                    Divider().frame(height: 24).opacity(0.4)
-                    contactActionButton(icon: "arrow.up.forward.app.fill", label: "WhatsApp") {
-                        Task { await UIApplication.shared.open(waURL) }
-                    }
-                }
+            } label: {
+                Image(systemName: "phone.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.bhVert)
+                    .frame(width: 36, height: 36)
+                    .glassEffect(in: .circle)
+                    .specularEdge(cornerRadius: 18)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .background(Color.bhOccupe.opacity(0.07))
-            .overlay(alignment: .bottom) { Divider().opacity(0.4) }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Contacter le voyageur")
         }
-    }
-
-    @ViewBuilder
-    private func contactActionButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                Text(label)
-                    .font(.system(size: 10, weight: .medium))
-            }
-            .foregroundStyle(Color.bhVert)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 4)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Normalisation numéro de téléphone
@@ -1049,3 +1040,4 @@ private struct MessageBubbleView: View {
         return f
     }()
 }
+
