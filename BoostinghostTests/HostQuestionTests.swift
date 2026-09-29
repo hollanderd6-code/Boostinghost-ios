@@ -363,14 +363,14 @@ struct PushNotificationRoutingTests {
     // PUSHIOS-1: conversation_id as String "1510" → Int 1510
     @Test func conversationIdFromString() {
         let userInfo: [AnyHashable: Any] = ["conversation_id": "1510", "type": "host_question"]
-        let id = PushNotificationManager.conversationId(from: userInfo)
+        let id = PushRoute.conversationId(from: userInfo)
         #expect(id == 1510)
     }
 
     // PUSHIOS-2: conversation_id as NSNumber (Int) 1510 → Int 1510
     @Test func conversationIdFromNSNumber() {
         let userInfo: [AnyHashable: Any] = ["conversation_id": NSNumber(value: 1510), "type": "host_question"]
-        let id = PushNotificationManager.conversationId(from: userInfo)
+        let id = PushRoute.conversationId(from: userInfo)
         #expect(id == 1510)
     }
 
@@ -379,14 +379,14 @@ struct PushNotificationRoutingTests {
     // This test verifies the routing logic of the static helper for the camelCase key variant.
     @Test func conversationIdFromCamelCase() {
         let userInfo: [AnyHashable: Any] = ["conversationId": "200"]
-        let id = PushNotificationManager.conversationId(from: userInfo)
+        let id = PushRoute.conversationId(from: userInfo)
         #expect(id == 200)
     }
 
     // PUSHIOS-4: tap with exact convId → parsed correctly from payload
     @Test func conversationIdExactValue() {
         let userInfo: [AnyHashable: Any] = ["conversation_id": "99999"]
-        let id = PushNotificationManager.conversationId(from: userInfo)
+        let id = PushRoute.conversationId(from: userInfo)
         #expect(id == 99999)
     }
 
@@ -445,8 +445,8 @@ struct PushNotificationRoutingTests {
     @Test func convIdFromTapPayloadNotFromFetchPending() {
         let userInfoA: [AnyHashable: Any] = ["conversation_id": "100"]
         let userInfoB: [AnyHashable: Any] = ["conversation_id": "200"]
-        let idA = PushNotificationManager.conversationId(from: userInfoA)
-        let idB = PushNotificationManager.conversationId(from: userInfoB)
+        let idA = PushRoute.conversationId(from: userInfoA)
+        let idB = PushRoute.conversationId(from: userInfoB)
         #expect(idA == 100)
         #expect(idB == 200)
         #expect(idA != idB)

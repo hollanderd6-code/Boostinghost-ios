@@ -101,6 +101,17 @@ enum Endpoint {
     static func ownerInvoiceFinalize(_ id: String) -> URL { base.appending(path: "/api/owner-invoices/\(id)/finalize") }
     static func ownerInvoiceSend(_ id: String) -> URL { base.appending(path: "/api/owner-invoices/\(id)/send") }
     static func ownerInvoiceMarkPaid(_ id: String) -> URL { base.appending(path: "/api/owner-invoices/\(id)/mark-paid") }
+    static let invoiceSummary = base.appending(path: "/api/reservations/invoice-summary")
+    static func invoiceSummaryQueryItems(dateFrom: String, dateTo: String, propertyIds: [String]) -> [URLQueryItem] {
+        var items: [URLQueryItem] = [
+            URLQueryItem(name: "date_from", value: dateFrom),
+            URLQueryItem(name: "date_to",   value: dateTo)
+        ]
+        if !propertyIds.isEmpty {
+            items.append(.init(name: "property_ids", value: propertyIds.joined(separator: ",")))
+        }
+        return items
+    }
     static let contrats      = base.appending(path: "/api/contrats")
     static func contrat(_ id: String) -> URL        { base.appending(path: "/api/contrats/\(id)") }
     static func contratResend(_ id: String) -> URL  { base.appending(path: "/api/contrats/\(id)/resend-sign") }

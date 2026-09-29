@@ -5,6 +5,7 @@ struct OwnerInvoicesView: View {
     @State private var vm = OwnerInvoicesViewModel()
 
     @State private var listAlert: ListAlert? = nil
+    @State private var showCreateSheet = false
 
     var body: some View {
         ZStack {
@@ -71,7 +72,17 @@ struct OwnerInvoicesView: View {
             }
             .padding(.leading, 12)
 
-            Spacer(minLength: 12)
+            Spacer(minLength: 8)
+
+            Button { showCreateSheet = true } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.bhVert)
+                    .frame(width: 38, height: 38)
+                    .glassEffect(in: .circle)
+                    .specularEdge(cornerRadius: 19)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)
@@ -82,6 +93,9 @@ struct OwnerInvoicesView: View {
                 .specularEdge(cornerRadius: 0)
                 .chromeShadow()
                 .ignoresSafeArea(edges: .top)
+        }
+        .sheet(isPresented: $showCreateSheet, onDismiss: { Task { await vm.reload() } }) {
+            OwnerInvoiceCreateView()
         }
     }
 

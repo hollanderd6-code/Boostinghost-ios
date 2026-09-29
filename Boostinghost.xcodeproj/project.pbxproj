@@ -141,6 +141,10 @@
 		AB0000000000000000000436 /* HostQuestionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000435 /* HostQuestionSheet.swift */; };
 		AB000000000000000000043A /* HostQuestionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000439 /* HostQuestionCard.swift */; };
 		AB0000000000000000000454 /* DepositDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000453 /* DepositDetailSheet.swift */; };
+		AB000000000000000000B002 /* OwnerInvoiceCreateModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000B001 /* OwnerInvoiceCreateModels.swift */; };
+		AB000000000000000000B004 /* OwnerInvoiceCreateViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000B003 /* OwnerInvoiceCreateViewModel.swift */; };
+		AB000000000000000000B006 /* OwnerInvoiceCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000B005 /* OwnerInvoiceCreateView.swift */; };
+		AB000000000000000000B021 /* OwnerInvoiceCreateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000B011 /* OwnerInvoiceCreateTests.swift */; };
 		AB0000000000000000000501 /* SearchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000500 /* SearchModels.swift */; };
 		AB0000000000000000000503 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000502 /* SearchViewModel.swift */; };
 		AB0000000000000000000505 /* GlobalSearchSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000504 /* GlobalSearchSheet.swift */; };
@@ -332,6 +336,10 @@
 		AB0000000000000000000435 /* HostQuestionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000439 /* HostQuestionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionCard.swift; sourceTree = "<group>"; };
 		AB0000000000000000000453 /* DepositDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositDetailSheet.swift; sourceTree = "<group>"; };
+		AB000000000000000000B001 /* OwnerInvoiceCreateModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoiceCreateModels.swift; sourceTree = "<group>"; };
+		AB000000000000000000B003 /* OwnerInvoiceCreateViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoiceCreateViewModel.swift; sourceTree = "<group>"; };
+		AB000000000000000000B005 /* OwnerInvoiceCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoiceCreateView.swift; sourceTree = "<group>"; };
+		AB000000000000000000B011 /* OwnerInvoiceCreateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoiceCreateTests.swift; sourceTree = "<group>"; };
 		AB0000000000000000000500 /* SearchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchModels.swift; sourceTree = "<group>"; };
 		AB0000000000000000000502 /* SearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000504 /* GlobalSearchSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalSearchSheet.swift; sourceTree = "<group>"; };
@@ -657,6 +665,9 @@
 				AB0000000000000000000422 /* OwnerInvoiceDetailView.swift */,
 				AB0000000000000000000424 /* OwnerClientDetailViewModel.swift */,
 				AB0000000000000000000426 /* OwnerClientDetailView.swift */,
+				AB000000000000000000B001 /* OwnerInvoiceCreateModels.swift */,
+				AB000000000000000000B003 /* OwnerInvoiceCreateViewModel.swift */,
+				AB000000000000000000B005 /* OwnerInvoiceCreateView.swift */,
 				AB0000000000000000000140 /* StaysView.swift */,
 				AB0000000000000000000141 /* ManageModels.swift */,
 				AB0000000000000000000152 /* DepositsModels.swift */,
@@ -776,6 +787,7 @@
 				AB0000000000000000009015 /* HostQuestionTests.swift */,
 				AB0000000000000000009016 /* CurrencyModelTests.swift */,
 				AB0000000000000000009017 /* FormattersTests.swift */,
+				AB000000000000000000B011 /* OwnerInvoiceCreateTests.swift */,
 			);
 			path = BoostinghostTests;
 			sourceTree = "<group>";
@@ -1058,6 +1070,9 @@
 				AB0000000000000000000421 /* OwnerInvoiceDetailView.swift in Sources */,
 				AB0000000000000000000423 /* OwnerClientDetailViewModel.swift in Sources */,
 				AB0000000000000000000425 /* OwnerClientDetailView.swift in Sources */,
+				AB000000000000000000B002 /* OwnerInvoiceCreateModels.swift in Sources */,
+				AB000000000000000000B004 /* OwnerInvoiceCreateViewModel.swift in Sources */,
+				AB000000000000000000B006 /* OwnerInvoiceCreateView.swift in Sources */,
 				AB0000000000000000000711 /* UpsellSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1073,6 +1088,7 @@
 				AB0000000000000000009025 /* HostQuestionTests.swift in Sources */,
 				AB0000000000000000009026 /* CurrencyModelTests.swift in Sources */,
 				AB0000000000000000009027 /* FormattersTests.swift in Sources */,
+				AB000000000000000000B021 /* OwnerInvoiceCreateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

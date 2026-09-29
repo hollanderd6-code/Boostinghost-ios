@@ -20,6 +20,7 @@ struct OwnerInvoiceDetailView: View {
     @State private var showFinalizeConfirm = false
     @State private var showSendConfirm     = false
     @State private var showDeleteConfirm   = false
+    @State private var showEditSheet       = false
     @State private var actionError: String? = nil
 
     init(invoiceId: String, onChanged: (() -> Void)? = nil) {
@@ -459,6 +460,24 @@ struct OwnerInvoiceDetailView: View {
                     }
                     .disabled(isRunning)
                     .opacity(isRunning ? 0.55 : 1)
+
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Text("Modifier")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.bhVert)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isRunning)
+                    .sheet(isPresented: $showEditSheet, onDismiss: {
+                        Task { await vm.load() }
+                        onChanged?()
+                    }) {
+                        OwnerInvoiceCreateView(mode: .edit(vm.invoiceId))
+                    }
 
                     Button {
                         showSendConfirm = true
