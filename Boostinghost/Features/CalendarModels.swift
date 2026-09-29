@@ -7,7 +7,8 @@ import Foundation
 //     basePrice, weekendPrice,
 //     prices: { "YYYY-MM-DD": Double },
 //     booked:  [{ start, end, guest, uid, platform }],
-//     blocked: [{ start, end, uid, reason }]
+//     blocked: [{ start, end, uid, reason }],
+//     currency: "EUR" | "ILS" | "USD" | …  (nil on legacy responses)
 // } } }
 
 struct PricingCalendarResponse: Decodable {
@@ -24,6 +25,8 @@ struct PricingCalendarProperty: Decodable {
     let prices:  [String: Double]?
     let booked:  [PricingCalendarEntry]?
     let blocked: [PricingCalendarBlock]?
+    // nil on legacy responses — callers use Formatters.normalizeCurrency to fall back to EUR
+    let currency: String?
 
     func price(for dayKey: String, isWeekend: Bool) -> Double? {
         if let custom = prices?[dayKey] { return custom }

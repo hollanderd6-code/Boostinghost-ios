@@ -98,6 +98,7 @@ struct UpsellSheet: View {
                 HStack {
                     TextField("0", text: $amountText)
                         .keyboardType(.decimalPad)
+                    // INTENTIONALLY_EUR — BHGuest upsell is a EUR-denominated Stripe charge (amountEuros field).
                     Text("€")
                         .foregroundStyle(Color.bhAttenue)
                 }
@@ -194,6 +195,7 @@ struct UpsellSheet: View {
             if r.feeCents > 0 {
                 let fee = Double(r.feeCents) / 100
                 let net = r.amountEuros - fee
+                // INTENTIONALLY_EUR — fee and net are BHGuest EUR commission amounts from the upsell API.
                 Section {
                     HStack {
                         Text("Commission BHGuest (3 %)")

@@ -253,7 +253,7 @@ struct DebourView: View {
                 Spacer(minLength: 8)
 
                 VStack(alignment: .trailing, spacing: 5) {
-                    Text(DebourAmountFmt.format(debour.montant))
+                    Text(Formatters.amount(debour.montant, currency: Formatters.normalizeCurrency(debour.currency)))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.bhEncre)
                     StatusPill(text: debour.statusLabel, style: debour.statusPillStyle)
@@ -483,6 +483,8 @@ private struct DebourCreateSheet: View {
     @State private var photoName              = "photo.jpg"
     @State private var photoPreview: Image?   = nil
 
+    @State private var currencyCode: String
+
     @State private var showClientPicker       = false
     @State private var showSourceDialog       = false
     @State private var showCamera             = false
@@ -506,12 +508,14 @@ private struct DebourCreateSheet: View {
             _selectedDate     = State(initialValue: Self.parseDate(d.date) ?? Date())
             _existingPhotoUrl = State(initialValue: d.photoUrl)
             _selectedClient   = State(initialValue: nil)  // résolu dans .task
+            _currencyCode     = State(initialValue: Formatters.normalizeCurrency(d.currency))
         } else {
             _description      = State(initialValue: "")
             _montantStr       = State(initialValue: "")
             _selectedDate     = State(initialValue: Date())
             _existingPhotoUrl = State(initialValue: nil)
             _selectedClient   = State(initialValue: nil)
+            _currencyCode     = State(initialValue: "EUR")
         }
     }
 
@@ -729,9 +733,25 @@ private struct DebourCreateSheet: View {
                                     .multilineTextAlignment(.trailing)
                                     .keyboardType(.decimalPad)
                                     .frame(width: 100)
-                                Text("€")
+                                Text(Formatters.currencySymbol(for: currencyCode))
                                     .font(.system(size: 15))
                                     .foregroundStyle(Color.bhAttenue)
+                            }
+                        }
+                        CardRow(showSeparator: true) {
+                            HStack {
+                                Text("Devise")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(Color.bhAttenue)
+                                Spacer()
+                                Picker("", selection: $currencyCode) {
+                                    Text("EUR – €").tag("EUR")
+                                    Text("ILS – ₪").tag("ILS")
+                                    Text("USD – $").tag("USD")
+                                    Text("CHF").tag("CHF")
+                                }
+                                .pickerStyle(.menu)
+                                .tint(Color.bhEncre)
                             }
                         }
                         CardRow(showSeparator: false) {
@@ -906,6 +926,7 @@ private struct DebourCreateSheet: View {
             ("description", descTrimmed),
             ("montant",     montantNormalized),
             ("date",        dateValue),
+            ("currency",    currencyCode),
         ]
 
         do {

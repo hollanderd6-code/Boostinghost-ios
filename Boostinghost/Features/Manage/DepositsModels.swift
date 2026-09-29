@@ -18,6 +18,7 @@ struct ReservationWithDeposit: Decodable, Identifiable {
     let guestName: String?
     let propertyName: String?
     let propertyId: String?
+    let currency: String?               // ISO 4217 from reservations.currency — nil treated as EUR
     let checkOut: String?               // ISO "YYYY-MM-DD" ou datetime complet (champ endDate ou checkOut)
     let amountCents: Int?               // centimes → /100 pour l'affichage
     let depositStatus: String?          // "authorized" | "auth_expired" | "captured" | "released"
@@ -147,6 +148,7 @@ struct ReservationWithDeposit: Decodable, Identifiable {
         case guestName
         case propertyName
         case propertyId
+        case currency
         case endDate            // nom réel renvoyé par le backend
         case checkOut           // fallback
         case depositReleaseDays
@@ -165,6 +167,7 @@ struct ReservationWithDeposit: Decodable, Identifiable {
         guestName    = try? c.decodeIfPresent(String.self, forKey: .guestName)
         propertyName = try? c.decodeIfPresent(String.self, forKey: .propertyName)
         propertyId   = try? c.decodeIfPresent(String.self, forKey: .propertyId)
+        currency     = try? c.decodeIfPresent(String.self, forKey: .currency)
         // endDate est le nom réel — checkOut comme repli pour la rétrocompatibilité
         checkOut     = (try? c.decodeIfPresent(String.self, forKey: .endDate))
                     ?? (try? c.decodeIfPresent(String.self, forKey: .checkOut))

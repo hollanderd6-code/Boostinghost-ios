@@ -29,6 +29,7 @@ struct Property: Decodable, Identifiable {
     let minNights: Int?
 
     // MARK: - Pricing (String-or-Number in the API)
+    let currency: String?             // ISO 4217 — nil on legacy properties (treat as EUR)
     let basePrice: Double?
     let weekendPrice: Double?
     let cleaningFee: Double?
@@ -99,6 +100,7 @@ struct Property: Decodable, Identifiable {
         // Schedule
         case arrivalTime, departureTime, minNights
         // Pricing
+        case currency
         case basePrice, weekendPrice, cleaningFee
         case touristTax, touristTaxPerNight
         case depositAmount, depositReleaseDays
@@ -156,6 +158,7 @@ struct Property: Decodable, Identifiable {
         departureTime    = try? c.decodeIfPresent(String.self, forKey: .departureTime)
         minNights        = c.flexInt(forKey: .minNights)
 
+        currency         = try? c.decodeIfPresent(String.self, forKey: .currency)
         basePrice        = c.flexDouble(forKey: .basePrice)
         weekendPrice     = c.flexDouble(forKey: .weekendPrice)
         cleaningFee      = c.flexDouble(forKey: .cleaningFee)

@@ -68,6 +68,7 @@
 		AB0000000000000000000015 /* ListCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000125 /* ListCard.swift */; };
 		AB0000000000000000000016 /* SheetHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000126 /* SheetHandle.swift */; };
 		AB0000000000000000000017 /* GlassNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000127 /* GlassNavBar.swift */; };
+		AB000000000000000000A001 /* ToastBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000A002 /* ToastBanner.swift */; };
 		AB0000000000000000000018 /* GlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000128 /* GlassTabBar.swift */; };
 		AB0000000000000000000019 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000129 /* LoginViewModel.swift */; };
 		AB0000000000000000000020 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000130 /* LoginView.swift */; };
@@ -122,6 +123,7 @@
 		AB0000000000000000000413 /* ContractDetailModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000414 /* ContractDetailModels.swift */; };
 		AB0000000000000000000415 /* ContractDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000416 /* ContractDetailViewModel.swift */; };
 		AB0000000000000000000417 /* ContractDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000418 /* ContractDetailView.swift */; };
+		AB000000000000000000A003 /* RentalContractModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000A004 /* RentalContractModels.swift */; };
 		AB0000000000000000000419 /* OwnerInvoicesModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000041A /* OwnerInvoicesModels.swift */; };
 		AB000000000000000000041B /* OwnerInvoicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000041C /* OwnerInvoicesViewModel.swift */; };
 		AB000000000000000000041D /* OwnerInvoicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000041E /* OwnerInvoicesView.swift */; };
@@ -177,6 +179,8 @@
 		AB0000000000000000009023 /* CalendarViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009013 /* CalendarViewModelTests.swift */; };
 		AB0000000000000000009024 /* CalendarOrderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009014 /* CalendarOrderTests.swift */; };
 		AB0000000000000000009025 /* HostQuestionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009015 /* HostQuestionTests.swift */; };
+		AB0000000000000000009026 /* CurrencyModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009016 /* CurrencyModelTests.swift */; };
+		AB0000000000000000009027 /* FormattersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000009017 /* FormattersTests.swift */; };
 		B1C7E4920A3F4D5E82F6A3B1C9D02E47 /* TemplateEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D8F2A14B6C4E0A9F7C1D8B5E2A3C06 /* TemplateEditView.swift */; };
 		BF11223344556677889900BA /* SupportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AA /* SupportModels.swift */; };
 		BF11223344556677889900BB /* SupportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF11223344556677889900AB /* SupportViewModel.swift */; };
@@ -256,6 +260,7 @@
 		AB0000000000000000000125 /* ListCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListCard.swift; sourceTree = "<group>"; };
 		AB0000000000000000000126 /* SheetHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetHandle.swift; sourceTree = "<group>"; };
 		AB0000000000000000000127 /* GlassNavBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassNavBar.swift; sourceTree = "<group>"; };
+		AB000000000000000000A002 /* ToastBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastBanner.swift; sourceTree = "<group>"; };
 		AB0000000000000000000128 /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
 		AB0000000000000000000129 /* LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000130 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -309,6 +314,7 @@
 		AB0000000000000000000414 /* ContractDetailModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDetailModels.swift; sourceTree = "<group>"; };
 		AB0000000000000000000416 /* ContractDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDetailViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000418 /* ContractDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDetailView.swift; sourceTree = "<group>"; };
+		AB000000000000000000A004 /* RentalContractModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RentalContractModels.swift; sourceTree = "<group>"; };
 		AB000000000000000000041A /* OwnerInvoicesModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoicesModels.swift; sourceTree = "<group>"; };
 		AB000000000000000000041C /* OwnerInvoicesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoicesViewModel.swift; sourceTree = "<group>"; };
 		AB000000000000000000041E /* OwnerInvoicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerInvoicesView.swift; sourceTree = "<group>"; };
@@ -365,6 +371,8 @@
 		AB0000000000000000009013 /* CalendarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModelTests.swift; sourceTree = "<group>"; };
 		AB0000000000000000009014 /* CalendarOrderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarOrderTests.swift; sourceTree = "<group>"; };
 		AB0000000000000000009015 /* HostQuestionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostQuestionTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009016 /* CurrencyModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyModelTests.swift; sourceTree = "<group>"; };
+		AB0000000000000000009017 /* FormattersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormattersTests.swift; sourceTree = "<group>"; };
 		B4D7291B8EFF4179AC8D6D7E /* ReservationEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationEditSheet.swift; sourceTree = "<group>"; };
 		BF11223344556677889900AA /* SupportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportModels.swift; sourceTree = "<group>"; };
 		BF11223344556677889900AB /* SupportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportViewModel.swift; sourceTree = "<group>"; };
@@ -477,6 +485,7 @@
 				AB0000000000000000000126 /* SheetHandle.swift */,
 				AB000000000000000000070A /* ScrollableFilterBar.swift */,
 				AB0000000000000000000127 /* GlassNavBar.swift */,
+				AB000000000000000000A002 /* ToastBanner.swift */,
 				AB0000000000000000000F06 /* BrandMark.swift */,
 				AB0000000000000000000128 /* GlassTabBar.swift */,
 				AB000000000000000000040A /* ProfileAvatarView.swift */,
@@ -640,6 +649,7 @@
 				AB0000000000000000000414 /* ContractDetailModels.swift */,
 				AB0000000000000000000416 /* ContractDetailViewModel.swift */,
 				AB0000000000000000000418 /* ContractDetailView.swift */,
+				AB000000000000000000A004 /* RentalContractModels.swift */,
 				AB000000000000000000041A /* OwnerInvoicesModels.swift */,
 				AB000000000000000000041C /* OwnerInvoicesViewModel.swift */,
 				AB000000000000000000041E /* OwnerInvoicesView.swift */,
@@ -764,6 +774,8 @@
 				AB0000000000000000009013 /* CalendarViewModelTests.swift */,
 				AB0000000000000000009014 /* CalendarOrderTests.swift */,
 				AB0000000000000000009015 /* HostQuestionTests.swift */,
+				AB0000000000000000009016 /* CurrencyModelTests.swift */,
+				AB0000000000000000009017 /* FormattersTests.swift */,
 			);
 			path = BoostinghostTests;
 			sourceTree = "<group>";
@@ -932,6 +944,7 @@
 				56D2B85D304FECFF00F5B146 /* MandatModels.swift in Sources */,
 				56D2B85E304FECFF00F5B146 /* MandatViewModel.swift in Sources */,
 				AB0000000000000000000017 /* GlassNavBar.swift in Sources */,
+				AB000000000000000000A001 /* ToastBanner.swift in Sources */,
 				AB0000000000000000000F05 /* BrandMark.swift in Sources */,
 				AB0000000000000000000018 /* GlassTabBar.swift in Sources */,
 				AB0000000000000000000019 /* LoginViewModel.swift in Sources */,
@@ -1037,6 +1050,7 @@
 				AB0000000000000000000413 /* ContractDetailModels.swift in Sources */,
 				AB0000000000000000000415 /* ContractDetailViewModel.swift in Sources */,
 				AB0000000000000000000417 /* ContractDetailView.swift in Sources */,
+				AB000000000000000000A003 /* RentalContractModels.swift in Sources */,
 				AB0000000000000000000419 /* OwnerInvoicesModels.swift in Sources */,
 				AB000000000000000000041B /* OwnerInvoicesViewModel.swift in Sources */,
 				AB000000000000000000041D /* OwnerInvoicesView.swift in Sources */,
@@ -1057,6 +1071,8 @@
 				AB0000000000000000009023 /* CalendarViewModelTests.swift in Sources */,
 				AB0000000000000000009024 /* CalendarOrderTests.swift in Sources */,
 				AB0000000000000000009025 /* HostQuestionTests.swift in Sources */,
+				AB0000000000000000009026 /* CurrencyModelTests.swift in Sources */,
+				AB0000000000000000009027 /* FormattersTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1213,7 +1229,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.0.1;
+				MARKETING_VERSION = 6.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.boostinghost.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1248,7 +1264,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 6.0.1;
+				MARKETING_VERSION = 6.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.boostinghost.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

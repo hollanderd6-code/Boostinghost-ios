@@ -134,8 +134,23 @@ struct TemplatePickerSheet: View {
         do {
             try await vm.sendTemplate(id: template.id)
             dismiss()
+        } catch let err as APIError {
+            // Le message generique masquait la cause reelle (403 en mode agence,
+            // 404, 500, decodage). On remonte ce que dit le serveur.
+            switch err {
+            case .server(let code, let msg):
+                sendError = msg ?? "Le serveur a refuse l'envoi (code \(code))."
+            case .network:
+                sendError = "Envoi echoue. Verifiez votre connexion."
+            case .decoding:
+                sendError = "Reponse du serveur illisible."
+            case .unauthorized:
+                sendError = "Session expiree. Reconnectez-vous."
+            case .subscriptionRequired:
+                sendError = "Abonnement requis."
+            }
         } catch {
-            sendError = "Envoi échoué. Vérifiez votre connexion."
+            sendError = error.localizedDescription
         }
     }
 }

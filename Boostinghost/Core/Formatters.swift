@@ -2,7 +2,47 @@ import Foundation
 
 enum Formatters {
 
+    // MARK: - Currency normalization
+
+    // Accepts any ISO 4217-like code, normalizes to uppercase.
+    // nil / empty / non-3-letter strings → "EUR".
+    static func normalizeCurrency(_ code: String?) -> String {
+        let t = (code ?? "").trimmingCharacters(in: .whitespaces).uppercased()
+        guard t.count == 3, t.allSatisfy(\.isLetter) else { return "EUR" }
+        return t
+    }
+
+    // MARK: - Non-EUR formatter cache (keyed by "<CODE>_<maxFraction>")
+    // nonisolated(unsafe): formatters are created/read exclusively from the main actor in practice;
+    // NumberFormatter is not thread-safe but the existing static formatters follow the same pattern.
+    nonisolated(unsafe) private static var fxCache: [String: NumberFormatter] = [:]
+
+    private static func fxFormatter(code: String, maxFraction: Int) -> NumberFormatter {
+        let key = "\(code)_\(maxFraction)"
+        if let f = fxCache[key] { return f }
+        let f = NumberFormatter()
+        f.locale                = Locale(identifier: "fr_FR")
+        f.numberStyle           = .currency
+        f.currencyCode          = code
+        f.maximumFractionDigits = maxFraction
+        f.minimumFractionDigits = maxFraction
+        fxCache[key] = f
+        return f
+    }
+
+    // MARK: - Currency symbol for use in text labels
+
+    static func currencySymbol(for currency: String) -> String {
+        let code = normalizeCurrency(currency)
+        if code == "EUR" { return "€" }
+        return fxFormatter(code: code, maxFraction: 0).currencySymbol ?? code
+    }
+
     // MARK: - Currency  →  "42 380 €"  (narrow non-breaking space, zero decimals)
+    //
+    // EUR path: exact legacy behavior preserved (fr_FR decimal + "€" suffix).
+    // Non-EUR path: NumberFormatter .currency with fr_FR locale; symbol and placement
+    //               are locale-determined — no hardcoded switch.
 
     private static let amountFormatter: NumberFormatter = {
         let f = NumberFormatter()
@@ -14,9 +54,14 @@ enum Formatters {
         return f
     }()
 
-    static func amount(_ value: Double) -> String {
-        let s = amountFormatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-        return "\(s)\u{202F}€"
+    static func amount(_ value: Double, currency: String = "EUR") -> String {
+        let code = normalizeCurrency(currency)
+        if code == "EUR" {
+            let s = amountFormatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+            return "\(s)\u{202F}€"
+        }
+        return fxFormatter(code: code, maxFraction: 0).string(from: NSNumber(value: value))
+            ?? "\(Int(value)) \(code)"
     }
 
     static func amount(_ value: String?) -> String {
@@ -35,9 +80,20 @@ enum Formatters {
         return f
     }()
 
-    static func amountDecimal(_ value: Double) -> String {
-        let s = amountDecimalFormatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
-        return "\(s)\u{202F}€"
+    static func amountDecimal(_ value: Double, currency: String = "EUR") -> String {
+        let code = normalizeCurrency(currency)
+        if code == "EUR" {
+            let s = amountDecimalFormatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
+            return "\(s)\u{202F}€"
+        }
+        return fxFormatter(code: code, maxFraction: 2).string(from: NSNumber(value: value))
+            ?? String(format: "%.2f \(code)", value)
+    }
+
+    // MARK: - Compact amount for narrow calendar cells (0 decimals, currency always shown)
+
+    static func amountCompact(_ value: Double, currency: String = "EUR") -> String {
+        amount(value, currency: currency)
     }
 
     // MARK: - Time  →  "16 h"  /  "9 h 41"

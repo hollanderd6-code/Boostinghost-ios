@@ -153,12 +153,14 @@ private struct DayCell: View {
                     .font(.system(size: 9.5))
                     .foregroundStyle(subLabelColor)
             }
-        case .single:
+        case .single(let propId):
             let key = CalendarViewModel.dayKey(for: date)
             if canViewPricing, let price = vm.dayPrices[key] {
-                Text("\(Int(price))€")
+                Text(Formatters.amountCompact(price, currency: vm.currency(forPropertyId: propId)))
                     .font(.system(size: 9.5))
                     .foregroundStyle(subLabelColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
         }
     }

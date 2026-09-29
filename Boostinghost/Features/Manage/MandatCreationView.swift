@@ -362,7 +362,21 @@ private struct Step1View: View {
                     ("oui",        "Autorisés"),
                 ])
                 timePicker("Arrivée",  timeString: $draft.checkinTime)
-                timePicker("Départ",   timeString: $draft.checkoutTime, separator: false)
+                timePicker("Départ",   timeString: $draft.checkoutTime)
+                CardRow(showSeparator: false) {
+                    HStack {
+                        Text("Devise").font(.system(size: 14.5)).foregroundStyle(Color.bhEncre)
+                        Spacer()
+                        Picker("", selection: $draft.currency) {
+                            Text("EUR – €").tag("EUR")
+                            Text("ILS – ₪").tag("ILS")
+                            Text("USD – $").tag("USD")
+                            Text("CHF").tag("CHF")
+                        }
+                        .pickerStyle(.menu)
+                        .tint(Color.bhEncre)
+                    }
+                }
             }
         }
     }
@@ -667,7 +681,7 @@ private struct Step2View: View {
                             .multilineTextAlignment(.trailing)
                             .keyboardType(.decimalPad)
                             .frame(width: 80)
-                        Text("€ TTC")
+                        Text("\(Formatters.currencySymbol(for: draft.currency)) TTC")
                             .font(.system(size: 14.5))
                             .foregroundStyle(Color.bhAttenue)
                     }
@@ -733,7 +747,7 @@ private struct Step2View: View {
                 .multilineTextAlignment(.trailing)
                 .keyboardType(.decimalPad)
                 .frame(width: 56)
-                Text("€").font(.system(size: 14.5)).foregroundStyle(Color.bhAttenue)
+                Text(Formatters.currencySymbol(for: draft.currency)).font(.system(size: 14.5)).foregroundStyle(Color.bhAttenue)
                 if def.units.count > 1 {
                     Picker("", selection: Binding(
                         get: { extraUnits.indices.contains(i) ? extraUnits[i] : def.units[0].0 },
@@ -768,7 +782,7 @@ private struct Step2View: View {
             ))
             .font(.system(size: 14.5)).foregroundStyle(Color.bhAttenue)
             .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 46)
-            Text("€").font(.system(size: 14.5)).foregroundStyle(Color.bhAttenue)
+            Text(Formatters.currencySymbol(for: draft.currency)).font(.system(size: 14.5)).foregroundStyle(Color.bhAttenue)
             Picker("", selection: Binding(
                 get: { freeExtras[i].unit },
                 set: { freeExtras[i].unit = $0; syncExtras() }
@@ -795,13 +809,13 @@ private struct Step2View: View {
             guard extraChecked.indices.contains(i), extraChecked[i] else { continue }
             let p = extraPrices.indices.contains(i) ? extraPrices[i].trimmingCharacters(in: .whitespaces) : ""
             let u = extraUnits.indices.contains(i)  ? extraUnits[i] : def.units[0].0
-            result.append(p.isEmpty ? def.label : "\(def.label) : \(p) € \(u)")
+            result.append(p.isEmpty ? def.label : "\(def.label) : \(p) \(Formatters.currencySymbol(for: draft.currency)) \(u)")
         }
         for fe in freeExtras where fe.isChecked {
             let lbl = fe.label.trimmingCharacters(in: .whitespaces)
             guard !lbl.isEmpty else { continue }
             let p = fe.price.trimmingCharacters(in: .whitespaces)
-            result.append(p.isEmpty ? lbl : "\(lbl) : \(p) € \(fe.unit)")
+            result.append(p.isEmpty ? lbl : "\(lbl) : \(p) \(Formatters.currencySymbol(for: draft.currency)) \(fe.unit)")
         }
         draft.extrasFacturables = result
     }
@@ -817,7 +831,7 @@ private struct Step2View: View {
                 } else if s.hasPrefix(def.label + " : ") {
                     extraChecked[j] = true
                     let rest = String(s.dropFirst(def.label.count + 3))
-                    let parts = rest.components(separatedBy: " € ")
+                    let parts = rest.components(separatedBy: " \(Formatters.currencySymbol(for: draft.currency)) ")
                     extraPrices[j] = parts.first ?? ""
                     if parts.count > 1 { extraUnits[j] = parts[1] }
                 }
@@ -920,7 +934,7 @@ private struct Step3View: View {
                 SectionLabel(text: "Forfait")
                 ListCard {
                     CardRow(showSeparator: false) {
-                        amountRow("Montant mensuel", text: $draft.forfaitMensuel, unit: "€/mois", placeholder: "200")
+                        amountRow("Montant mensuel", text: $draft.forfaitMensuel, unit: "\(Formatters.currencySymbol(for: draft.currency))/mois", placeholder: "200")
                     }
                 }
             }
@@ -929,7 +943,7 @@ private struct Step3View: View {
                 SectionLabel(text: "Forfait")
                 ListCard {
                     CardRow(showSeparator: false) {
-                        amountRow("Montant / réservation", text: $draft.forfaitResa, unit: "€", placeholder: "50")
+                        amountRow("Montant / réservation", text: $draft.forfaitResa, unit: Formatters.currencySymbol(for: draft.currency), placeholder: "50")
                     }
                 }
             }
@@ -948,7 +962,7 @@ private struct Step3View: View {
                         }
                     }
                     CardRow(showSeparator: false) {
-                        amountRow("Forfait mensuel", text: $draft.mixteForfait, unit: "€/mois", placeholder: "100")
+                        amountRow("Forfait mensuel", text: $draft.mixteForfait, unit: "\(Formatters.currencySymbol(for: draft.currency))/mois", placeholder: "100")
                     }
                 }
             }
@@ -1316,7 +1330,7 @@ private struct Step5View: View {
                 }
                 if !d.urgenceLimit.isEmpty {
                     detailRow("Plafond urgence",
-                        value: "\(d.urgenceLimit)\u{202F}€ TTC",
+                        value: "\(d.urgenceLimit)\u{202F}\(Formatters.currencySymbol(for: d.currency)) TTC",
                         separator: !d.extrasFacturables.isEmpty)
                 }
                 ForEach(Array(d.extrasFacturables.enumerated()), id: \.offset) { idx, e in
@@ -1347,15 +1361,15 @@ private struct Step5View: View {
                     detailRow("Base de calcul",    value: Self.commissionBaseLabel(d.commissionBase))
                 case "forfait_mensuel":
                     if !d.forfaitMensuel.isEmpty {
-                        detailRow("Forfait",       value: "\(d.forfaitMensuel)\u{202F}€/mois")
+                        detailRow("Forfait",       value: "\(d.forfaitMensuel)\u{202F}\(Formatters.currencySymbol(for: d.currency))/mois")
                     }
                 case "forfait_resa":
                     if !d.forfaitResa.isEmpty {
-                        detailRow("Forfait / rés.", value: "\(d.forfaitResa)\u{202F}€")
+                        detailRow("Forfait / rés.", value: "\(d.forfaitResa)\u{202F}\(Formatters.currencySymbol(for: d.currency))")
                     }
                 case "mixte":
                     if !d.mixteRate.isEmpty    { detailRow("Taux",    value: "\(d.mixteRate)\u{202F}%") }
-                    if !d.mixteForfait.isEmpty { detailRow("Forfait", value: "\(d.mixteForfait)\u{202F}€/mois") }
+                    if !d.mixteForfait.isEmpty { detailRow("Forfait", value: "\(d.mixteForfait)\u{202F}\(Formatters.currencySymbol(for: d.currency))/mois") }
                 default:
                     EmptyView()
                 }

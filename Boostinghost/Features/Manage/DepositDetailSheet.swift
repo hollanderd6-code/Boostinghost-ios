@@ -5,6 +5,7 @@ import SwiftUI
 struct DepositDetailSheet: View {
     let deposit: ReservationWithDeposit
     let vm: DepositsViewModel
+    var onSuccess: ((ToastMessage) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var isSubmittingRelease = false
@@ -52,7 +53,7 @@ struct DepositDetailSheet: View {
                                         .font(.system(size: 14.5, weight: .medium))
                                         .foregroundStyle(Color.bhEncre)
                                     Spacer()
-                                    Text(deposit.depositAmount.map { Formatters.amount($0) } ?? "—")
+                                    Text(deposit.depositAmount.map { Formatters.amount($0, currency: currencyCode) } ?? "—")
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundStyle(Color.bhEncre)
                                 }
@@ -118,7 +119,10 @@ struct DepositDetailSheet: View {
             Text(releaseMessage)
         }
         .sheet(isPresented: $showCaptureSheet) {
-            CaptureAmountSheet(deposit: deposit, vm: vm, onDismiss: { dismiss() })
+            CaptureAmountSheet(deposit: deposit, vm: vm, onSuccess: { toast in
+                dismiss()
+                onSuccess?(toast)
+            })
         }
     }
 
@@ -293,6 +297,12 @@ struct DepositDetailSheet: View {
             .background(Color.white.opacity(0.30), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
+    // MARK: - Currency
+
+    private var currencyCode: String {
+        Formatters.normalizeCurrency(deposit.currency)
+    }
+
     // MARK: - Helpers visuels
 
     private func sectionLabel(_ text: String) -> some View {
@@ -312,19 +322,27 @@ struct DepositDetailSheet: View {
     private var releaseTitle: String { "Restituer la caution ?" }
     private var releaseMessage: String {
         let name = deposit.guestName ?? "ce voyageur"
-        let amt  = deposit.depositAmount.map { Formatters.amount($0) } ?? "—"
+        let amt  = deposit.depositAmount.map { Formatters.amount($0, currency: currencyCode) } ?? "—"
         return "La caution de \(amt) sera restituée à \(name). Cette action est irréversible."
     }
 
     // MARK: - Action réseau : libérer
+
+    private struct DepositActionResponse: Decodable {
+        let amountCents: Int?
+    }
 
     private func performRelease() {
         guard !isSubmittingRelease, !deposit.depositId.isEmpty else { return }
         isSubmittingRelease = true
         Task {
             do {
-                try await APIClient.shared.postVoid(Endpoint.releaseDeposit(deposit.depositId), body: EmptyBody())
+                let r: DepositActionResponse = try await APIClient.shared.post(
+                    Endpoint.releaseDeposit(deposit.depositId), body: EmptyBody()
+                )
                 await vm.load()
+                let label = r.amountCents.map { " · " + Formatters.amount(Double($0) / 100, currency: currencyCode) } ?? ""
+                onSuccess?(ToastMessage(text: "Caution restituée\(label)", style: .success))
                 dismiss()
             } catch {
                 errorMessage = (error as? APIError)?.userMessage ?? error.localizedDescription
@@ -339,12 +357,15 @@ struct DepositDetailSheet: View {
 private struct CaptureAmountSheet: View {
     let deposit: ReservationWithDeposit
     let vm: DepositsViewModel
-    let onDismiss: () -> Void
+    let onSuccess: (ToastMessage) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var amountText   = ""
     @State private var isSubmitting = false
     @State private var errorMessage: String?
+
+    private var currencyCode: String { Formatters.normalizeCurrency(deposit.currency) }
+    private var currencySymbol: String { Formatters.currencySymbol(for: currencyCode) }
 
     private var maxAmount: Double { deposit.depositAmount ?? 0 }
     private var enteredAmount: Double? { Double(amountText.replacingOccurrences(of: ",", with: ".")) }
@@ -399,7 +420,7 @@ private struct CaptureAmountSheet: View {
                 .font(.system(size: 24, weight: .bold))
                 .tracking(-0.5)
                 .foregroundStyle(Color.bhEncre)
-            Text("Saisissez le montant à débiter. Plafond : \(maxAmount > 0 ? Formatters.amount(maxAmount) : "—").")
+            Text("Saisissez le montant à débiter. Plafond : \(maxAmount > 0 ? Formatters.amount(maxAmount, currency: currencyCode) : "—").")
                 .font(.bhCorps)
                 .foregroundStyle(Color.bhAttenue)
         }
@@ -420,14 +441,14 @@ private struct CaptureAmountSheet: View {
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(Color.bhEncre)
                             .multilineTextAlignment(.trailing)
-                        Text("€")
+                        Text(currencySymbol)
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(Color.bhAttenue)
                     }
                 }
             }
             if let v = enteredAmount, v > maxAmount {
-                Text("Le montant dépasse le plafond autorisé (\(Formatters.amount(maxAmount))).")
+                Text("Le montant dépasse le plafond autorisé (\(Formatters.amount(maxAmount, currency: currencyCode))).")
                     .font(.bhMeta)
                     .foregroundStyle(Color.bhTerracotta)
             }
@@ -465,26 +486,30 @@ private struct CaptureAmountSheet: View {
 
     private var confirmLabel: String {
         guard let v = enteredAmount, isValid else { return "Retenir" }
-        return "Retenir \(Formatters.amount(v))"
+        return "Retenir \(Formatters.amount(v, currency: currencyCode))"
     }
 
     private var errorPresented: Binding<Bool> {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
     }
 
+    private struct CaptureBody: Encodable { let amountCents: Int }
+    private struct CaptureResponse: Decodable { let amountCents: Int? }
+
     private func performCapture(amountCents: Int) {
         guard !isSubmitting, !deposit.depositId.isEmpty else { return }
         isSubmitting = true
         Task {
             do {
-                struct CaptureBody: Encodable { let amountCents: Int }
-                try await APIClient.shared.postVoid(
+                let r: CaptureResponse = try await APIClient.shared.post(
                     Endpoint.captureDeposit(deposit.depositId),
                     body: CaptureBody(amountCents: amountCents)
                 )
                 await vm.load()
+                let actual = r.amountCents ?? amountCents
+                let label = " · " + Formatters.amount(Double(actual) / 100, currency: currencyCode)
                 dismiss()
-                onDismiss()
+                onSuccess(ToastMessage(text: "Caution retenue\(label)", style: .warning))
             } catch {
                 errorMessage = (error as? APIError)?.userMessage ?? error.localizedDescription
                 isSubmitting = false

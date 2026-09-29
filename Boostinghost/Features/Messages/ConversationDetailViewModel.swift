@@ -333,6 +333,7 @@ final class ConversationDetailViewModel {
     private(set) var isDepositLoading = false
     private(set) var depositLink: String? = nil
     private(set) var depositAmountCents: Int? = nil
+    private(set) var depositCurrency: String? = nil
     private(set) var depositUnavailable = false
 
     // Airbnb filter mirrors the web front-end: normalise platform (lowercase, strip _-space)
@@ -368,6 +369,7 @@ final class ConversationDetailViewModel {
             let shortUrl = r?.shortUrl.flatMap { $0.isEmpty ? nil : $0 } ?? rawUrl
             depositLink = shortUrl
             depositAmountCents = ctx.depositAmountCents
+            depositCurrency = ctx.depositCurrency
         } catch {
             sendError = "Impossible de récupérer le lien de caution."
         }
@@ -378,11 +380,13 @@ final class ConversationDetailViewModel {
         draftText = url
         depositLink = nil
         depositAmountCents = nil
+        depositCurrency = nil
     }
 
     func clearDepositLink() {
         depositLink = nil
         depositAmountCents = nil
+        depositCurrency = nil
     }
 
     func clearDepositUnavailable() {

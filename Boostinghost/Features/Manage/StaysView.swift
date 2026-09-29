@@ -16,6 +16,7 @@ struct StaysView: View {
     @State private var showExpired               = false
     @State private var selectedDeposit: ReservationWithDeposit? = nil
     @State private var selectedInvoice: Invoice? = nil
+    @State private var depositToast: ToastMessage? = nil
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -28,6 +29,7 @@ struct StaysView: View {
                 }
             }
         }
+        .toastOverlay($depositToast)
         .toolbar(.hidden, for: .navigationBar)
         .task {
             async let a: Void = vm.load()
@@ -35,7 +37,7 @@ struct StaysView: View {
             _ = await (a, b)
         }
         .sheet(item: $selectedDeposit) { dep in
-            DepositDetailSheet(deposit: dep, vm: vm)
+            DepositDetailSheet(deposit: dep, vm: vm, onSuccess: { toast in depositToast = toast })
         }
         .sheet(item: $selectedInvoice) { inv in
             InvoiceDetailSheet(invoice: inv)
@@ -159,9 +161,20 @@ struct StaysView: View {
             Text("EMPREINTES EN COURS")
                 .bhIntertitre()
 
-            Text(Formatters.amount(vm.heroTotal))
-                .bhValeurHero()
-                .padding(.top, 2)
+            Group {
+                switch vm.heroAggregate {
+                case .empty:
+                    Text(Formatters.amount(0))
+                case .single(let code, let total):
+                    Text(Formatters.amount(total, currency: code))
+                case .mixed(let count):
+                    Text("\(count) caution\(count > 1 ? "s" : "")")
+                }
+            }
+            .font(.bhValeurHero)
+            .tracking(-1.19)
+            .foregroundStyle(Color.bhEncre)
+            .padding(.top, 2)
 
             Text("sur \(vm.heroSejourCount) séjour\(vm.heroSejourCount > 1 ? "s" : "")")
                 .font(.bhMeta)
@@ -184,7 +197,7 @@ struct StaysView: View {
                             .font(.bhTitreLigneL)
                             .foregroundStyle(Color.bhEncre)
                         Spacer()
-                        Text(dep.depositAmount.map { Formatters.amount($0) } ?? "—")
+                        Text(dep.depositAmount.map { Formatters.amount($0, currency: Formatters.normalizeCurrency(dep.currency)) } ?? "—")
                             .font(.bhTitreLigneL)
                             .foregroundStyle(Color.bhEncre)
                     }
@@ -264,7 +277,7 @@ struct StaysView: View {
                                 }
                                 Spacer(minLength: 12)
                                 VStack(alignment: .trailing, spacing: 3) {
-                                    Text(dep.depositAmount.map { Formatters.amount($0) } ?? "—")
+                                    Text(dep.depositAmount.map { Formatters.amount($0, currency: Formatters.normalizeCurrency(dep.currency)) } ?? "—")
                                         .font(.bhTitreLigne)
                                         .foregroundStyle(Color.bhEncre)
                                     if let label = dep.authExpiryLabel {
@@ -307,9 +320,18 @@ struct StaysView: View {
                     Text("EMPREINTES EXPIRÉES · \(vm.expiredCount)")
                         .bhIntertitre()
                     Spacer()
-                    Text(Formatters.amount(vm.expiredTotal))
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color.bhAttenue)
+                    Group {
+                        switch vm.expiredAggregate {
+                        case .empty:
+                            EmptyView()
+                        case .single(let code, let total):
+                            Text(Formatters.amount(total, currency: code))
+                        case .mixed:
+                            Text("Devises mixtes")
+                        }
+                    }
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.bhAttenue)
                     Image(systemName: showExpired ? "chevron.up" : "chevron.down")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.bhAttenue)
@@ -334,7 +356,7 @@ struct StaysView: View {
                                                 .foregroundStyle(Color.bhAttenue)
                                         }
                                         Spacer(minLength: 12)
-                                        Text(dep.depositAmount.map { Formatters.amount($0) } ?? "—")
+                                        Text(dep.depositAmount.map { Formatters.amount($0, currency: Formatters.normalizeCurrency(dep.currency)) } ?? "—")
                                             .font(.bhTitreLigne)
                                             .foregroundStyle(Color.bhAttenue)
                                         Image(systemName: "chevron.right")
@@ -386,8 +408,17 @@ struct StaysView: View {
                 Text("HISTORIQUE · \(n) facture\(n > 1 ? "s" : "")")
                     .bhIntertitre()
                 Spacer()
-                if invoicesVm.historyTotal > 0 {
-                    Text(Formatters.amount(invoicesVm.historyTotal))
+                switch invoicesVm.historyCurrencyState {
+                case .empty:
+                    EmptyView()
+                case .single(let code):
+                    if invoicesVm.historyTotal > 0 {
+                        Text(Formatters.amount(invoicesVm.historyTotal, currency: code))
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.bhAttenue)
+                    }
+                case .mixed:
+                    Text("Devises mixtes")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.bhAttenue)
                 }
@@ -421,7 +452,7 @@ struct StaysView: View {
                                 Spacer(minLength: 12)
                                 VStack(alignment: .trailing, spacing: 3) {
                                     if let total = inv.total {
-                                        Text(Formatters.amount(total))
+                                        Text(Formatters.amount(total, currency: Formatters.normalizeCurrency(inv.currency)))
                                             .font(.bhTitreLigne)
                                             .foregroundStyle(Color.bhEncre)
                                     }

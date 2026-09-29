@@ -381,7 +381,7 @@ struct ContractDetailView: View {
                 }
                 if !urgence.isEmpty {
                     detailRow("Plafond urgence",
-                        value: "\(urgence)\u{202F}€ TTC",
+                        value: "\(urgence)\u{202F}\(Formatters.currencySymbol(for: detail.displayCurrency)) TTC",
                         separator: !extras.isEmpty)
                 }
                 ForEach(Array(extras.enumerated()), id: \.offset) { idx, e in
@@ -412,15 +412,15 @@ struct ContractDetailView: View {
                     detailRow("Base de calcul", value: commissionBaseLabel(d?.commissionBase ?? "ht"))
                 case "forfait_mensuel":
                     if let f = d?.forfaitMensuel, !f.isEmpty {
-                        detailRow("Forfait",    value: "\(f)\u{202F}€/mois")
+                        detailRow("Forfait",    value: "\(f)\u{202F}\(Formatters.currencySymbol(for: detail.displayCurrency))/mois")
                     }
                 case "forfait_resa":
                     if let f = d?.forfaitResa, !f.isEmpty {
-                        detailRow("Forfait / rés.", value: "\(f)\u{202F}€")
+                        detailRow("Forfait / rés.", value: "\(f)\u{202F}\(Formatters.currencySymbol(for: detail.displayCurrency))")
                     }
                 case "mixte":
                     if let r = d?.mixteRate,    !r.isEmpty { detailRow("Taux",    value: "\(r)\u{202F}%") }
-                    if let f = d?.mixteForfait, !f.isEmpty { detailRow("Forfait", value: "\(f)\u{202F}€/mois") }
+                    if let f = d?.mixteForfait, !f.isEmpty { detailRow("Forfait", value: "\(f)\u{202F}\(Formatters.currencySymbol(for: detail.displayCurrency))/mois") }
                 default:
                     EmptyView()
                 }
@@ -501,13 +501,14 @@ struct ContractDetailView: View {
 
     private func tarifsContent(_ detail: ContractDetail) -> some View {
         let d = detail.contractData
+        let sym = Formatters.currencySymbol(for: detail.displayCurrency)
         return VStack(spacing: 0) {
-            if let v = d?.totalPrice,        !v.isEmpty { detailRow("Total séjour",     value: "\(v)\u{202F}€") }
-            if let v = d?.acompte,           !v.isEmpty { detailRow("Acompte",          value: "\(v)\u{202F}€") }
+            if let v = d?.totalPrice,        !v.isEmpty { detailRow("Total séjour",     value: "\(v)\u{202F}\(sym)") }
+            if let v = d?.acompte,           !v.isEmpty { detailRow("Acompte",          value: "\(v)\u{202F}\(sym)") }
             if let v = d?.acompteDate,       !v.isEmpty { detailRow("Date acompte",     value: formatDateISO(v)) }
-            if let v = d?.deposit,           !v.isEmpty { detailRow("Caution",          value: "\(v)\u{202F}€") }
+            if let v = d?.deposit,           !v.isEmpty { detailRow("Caution",          value: "\(v)\u{202F}\(sym)") }
             if let v = d?.depositReturnDays, !v.isEmpty { detailRow("Retour caution",   value: "\(v)\u{202F}jours") }
-            if let v = d?.cleaningFee,       !v.isEmpty { detailRow("Frais ménage",     value: "\(v)\u{202F}€") }
+            if let v = d?.cleaningFee,       !v.isEmpty { detailRow("Frais ménage",     value: "\(v)\u{202F}\(sym)") }
             if let v = d?.paymentMethod,     !v.isEmpty { detailRow("Paiement",         value: paymentMethodLabel(v)) }
             if let v = d?.priceNotes,        !v.isEmpty { detailRow("Notes",            value: v, separator: false) }
         }

@@ -178,7 +178,9 @@ struct BulkActionSheet: View {
                 TextField("Prix / nuit", text: $priceText)
                     .keyboardType(.decimalPad)
                     .disabled(clearPrice)
-                Text("€").foregroundStyle(Color.bhAttenue)
+                if let sym = selectedCurrencySymbol {
+                    Text(sym).foregroundStyle(Color.bhAttenue)
+                }
             }
             Toggle("Revenir au prix calculé", isOn: $clearPrice)
                 .onChange(of: clearPrice) { _, on in if on { priceText = "" } }
@@ -282,6 +284,16 @@ struct BulkActionSheet: View {
     // MARK: Helpers
 
     private var allSelected: Bool { selectedPropIds.count == vm.properties.count }
+
+    // Returns the shared currency symbol iff every selected property uses the same currency.
+    // Mixed-currency bulk edits cannot show a single unit label.
+    private var selectedCurrencySymbol: String? {
+        let props = vm.properties.filter { selectedPropIds.contains($0.id) }
+        guard !props.isEmpty else { return nil }
+        let currencies = Set(props.map { Formatters.normalizeCurrency($0.currency) })
+        guard currencies.count == 1, let code = currencies.first else { return nil }
+        return Formatters.currencySymbol(for: code)
+    }
 
     private var nightCount: Int {
         max(0, bulkCal.dateComponents([.day], from: startDate, to: endDate).day ?? 0) + 1

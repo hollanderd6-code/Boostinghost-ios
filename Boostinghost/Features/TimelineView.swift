@@ -259,25 +259,29 @@ private struct TimelineRow: View {
 
                     ZStack {
                         if let p = price, showPrice {
+                            let priceTxt = Formatters.amountCompact(p, currency: propData?.currency ?? "EUR")
                             if isCheckout && !isCheckin {
-                                Text("\(Int(p.rounded()))€")
+                                Text(priceTxt)
                                     .font(.system(size: CalBarLayout.priceSize, weight: .medium))
                                     .foregroundStyle(Color.bhAttenue)
                                     .lineLimit(1)
+                                    .minimumScaleFactor(0.75)
                                     .frame(width: colWidth / 2)
                                     .frame(width: colWidth, alignment: .trailing)
                             } else if isCheckin {
-                                Text("\(Int(p.rounded()))€")
+                                Text(priceTxt)
                                     .font(.system(size: CalBarLayout.priceSize, weight: .medium))
                                     .foregroundStyle(Color.bhAttenue)
                                     .lineLimit(1)
+                                    .minimumScaleFactor(0.75)
                                     .frame(width: colWidth / 2)
                                     .frame(width: colWidth, alignment: .leading)
                             } else {
-                                Text("\(Int(p.rounded()))€")
+                                Text(priceTxt)
                                     .font(.system(size: CalBarLayout.priceSize, weight: .medium))
                                     .foregroundStyle(Color.bhAttenue)
                                     .lineLimit(1)
+                                    .minimumScaleFactor(0.75)
                             }
                         }
                     }

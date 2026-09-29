@@ -514,9 +514,10 @@ struct PropertyDetailView: View {
 
     private var argentSummary: String {
         guard let base = property.basePrice, base > 0 else { return "—" }
-        var parts = [Formatters.amount(base)]
-        if let fee = property.cleaningFee, fee > 0 { parts.append("ménage \(Formatters.amount(fee))") }
-        if let tax = property.touristTax,  tax > 0 { parts.append("taxe \(Formatters.amount(tax)) p.nuit") }
+        let cur = property.currency ?? "EUR"
+        var parts = [Formatters.amount(base, currency: cur)]
+        if let fee = property.cleaningFee, fee > 0 { parts.append("ménage \(Formatters.amount(fee, currency: cur))") }
+        if let tax = property.touristTax,  tax > 0 { parts.append("taxe \(Formatters.amount(tax, currency: cur)) p.nuit") }
         return parts.joined(separator: " · ")
     }
     private var argentStatus: BlockStatus {

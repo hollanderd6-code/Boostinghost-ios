@@ -112,6 +112,9 @@ struct OwnerInvoiceDetail: Decodable {
     let createdAt: String?
     let updatedAt: String?
 
+    // Currency persisted at creation — owner_invoices.currency (INTL-4.1B)
+    let currency: String?
+
     init() {
         id = nil; invoiceNumber = nil; status = nil; isCreditNote = nil
         originalInvoiceId = nil; clientId = nil; clientName = nil
@@ -120,7 +123,7 @@ struct OwnerInvoiceDetail: Decodable {
         subtotalHt = nil; deboursTotal = nil; discountAmount = nil
         tvaRate = nil; tvaAmount = nil; totalTtc = nil
         paymentDelay = nil; paymentMode = nil; lateInterestRate = nil
-        notes = nil; createdAt = nil; updatedAt = nil
+        notes = nil; createdAt = nil; updatedAt = nil; currency = nil
     }
 
     private enum CodingKeys: CodingKey {
@@ -129,7 +132,7 @@ struct OwnerInvoiceDetail: Decodable {
         case issueDate, dueDate, periodStart, periodEnd
         case subtotalHt, deboursTotal, discountAmount, tvaRate, tvaAmount, totalTtc
         case paymentDelay, paymentMode, lateInterestRate
-        case notes, createdAt, updatedAt
+        case notes, createdAt, updatedAt, currency
     }
 
     init(from decoder: Decoder) throws {
@@ -161,6 +164,7 @@ struct OwnerInvoiceDetail: Decodable {
         notes             = try? c.decodeIfPresent(String.self, forKey: .notes)
         createdAt         = try? c.decodeIfPresent(String.self, forKey: .createdAt)
         updatedAt         = try? c.decodeIfPresent(String.self, forKey: .updatedAt)
+        currency          = try? c.decodeIfPresent(String.self, forKey: .currency)
     }
 
     var statusLabel: String {

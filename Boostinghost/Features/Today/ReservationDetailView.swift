@@ -54,11 +54,12 @@ struct ReservationDetailView: View {
         }
         .sheet(isPresented: $showInvoiceSheet) {
             ReservationInvoiceSheet(
-                reservationUid: arrivee.reservationUid,
-                guestName:      guestFullName,
-                propertyName:   arrivee.propertyName,
-                startDate:      vm.reservation?.startDate ?? "",
-                endDate:        vm.reservation?.endDate   ?? ""
+                reservationUid:      arrivee.reservationUid,
+                guestName:           guestFullName,
+                propertyName:        arrivee.propertyName,
+                startDate:           vm.reservation?.startDate ?? "",
+                endDate:             vm.reservation?.endDate   ?? "",
+                reservationCurrency: reservationCurrency
             )
         }
         .sheet(isPresented: $showCreateInvoiceSheet) {
@@ -102,7 +103,7 @@ struct ReservationDetailView: View {
             }
         }
         .sheet(isPresented: $showUpsellSheet) {
-            if let convId = arrivee.conversationId {
+            if let convId = arrivee.conversationId ?? vm.reservation?.conversationId {
                 UpsellSheet(conversationId: convId)
             }
         }
@@ -121,6 +122,13 @@ struct ReservationDetailView: View {
     // Falls back to propertySummary once the API response arrives (search path sets propertyName = "")
     private var effectivePropertyName: String {
         arrivee.propertyName.isEmpty ? (vm.propertySummary?.displayName ?? "") : arrivee.propertyName
+    }
+
+    // reservation.currency is the authority; fall back to the associated PropertySummary, then EUR.
+    private var reservationCurrency: String {
+        Formatters.normalizeCurrency(
+            vm.reservation?.currency ?? vm.propertySummary?.currency
+        )
     }
 
     // MARK: - Barre de navigation
@@ -168,7 +176,7 @@ struct ReservationDetailView: View {
                 }
             }
 
-            if let convId = arrivee.conversationId {
+            if let convId = arrivee.conversationId ?? vm.reservation?.conversationId {
                 Button {
                     writeConversation = Conversation(
                         arriveeId:    convId,
@@ -232,7 +240,7 @@ struct ReservationDetailView: View {
                 HStack(alignment: .firstTextBaseline) {
                     if canViewFinances {
                         if let total = vm.reservation?.amountTotal {
-                            Text(Formatters.amount(total))
+                            Text(Formatters.amount(total, currency: reservationCurrency))
                                 .font(.system(size: 22, weight: .semibold))
                                 .tracking(-0.6)
                                 .foregroundStyle(Color.bhEncre)
@@ -478,7 +486,7 @@ struct ReservationDetailView: View {
                     Text(Formatters.dayShort(entry.key))
                         .padding(.leading, 10)
                     Spacer()
-                    Text(Formatters.amountDecimal(price))
+                    Text(Formatters.amountDecimal(price, currency: reservationCurrency))
                 }
                 .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(Color.bhAttenue)
@@ -493,7 +501,7 @@ struct ReservationDetailView: View {
                 .font(bold ? .bhTitreLigne : .bhMeta)
                 .foregroundStyle(Color.bhEncre)
             Spacer()
-            Text(Formatters.amountDecimal(amount))
+            Text(Formatters.amountDecimal(amount, currency: reservationCurrency))
                 .font(bold ? .bhTitreLigne : .bhMeta)
                 .foregroundStyle(red ? Color.bhTerracotta : (bold ? Color.bhEncre : Color.bhAttenue))
         }

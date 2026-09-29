@@ -202,7 +202,7 @@ struct OwnerInvoicesView: View {
                 StatusPill(text: invoice.statusLabel, style: invoice.statusPillStyle)
                 HStack(spacing: 6) {
                     if let amount = invoice.totalTtc {
-                        Text(Formatters.amount(amount))
+                        Text(Formatters.amount(amount, currency: Formatters.normalizeCurrency(invoice.currency)))
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(Color.bhEncre)
                     }

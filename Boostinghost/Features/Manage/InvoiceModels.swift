@@ -37,6 +37,7 @@ struct Invoice: Decodable, Identifiable {
     let createdAt: String?
     let conversationId: Int?
     let reservationUid: String?
+    let currency: String?
 
     var hasEmail: Bool {
         guard let e = clientEmail else { return false }
@@ -54,7 +55,7 @@ struct Invoice: Decodable, Identifiable {
         case nights, platform
         case rentAmount, touristTaxAmount, cleaningFee
         case vatRate, vatAmount, total, createdAt
-        case conversationId, reservationUid
+        case conversationId, reservationUid, currency
     }
 
     init(from decoder: Decoder) throws {
@@ -80,8 +81,9 @@ struct Invoice: Decodable, Identifiable {
         vatAmount         = c.flexDouble(forKey: .vatAmount)
         total             = c.flexDouble(forKey: .total)
         createdAt         = try? c.decodeIfPresent(String.self, forKey: .createdAt)
-        conversationId    = try? c.decodeIfPresent(Int.self, forKey: .conversationId)
+        conversationId    = try? c.decodeIfPresent(Int.self,    forKey: .conversationId)
         reservationUid    = try? c.decodeIfPresent(String.self, forKey: .reservationUid)
+        currency          = try? c.decodeIfPresent(String.self, forKey: .currency)
         id = invoiceNumber ?? createdAt ?? UUID().uuidString
     }
 }

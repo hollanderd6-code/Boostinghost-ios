@@ -44,6 +44,11 @@ struct CreateReservationView: View {
         vm.properties.first { $0.id == selectedPropertyId }
     }
 
+    // Follows selectedPropertyId reactively — updates when the user changes the property picker.
+    private var currentCurrencySymbol: String {
+        Formatters.currencySymbol(for: Formatters.normalizeCurrency(selectedProperty?.currency))
+    }
+
     var body: some View {
         Form {
             Section {
@@ -174,7 +179,7 @@ struct CreateReservationView: View {
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
                 .frame(width: 90)
-            Text("€").foregroundStyle(Color.bhAttenue)
+            Text(currentCurrencySymbol).foregroundStyle(Color.bhAttenue)
         }
     }
 
@@ -197,7 +202,8 @@ struct CreateReservationView: View {
                 amountRooms:     decimal(amountRoomsText),
                 amountCleaning:  decimal(amountCleaningText),
                 amountTaxes:     decimal(amountTaxesText),
-                otaCommission:   decimal(otaCommissionText)
+                otaCommission:   decimal(otaCommissionText),
+                currency:        Formatters.normalizeCurrency(selectedProperty?.currency)
             )
             await vm.reloadMonthData()
             onComplete()

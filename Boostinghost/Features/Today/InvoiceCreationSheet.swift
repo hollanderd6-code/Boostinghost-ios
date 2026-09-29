@@ -17,6 +17,7 @@ struct InvoiceCreationSheet: View {
     @State private var isProfessional: Bool
     @State private var clientCompany: String
     @State private var clientSiret: String
+    @State private var clientPhone: String
     @State private var freeNote: String
 
     // Séjour
@@ -54,6 +55,7 @@ struct InvoiceCreationSheet: View {
         _isProfessional    = State(initialValue: false)
         _clientCompany     = State(initialValue: "")
         _clientSiret       = State(initialValue: "")
+        _clientPhone       = State(initialValue: arrivee.guestPhone ?? "")
         _freeNote          = State(initialValue: "")
 
         let checkin: Date = {
@@ -170,6 +172,8 @@ struct InvoiceCreationSheet: View {
                                  placeholder: "email@exemple.com", keyboard: .emailAddress)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
+                        fieldRow(label: "Téléphone", binding: $clientPhone,
+                                 placeholder: "06 12 34 56 78", keyboard: .phonePad)
                     }
                     CardRow(showSeparator: true) {
                         nationalityRow
@@ -449,6 +453,7 @@ struct InvoiceCreationSheet: View {
             let clientCity: String?
             let clientCompany: String?
             let clientSiret: String?
+            let clientPhone: String?
             let freeNote: String?
             let platform: String?
             let propertyName: String
@@ -480,6 +485,7 @@ struct InvoiceCreationSheet: View {
             clientCity:        opt(clientCity),
             clientCompany:     isProfessional ? opt(clientCompany) : nil,
             clientSiret:       isProfessional ? opt(clientSiret)   : nil,
+            clientPhone:       opt(clientPhone),
             freeNote:          opt(freeNote),
             platform:          arrivee.platform.flatMap { $0.isEmpty ? nil : $0 },
             propertyName:      arrivee.propertyName,
@@ -508,6 +514,10 @@ struct InvoiceCreationSheet: View {
     }
 
     // MARK: - Helpers
+
+    private var currencyCode: String {
+        Formatters.normalizeCurrency(reservation?.currency)
+    }
 
     private var canSend: Bool {
         !clientName.trimmingCharacters(in: .whitespaces).isEmpty
@@ -562,7 +572,7 @@ struct InvoiceCreationSheet: View {
                 .font(.bhTitreLigne)
                 .foregroundStyle(Color.bhEncre)
                 .frame(width: 90)
-            Text("€")
+            Text(Formatters.currencySymbol(for: currencyCode))
                 .font(.bhMeta)
                 .foregroundStyle(Color.bhAttenue)
         }

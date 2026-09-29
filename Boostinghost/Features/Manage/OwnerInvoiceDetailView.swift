@@ -143,6 +143,11 @@ struct OwnerInvoiceDetailView: View {
         }
     }
 
+    private var invoiceCurrencyCode: String {
+        guard let inv = vm.detail?.invoice else { return "EUR" }
+        return Formatters.normalizeCurrency(inv.currency)
+    }
+
     private var navTitle: String {
         guard let inv = vm.detail?.invoice else { return "Facture" }
         if inv.isCreditNote == true { return "Avoir" }
@@ -176,17 +181,17 @@ struct OwnerInvoiceDetailView: View {
     private func headerCard(_ inv: OwnerInvoiceDetail) -> some View {
         HStack(spacing: 8) {
             summaryBlock(
-                value: inv.totalTtc.map { Formatters.amount($0) } ?? "—",
+                value: inv.totalTtc.map { Formatters.amount($0, currency: invoiceCurrencyCode) } ?? "—",
                 label: "Total TTC",
                 accent: true
             )
             summaryBlock(
-                value: inv.subtotalHt.map { Formatters.amount($0) } ?? "—",
+                value: inv.subtotalHt.map { Formatters.amount($0, currency: invoiceCurrencyCode) } ?? "—",
                 label: "Sous-total HT",
                 accent: false
             )
             summaryBlock(
-                value: inv.tvaAmount.map { Formatters.amount($0) } ?? "—",
+                value: inv.tvaAmount.map { Formatters.amount($0, currency: invoiceCurrencyCode) } ?? "—",
                 label: "TVA",
                 accent: false
             )
@@ -331,14 +336,14 @@ struct OwnerInvoiceDetailView: View {
                         }
                     }
                     if let qty = item.quantity, let unit = item.unitPrice {
-                        Text("\(formatDecimal(qty)) × \(Formatters.amount(unit))")
+                        Text("\(formatDecimal(qty)) × \(Formatters.amount(unit, currency: invoiceCurrencyCode))")
                             .font(.system(size: 12))
                             .foregroundStyle(Color.bhAttenue)
                     }
                 }
                 Spacer(minLength: 8)
                 if let total = item.total {
-                    Text(Formatters.amount(total))
+                    Text(Formatters.amount(total, currency: invoiceCurrencyCode))
                         .font(.system(size: 13.5, weight: .semibold))
                         .foregroundStyle(Color.bhEncre)
                 }
@@ -378,14 +383,14 @@ struct OwnerInvoiceDetailView: View {
 
     private func totalsSection(_ inv: OwnerInvoiceDetail) -> some View {
         VStack(spacing: 0) {
-            if let v = inv.subtotalHt   { detailRow("Sous-total HT", value: Formatters.amount(v)) }
-            if let v = inv.deboursTotal, v > 0 { detailRow("Débours",   value: Formatters.amount(v)) }
-            if let v = inv.discountAmount, v > 0 { detailRow("Remise",  value: "− \(Formatters.amount(v))") }
+            if let v = inv.subtotalHt   { detailRow("Sous-total HT", value: Formatters.amount(v, currency: invoiceCurrencyCode)) }
+            if let v = inv.deboursTotal, v > 0 { detailRow("Débours",   value: Formatters.amount(v, currency: invoiceCurrencyCode)) }
+            if let v = inv.discountAmount, v > 0 { detailRow("Remise",  value: "− \(Formatters.amount(v, currency: invoiceCurrencyCode))") }
             if let rate = inv.tvaRate, let amount = inv.tvaAmount {
-                detailRow("TVA (\(formatDecimal(rate))\u{202F}%)", value: Formatters.amount(amount))
+                detailRow("TVA (\(formatDecimal(rate))\u{202F}%)", value: Formatters.amount(amount, currency: invoiceCurrencyCode))
             }
             if let v = inv.totalTtc {
-                detailRow("Total TTC", value: Formatters.amount(v), separator: false)
+                detailRow("Total TTC", value: Formatters.amount(v, currency: invoiceCurrencyCode), separator: false)
             }
         }
     }

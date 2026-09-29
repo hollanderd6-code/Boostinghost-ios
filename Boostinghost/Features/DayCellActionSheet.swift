@@ -24,6 +24,10 @@ struct DayCellActionSheet: View {
 
     private var canManagePricing: Bool { authStore.session?.can("can_manage_pricing") ?? true }
 
+    private var currencySymbol: String {
+        Formatters.currencySymbol(for: vm.currency(forPropertyId: property.id))
+    }
+
     private enum CellAction:    Hashable { case block, price }
     private enum PriceSubAction: Hashable { case tarif, nuitMin }
 
@@ -259,7 +263,7 @@ struct DayCellActionSheet: View {
                 TextField("Prix / nuit", text: $priceText)
                     .keyboardType(.decimalPad)
                     .disabled(clearPrice)
-                Text("€").foregroundStyle(Color.bhAttenue)
+                Text(currencySymbol).foregroundStyle(Color.bhAttenue)
             }
             Toggle("Revenir au prix calculé", isOn: $clearPrice)
                 .onChange(of: clearPrice) { _, on in

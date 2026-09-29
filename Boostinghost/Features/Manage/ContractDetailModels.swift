@@ -55,6 +55,8 @@ struct ContractDetailData: Decodable {
     let tva: String?
     let tarifPreavis: String?
     let reversement: String?
+    // EXISTING_STORED_CURRENCY — stored in contract_data JSONB since MANDAT-1 (server.js:40810)
+    let currency: String?
 
     // Conditions durée (mandat)
     let dureeType: String?
@@ -169,6 +171,7 @@ struct ContractDetailData: Decodable {
         tva                    = try? c.decodeIfPresent(String.self,   forKey: .tva)
         tarifPreavis           = try? c.decodeIfPresent(String.self,   forKey: .tarifPreavis)
         reversement            = try? c.decodeIfPresent(String.self,   forKey: .reversement)
+        currency               = try? c.decodeIfPresent(String.self,   forKey: .currency)
 
         dureeType              = try? c.decodeIfPresent(String.self,   forKey: .dureeType)
         dateDebut              = try? c.decodeIfPresent(String.self,   forKey: .dateDebut)
@@ -231,7 +234,7 @@ struct ContractDetailData: Decodable {
         case animals, smoking, parties, checkinTime, checkoutTime
         case missions, urgenceLimit, extrasFacturables
         case remuType, commissionRate, commissionBase, forfaitMensuel, forfaitResa
-        case mixteRate, mixteForfait, tva, tarifPreavis, reversement
+        case mixteRate, mixteForfait, tva, tarifPreavis, reversement, currency
         case dureeType, dateDebut, dureeMois, renouvellement, preavis
         case exclusivite, respPlafond, juridiction, confidentialite, clausesPersonnalisees
         case signatureDate
@@ -262,6 +265,8 @@ struct ContractDetail: Decodable, Identifiable {
 
     var isMandat: Bool { contractData?.contractType == "mandat" }
     var typeLabel: String { isMandat ? "Mandat de gestion" : "Contrat de location" }
+    // Mandate currency decoded from JSONB; nil (old mandates / rental) falls back to EUR.
+    var displayCurrency: String { Formatters.normalizeCurrency(contractData?.currency) }
 
     // Signataire : propriétaire pour mandat, voyageur pour contrat de location
     var signerFirstName: String? {

@@ -1,5 +1,31 @@
 import SwiftUI
 
+// MARK: - Supported currencies
+
+private struct SupportedCurrency: Identifiable, Equatable {
+    let code:   String
+    let name:   String
+    let symbol: String
+    var id: String { code }
+    var label: String { "\(code) — \(name)" }
+}
+
+private let kSupportedCurrencies: [SupportedCurrency] = [
+    SupportedCurrency(code: "EUR", name: "Euro",              symbol: "€"),
+    SupportedCurrency(code: "ILS", name: "Shekel israélien",  symbol: "₪"),
+    SupportedCurrency(code: "USD", name: "Dollar américain",  symbol: "$"),
+    SupportedCurrency(code: "CHF", name: "Franc suisse",      symbol: "CHF"),
+]
+
+private func currencyOption(for code: String) -> SupportedCurrency? {
+    kSupportedCurrencies.first { $0.code == code }
+}
+
+// Returns the display label for any currency code (known or legacy).
+private func currencyLabel(for code: String) -> String {
+    currencyOption(for: code)?.label ?? code
+}
+
 // MARK: - Draft
 
 private func numStr(_ d: Double?) -> String {
@@ -17,6 +43,7 @@ private struct ArgentDraft {
     var conciergePct: String
     var airbnbCommissionPct: String
     var bookingCommissionPct: String
+    var currency: String   // ISO 4217 code — never empty (defaults to "EUR")
 
     init(from p: Property) {
         basePrice            = numStr(p.basePrice)
@@ -28,6 +55,7 @@ private struct ArgentDraft {
         conciergePct         = numStr(p.conciergePct)
         airbnbCommissionPct  = numStr(p.airbnbCommissionPct)
         bookingCommissionPct = numStr(p.bookingCommissionPct)
+        currency             = Formatters.normalizeCurrency(p.currency)
     }
 }
 
@@ -39,6 +67,11 @@ private enum ArgentField: Int, CaseIterable {
          conciergePct, airbnbPct, bookingPct
 }
 
+// True when the property is fully connected to the channel manager (both flags set).
+private func isChannexLocked(_ p: Property) -> Bool {
+    (p.channexEnabled ?? false) && (p.channexPropertyId?.isEmpty == false)
+}
+
 // MARK: - Bloc "Argent"
 
 struct ArgentBlockView: View {
@@ -48,11 +81,15 @@ struct ArgentBlockView: View {
 
     @State private var displayed: Property
     @State private var draft: ArgentDraft
-    @State private var isEditing = false
-    @State private var isSaving  = false
+    @State private var isEditing          = false
+    @State private var isSaving           = false
     @State private var saveError: String?
+    @State private var showCurrencyPicker = false
 
     @FocusState private var focusedField: ArgentField?
+
+    private var currencyCode:   String { Formatters.normalizeCurrency(displayed.currency) }
+    private var currencySymbol: String { Formatters.currencySymbol(for: currencyCode) }
 
     init(property: Property, onUpdate: @escaping (Property) -> Void = { _ in }) {
         self.onUpdate = onUpdate
@@ -68,6 +105,7 @@ struct ArgentBlockView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
                         if isEditing {
+                            deviseEditCard
                             prixEditCard
                             menageEditCard
                             taxeEditCard
@@ -75,14 +113,15 @@ struct ArgentBlockView: View {
                             commissionsEditCard
                             editNote
                         } else {
+                            deviseReadCard
                             prixCard
                             if let fee = displayed.cleaningFee, fee > 0 {
                                 simpleCard(icon: "sparkles", label: "Frais de ménage",
-                                           value: Formatters.amount(fee))
+                                           value: Formatters.amount(fee, currency: currencyCode))
                             }
                             if let tax = displayed.touristTax, tax > 0 {
                                 simpleCard(icon: "building.2", label: "Taxe de séjour",
-                                           value: "\(Formatters.amount(tax)) / nuit / pers.")
+                                           value: "\(Formatters.amount(tax, currency: currencyCode)) / nuit / pers.")
                             }
                             if hasCautionData { cautionCard }
                             if hasCommissionsData { commissionsCard }
@@ -134,6 +173,9 @@ struct ArgentBlockView: View {
             Button("OK") { saveError = nil }
         } message: {
             Text(saveError ?? "")
+        }
+        .sheet(isPresented: $showCurrencyPicker) {
+            CurrencyPickerSheet(selected: $draft.currency)
         }
     }
 
@@ -240,6 +282,12 @@ struct ArgentBlockView: View {
 
     // MARK: - Cartes lecture
 
+    private var deviseReadCard: some View {
+        let code = Formatters.normalizeCurrency(displayed.currency)
+        return simpleCard(icon: "creditcard", label: "Devise",
+                          value: currencyLabel(for: code))
+    }
+
     private var prixCard: some View {
         ListCard {
             VStack(spacing: 0) {
@@ -247,11 +295,11 @@ struct ArgentBlockView: View {
                 if let base = displayed.basePrice, base > 0 {
                     let hasWkd = (displayed.weekendPrice ?? 0) > 0
                     CardRow(showSeparator: hasWkd) {
-                        prixRow(label: "Semaine", value: "\(Formatters.amount(base)) / nuit")
+                        prixRow(label: "Semaine", value: "\(Formatters.amount(base, currency: currencyCode)) / nuit")
                     }
                     if let wkd = displayed.weekendPrice, wkd > 0 {
                         CardRow(showSeparator: false) {
-                            prixRow(label: "Week-end", value: "\(Formatters.amount(wkd)) / nuit")
+                            prixRow(label: "Week-end", value: "\(Formatters.amount(wkd, currency: currencyCode)) / nuit")
                         }
                     }
                 } else {
@@ -279,7 +327,7 @@ struct ArgentBlockView: View {
                 fieldHeader(icon: "lock.shield", label: "Caution", showSeparator: true)
                 if let amt = displayed.depositAmount, amt > 0 {
                     CardRow(showSeparator: displayed.depositReleaseDays != nil) {
-                        prixRow(label: "Montant", value: Formatters.amount(amt))
+                        prixRow(label: "Montant", value: Formatters.amount(amt, currency: currencyCode))
                     }
                 }
                 if let days = displayed.depositReleaseDays {
@@ -334,6 +382,46 @@ struct ArgentBlockView: View {
     }
 
     // MARK: - Cartes édition
+
+    private var deviseEditCard: some View {
+        let locked = isChannexLocked(displayed)
+        return ListCard {
+            VStack(spacing: 0) {
+                fieldHeader(icon: "creditcard", label: "Devise", showSeparator: true)
+                CardRow(showSeparator: locked) {
+                    Button {
+                        guard !locked else { return }
+                        showCurrencyPicker = true
+                    } label: {
+                        HStack {
+                            Text("Devise")
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color.bhAttenue)
+                            Spacer()
+                            Text(currencyLabel(for: draft.currency))
+                                .font(.system(size: 15))
+                                .foregroundStyle(locked ? Color.bhAttenue : Color.bhEncre)
+                            if !locked {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(Color.bhAttenue.opacity(0.55))
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(locked)
+                }
+                if locked {
+                    CardRow(showSeparator: false) {
+                        Text("Non modifiable tant que le logement est connecté au channel manager.")
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(Color.bhAttenue)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
+        }
+    }
 
     private var prixEditCard: some View {
         ListCard {
@@ -407,7 +495,7 @@ struct ArgentBlockView: View {
                     .keyboardType(.decimalPad)
                     .focused($focusedField, equals: focus)
                     .frame(width: 80)
-                Text("€").font(.system(size: 15)).foregroundStyle(Color.bhAttenue)
+                Text(currencySymbol).font(.system(size: 15)).foregroundStyle(Color.bhAttenue)
             }
         }
     }
@@ -474,6 +562,7 @@ struct ArgentBlockView: View {
             ("internalName", displayed.internalName ?? ""),
             ("ownerId",      displayed.ownerId      ?? ""),
             ("photoUrl",     displayed.photoUrl     ?? ""),
+            ("currency",     draft.currency),
         ]
 
         let numericFields: [(String, String)] = [
@@ -502,6 +591,8 @@ struct ArgentBlockView: View {
             isEditing = false
         } catch let err as APIError {
             switch err {
+            case .server(409, _):
+                saveError = "La devise ne peut pas être modifiée tant que ce logement est connecté au channel manager."
             case .server(_, let msg):   saveError = msg ?? "Erreur serveur"
             case .network:              saveError = "Erreur réseau"
             case .decoding:             saveError = "Erreur de décodage"
@@ -510,6 +601,78 @@ struct ArgentBlockView: View {
             }
         } catch {
             saveError = error.localizedDescription
+        }
+    }
+}
+
+// MARK: - Currency picker sheet
+
+private struct CurrencyPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selected: String
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    // If the current value is not in the supported list, show it as a legacy entry.
+                    if currencyOption(for: selected) == nil {
+                        Button {
+                            // Keep the existing unsupported currency — user taps to confirm.
+                            dismiss()
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(selected)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Color.bhEncre)
+                                    Text("Devise actuelle")
+                                        .font(.system(size: 12.5))
+                                        .foregroundStyle(Color.bhAttenue)
+                                }
+                                Spacer()
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.bhVert)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    ForEach(kSupportedCurrencies) { option in
+                        Button {
+                            selected = option.code
+                            dismiss()
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(option.label)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Color.bhEncre)
+                                    Text(option.symbol)
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.bhAttenue)
+                                }
+                                Spacer()
+                                if selected == option.code {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(Color.bhVert)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .navigationTitle("Devise du logement")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fermer") { dismiss() }
+                        .foregroundStyle(Color.bhVert)
+                }
+            }
         }
     }
 }

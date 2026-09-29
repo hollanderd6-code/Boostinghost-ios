@@ -40,8 +40,8 @@ final class DepositsViewModel {
 
     // MARK: - Hero card
 
-    var heroTotal: Double {
-        (toRelease + inProgress).compactMap(\.depositAmount).reduce(0, +)
+    var heroAggregate: DepositAggregateCurrencyState {
+        DepositAggregateCurrencyState.compute(from: toRelease + inProgress)
     }
 
     var heroSejourCount: Int { toRelease.count + inProgress.count }
@@ -54,10 +54,10 @@ final class DepositsViewModel {
         return n == 1 ? "1 à restituer" : "\(n) à restituer"
     }
 
-    // MARK: - Total empreintes expirées
+    // MARK: - Expirées
 
-    var expiredTotal: Double {
-        expired.compactMap(\.depositAmount).reduce(0, +)
+    var expiredAggregate: DepositAggregateCurrencyState {
+        DepositAggregateCurrencyState.compute(from: expired)
     }
 
     // MARK: - Load
@@ -102,5 +102,24 @@ final class DepositsViewModel {
         } catch {
             actionError = error.localizedDescription
         }
+    }
+}
+
+// MARK: - Aggregate currency state (cross-currency sum protection)
+
+enum DepositAggregateCurrencyState: Equatable {
+    case empty
+    case single(code: String, total: Double)
+    case mixed(count: Int)
+
+    static func compute(from deposits: [ReservationWithDeposit]) -> DepositAggregateCurrencyState {
+        let withAmounts = deposits.filter { $0.depositAmount != nil }
+        if withAmounts.isEmpty { return .empty }
+        let codes = Set(withAmounts.map { Formatters.normalizeCurrency($0.currency) })
+        if codes.count == 1 {
+            let total = withAmounts.compactMap(\.depositAmount).reduce(0, +)
+            return .single(code: codes.first!, total: total)
+        }
+        return .mixed(count: withAmounts.count)
     }
 }

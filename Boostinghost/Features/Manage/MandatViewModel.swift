@@ -113,6 +113,7 @@ final class MandatViewModel {
         if let v = s.respPlafond     { draft.respPlafond     = v }
         if let v = s.juridiction     { draft.juridiction     = v }
         if let v = s.confidentialite { draft.confidentialite = v }
+        if let v = s.currency        { draft.currency        = Formatters.normalizeCurrency(v) }
     }
 
     func resetPrefill() {
@@ -135,6 +136,7 @@ final class MandatViewModel {
         draft.respPlafond     = "oui"
         draft.juridiction     = "lieu_bien"
         draft.confidentialite = "5"
+        draft.currency        = "EUR"
         hasPrefill = false
     }
 
@@ -163,16 +165,17 @@ final class MandatViewModel {
     // MARK: - Récapitulatif étape 5
 
     var commissionSummary: String {
+        let sym = Formatters.currencySymbol(for: draft.currency)
         switch draft.remuType {
         case "commission":
             let r = draft.commissionRate
             return r.isEmpty ? "—" : "\(r)\u{202F}%"
         case "forfait_mensuel":
             let f = draft.forfaitMensuel
-            return f.isEmpty ? "—" : "\(f)\u{202F}€/mois"
+            return f.isEmpty ? "—" : "\(f)\u{202F}\(sym)/mois"
         case "forfait_resa":
             let f = draft.forfaitResa
-            return f.isEmpty ? "—" : "\(f)\u{202F}€/rés."
+            return f.isEmpty ? "—" : "\(f)\u{202F}\(sym)/rés."
         case "mixte":
             let r = draft.mixteRate
             return r.isEmpty ? "—" : "\(r)\u{202F}% + forfait"

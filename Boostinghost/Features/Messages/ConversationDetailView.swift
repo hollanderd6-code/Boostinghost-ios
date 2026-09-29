@@ -77,7 +77,7 @@ struct ConversationDetailView: View {
             Button("Annuler", role: .cancel) { vm.clearDepositLink() }
         } message: {
             if let cents = vm.depositAmountCents {
-                Text("Caution de \(Formatters.amount(Double(cents) / 100.0)). Coller le lien dans le message ?")
+                Text("Caution de \(Formatters.amount(Double(cents) / 100.0, currency: Formatters.normalizeCurrency(vm.depositCurrency))). Coller le lien dans le message ?")
             } else {
                 Text("Coller le lien de caution dans le message ?")
             }
@@ -674,7 +674,7 @@ struct ConversationDetailView: View {
                                 Text("Montant")
                                     .font(.system(size: 10))
                                     .foregroundStyle(Color.bhAttenue)
-                                Text(Formatters.amount(total))
+                                Text(Formatters.amount(total, currency: Formatters.normalizeCurrency(vm.conversation.currency)))
                                     .font(.system(size: 12.5, weight: .semibold))
                                     .foregroundStyle(Color.bhEncre)
                             }

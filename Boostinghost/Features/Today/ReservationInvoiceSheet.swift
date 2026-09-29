@@ -173,13 +173,22 @@ final class ReservationInvoiceViewModel {
 // MARK: - Feuille principale
 
 struct ReservationInvoiceSheet: View {
-    let guestName: String
+    let guestName:          String
+    let reservationCurrency: String
 
     @Environment(\.dismiss) private var dismiss
     @State private var vm: ReservationInvoiceViewModel
 
-    init(reservationUid: String, guestName: String, propertyName: String, startDate: String, endDate: String) {
-        self.guestName = guestName
+    init(
+        reservationUid:      String,
+        guestName:           String,
+        propertyName:        String,
+        startDate:           String,
+        endDate:             String,
+        reservationCurrency: String = "EUR"
+    ) {
+        self.guestName           = guestName
+        self.reservationCurrency = Formatters.normalizeCurrency(reservationCurrency)
         _vm = State(initialValue: ReservationInvoiceViewModel(
             reservationUid: reservationUid,
             propertyName:   propertyName,
@@ -367,7 +376,7 @@ struct ReservationInvoiceSheet: View {
                 Spacer(minLength: 12)
                 VStack(alignment: .trailing, spacing: 3) {
                     if let total = inv.total {
-                        Text(Formatters.amount(total))
+                        Text(Formatters.amount(total, currency: Formatters.normalizeCurrency(inv.currency)))
                             .font(.bhTitreLigne)
                             .foregroundStyle(Color.bhEncre)
                     }

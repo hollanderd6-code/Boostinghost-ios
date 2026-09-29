@@ -32,15 +32,27 @@ final class DebourViewModel {
         }
     }
 
-    var pendingTotal: Double {
-        debours.filter { $0.status == "pending" }.reduce(0) { $0 + $1.montant }
+    var pendingCurrencyState: DebourPendingCurrencyState {
+        let pending = debours.filter { $0.status == "pending" }
+        if pending.isEmpty { return .empty }
+        let codes = Set(pending.map { Formatters.normalizeCurrency($0.currency) })
+        return codes.count == 1 ? .single(codes.first!) : .mixed
     }
 
     var superTitle: String {
         guard case .loaded = loadState else { return " " }
         let n = debours.count
         let nPart = n == 1 ? "1 débours" : "\(n) débours"
-        return "\(nPart) · \(DebourAmountFmt.format(pendingTotal)) en attente"
+        let pending = debours.filter { $0.status == "pending" }
+        switch pendingCurrencyState {
+        case .empty:
+            return nPart
+        case .single(let code):
+            let total = pending.reduce(0) { $0 + $1.montant }
+            return "\(nPart) · \(Formatters.amount(total, currency: code)) en attente"
+        case .mixed:
+            return "\(nPart) · \(pending.count) en attente"
+        }
     }
 
     func count(for f: DebourFilter) -> Int {
@@ -141,20 +153,10 @@ final class DebourViewModel {
     }
 }
 
-// MARK: - Formatter montant (2 décimales, fr_FR)
+// MARK: - Pending currency state (cross-currency sum protection)
 
-enum DebourAmountFmt {
-    private static let fmt: NumberFormatter = {
-        let f = NumberFormatter()
-        f.locale = Locale(identifier: "fr_FR")
-        f.numberStyle = .decimal
-        f.minimumFractionDigits = 2
-        f.maximumFractionDigits = 2
-        return f
-    }()
-
-    static func format(_ value: Double) -> String {
-        let s = fmt.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
-        return "\(s)\u{202F}€"
-    }
+enum DebourPendingCurrencyState {
+    case empty
+    case single(String)
+    case mixed
 }

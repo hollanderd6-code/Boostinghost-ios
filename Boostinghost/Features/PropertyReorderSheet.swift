@@ -76,8 +76,23 @@ struct PropertyReorderSheet: View {
         do {
             try await vm.reorderProperties(draftOrder)
             dismiss()
+        } catch let err as APIError {
+            // Le message generique masquait la cause (403 en mode agence, 400,
+            // 500, conflit de contrainte sur display_order).
+            switch err {
+            case .server(let code, let msg):
+                errorMessage = msg ?? "Le serveur a refuse l'enregistrement (code \(code))."
+            case .network:
+                errorMessage = "Enregistrement impossible. Verifiez votre connexion."
+            case .decoding:
+                errorMessage = "Reponse du serveur illisible."
+            case .unauthorized:
+                errorMessage = "Session expiree. Reconnectez-vous."
+            case .subscriptionRequired:
+                errorMessage = "Abonnement requis."
+            }
         } catch {
-            errorMessage = "Impossible de sauvegarder l'ordre. Réessayez."
+            errorMessage = error.localizedDescription
         }
         isSaving = false
     }

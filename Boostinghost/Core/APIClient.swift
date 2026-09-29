@@ -25,13 +25,13 @@ actor APIClient {
 
     // MARK: - GET
 
-    func get<T: Decodable>(_ url: URL, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws -> T {
+    func get<T: Decodable>(_ url: URL, agencyAll: Bool? = nil, extraQueryItems: [URLQueryItem] = []) async throws -> T {
         return try await perform(makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "GET"))
     }
 
     // MARK: - GET raw data (PDF, binary)
 
-    func getData(_ url: URL, agencyAll: Bool = false) async throws -> Data {
+    func getData(_ url: URL, agencyAll: Bool? = nil) async throws -> Data {
         let req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "GET")
         let (data, response) = try await send(req)
         try validate(response: response, data: data)
@@ -40,7 +40,7 @@ actor APIClient {
 
     // MARK: - POST raw data (PDF streamé — body JSON optionnel)
 
-    func postData<B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false) async throws -> Data {
+    func postData<B: Encodable>(_ url: URL, body: B, agencyAll: Bool? = nil) async throws -> Data {
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "POST")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
@@ -56,7 +56,7 @@ actor APIClient {
         return data
     }
 
-    func postData(_ url: URL, agencyAll: Bool = false) async throws -> Data {
+    func postData(_ url: URL, agencyAll: Bool? = nil) async throws -> Data {
         let req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "POST")
         let (data, response) = try await send(req)
         try validate(response: response, data: data)
@@ -65,7 +65,7 @@ actor APIClient {
 
     // MARK: - DELETE
 
-    func delete(_ url: URL, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws {
+    func delete(_ url: URL, agencyAll: Bool? = nil, extraQueryItems: [URLQueryItem] = []) async throws {
         let req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "DELETE")
         let (data, response) = try await send(req)
         #if DEBUG
@@ -81,19 +81,19 @@ actor APIClient {
     // MARK: - POST
 
     // Variante sans corps (body vide, réponse typée, timeout configurable)
-    func post<T: Decodable>(_ url: URL, agencyAll: Bool = false, timeout: TimeInterval = 60) async throws -> T {
+    func post<T: Decodable>(_ url: URL, agencyAll: Bool? = nil, timeout: TimeInterval = 60) async throws -> T {
         let req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "POST", timeout: timeout)
         return try await perform(req)
     }
 
-    func post<T: Decodable, B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws -> T {
+    func post<T: Decodable, B: Encodable>(_ url: URL, body: B, agencyAll: Bool? = nil, extraQueryItems: [URLQueryItem] = []) async throws -> T {
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "POST")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
         return try await perform(req)
     }
 
-    func postVoid<B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws {
+    func postVoid<B: Encodable>(_ url: URL, body: B, agencyAll: Bool? = nil, extraQueryItems: [URLQueryItem] = []) async throws {
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "POST")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
@@ -103,14 +103,14 @@ actor APIClient {
 
     // MARK: - PUT
 
-    func put<T: Decodable, B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws -> T {
+    func put<T: Decodable, B: Encodable>(_ url: URL, body: B, agencyAll: Bool? = nil, extraQueryItems: [URLQueryItem] = []) async throws -> T {
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "PUT")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
         return try await perform(req)
     }
 
-    func putVoid<B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false, extraQueryItems: [URLQueryItem] = []) async throws {
+    func putVoid<B: Encodable>(_ url: URL, body: B, agencyAll: Bool? = nil, extraQueryItems: [URLQueryItem] = []) async throws {
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: extraQueryItems), method: "PUT")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
@@ -120,14 +120,14 @@ actor APIClient {
 
     // MARK: - PATCH (JSON)
 
-    func patch<T: Decodable, B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false) async throws -> T {
+    func patch<T: Decodable, B: Encodable>(_ url: URL, body: B, agencyAll: Bool? = nil) async throws -> T {
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "PATCH")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
         return try await perform(req)
     }
 
-    func patchVoid<B: Encodable>(_ url: URL, body: B, agencyAll: Bool = false) async throws {
+    func patchVoid<B: Encodable>(_ url: URL, body: B, agencyAll: Bool? = nil) async throws {
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "PATCH")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
@@ -152,7 +152,7 @@ actor APIClient {
         fileData: Data? = nil,
         fileName: String? = nil,
         fileMimeType: String? = nil,
-        agencyAll: Bool = false
+        agencyAll: Bool? = nil
     ) async throws -> T {
         let boundary = "BH\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "POST")
@@ -194,7 +194,7 @@ actor APIClient {
 
     // MARK: - PUT multipart/form-data (champs texte uniquement)
 
-    func putMultipart<T: Decodable>(_ url: URL, fields: [(String, String)], agencyAll: Bool = false) async throws -> T {
+    func putMultipart<T: Decodable>(_ url: URL, fields: [(String, String)], agencyAll: Bool? = nil) async throws -> T {
         let boundary = "BH\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "PUT")
         req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
@@ -211,7 +211,7 @@ actor APIClient {
         fileData: Data? = nil,
         fileName: String? = nil,
         fileMimeType: String? = nil,
-        agencyAll: Bool = false
+        agencyAll: Bool? = nil
     ) async throws -> T {
         let boundary = "BH\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
         var req = makeRequest(url: buildURL(url, agencyAll: agencyAll, extra: []), method: "PUT")
@@ -305,9 +305,29 @@ actor APIClient {
         return (try? JSONDecoder().decode(ErrorEnvelope.self, from: data))?.firstMessage
     }
 
-    private func buildURL(_ url: URL, agencyAll: Bool, extra: [URLQueryItem]) -> URL {
+    // agency=all par defaut — comme auth-fetch.js cote web, qui l'ajoute a
+    // toutes les requetes. Cote serveur, getAgencyUserIds renvoie [userId] seul
+    // quand le parametre est absent : chaque appel qui l'oubliait echouait
+    // silencieusement sur les logements d'un compte delegue (faits memorises,
+    // envoi de template, ordre des logements...).
+    //
+    //   agencyAll non precise  -> agency=all
+    //   agencyAll: true        -> agency=all
+    //   agencyAll: false       -> pas de agency=all (opt-out explicite)
+    //
+    // Pour un utilisateur sans delegation acceptee, le parametre ne change
+    // rien : getAgencyUserIds renvoie [userId] dans les deux cas.
+    private func buildURL(_ url: URL, agencyAll: Bool?, extra: [URLQueryItem]) -> URL {
         var items = extra
-        if agencyAll { items.append(URLQueryItem(name: "agency", value: "all")) }
+
+        let urlHasAgency = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.contains { $0.name == "agency" } ?? false
+        let extraHasAgency = extra.contains { $0.name == "agency" }
+
+        if (agencyAll ?? true) && !urlHasAgency && !extraHasAgency {
+            items.append(URLQueryItem(name: "agency", value: "all"))
+        }
+
         guard !items.isEmpty,
               var c = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
         c.queryItems = (c.queryItems ?? []) + items

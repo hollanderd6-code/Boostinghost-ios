@@ -146,6 +146,11 @@ enum PushRoute {
         return nil
     }
 
+    /// Extrait le conversationId depuis un userInfo APNs brut (snake_case ou camelCase).
+    static func conversationId(from userInfo: [AnyHashable: Any]) -> Int? {
+        value(flatten(userInfo), "conversation_id", "conversationId").flatMap { Int($0) }
+    }
+
     @MainActor
     static func apply(_ data: [String: String]) {
         let router = NotificationRouter.shared

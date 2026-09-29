@@ -12,12 +12,14 @@ struct OwnerInvoice: Decodable, Identifiable {
     let isCreditNote: Bool?
     let originalInvoiceId: String?
     let clientName: String?
+    let currency: String?
 
     var isDraft: Bool { status == "draft" }
 
     private enum CodingKeys: String, CodingKey {
         case id, invoiceNumber, issueDate, totalTtc, status
         case clientId, isCreditNote, originalInvoiceId, clientName
+        case currency
     }
 
     init(from decoder: Decoder) throws {
@@ -31,6 +33,7 @@ struct OwnerInvoice: Decodable, Identifiable {
         isCreditNote       = try? c.decodeIfPresent(Bool.self,   forKey: .isCreditNote)
         originalInvoiceId  = c.flexString(forKey: .originalInvoiceId)
         clientName         = try? c.decodeIfPresent(String.self, forKey: .clientName)
+        currency           = try? c.decodeIfPresent(String.self, forKey: .currency)
     }
 }
 

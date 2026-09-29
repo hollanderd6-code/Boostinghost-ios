@@ -95,16 +95,17 @@ final class ContractDetailViewModel {
 
     var commissionSummary: String {
         guard let d = detail?.contractData else { return "—" }
+        let sym = Formatters.currencySymbol(for: detail?.displayCurrency ?? "EUR")
         switch d.remuType ?? "" {
         case "commission":
             let r = d.commissionRate ?? ""
             return r.isEmpty ? "—" : "\(r)\u{202F}%"
         case "forfait_mensuel":
             let f = d.forfaitMensuel ?? ""
-            return f.isEmpty ? "—" : "\(f)\u{202F}€/mois"
+            return f.isEmpty ? "—" : "\(f)\u{202F}\(sym)/mois"
         case "forfait_resa":
             let f = d.forfaitResa ?? ""
-            return f.isEmpty ? "—" : "\(f)\u{202F}€/rés."
+            return f.isEmpty ? "—" : "\(f)\u{202F}\(sym)/rés."
         case "mixte":
             let r = d.mixteRate ?? ""
             return r.isEmpty ? "—" : "\(r)\u{202F}% + forfait"
@@ -135,7 +136,8 @@ final class ContractDetailViewModel {
 
     var rentalPriceSummary: String {
         guard let p = detail?.contractData?.totalPrice, !p.isEmpty else { return "—" }
-        return "\(p)\u{202F}€"
+        let sym = Formatters.currencySymbol(for: detail?.displayCurrency ?? "EUR")
+        return "\(p)\u{202F}\(sym)"
     }
 
     var rentalStaySummary: String {
@@ -151,6 +153,7 @@ final class ContractDetailViewModel {
 
     var rentalDepositSummary: String {
         guard let d = detail?.contractData?.deposit, !d.isEmpty else { return "—" }
-        return "\(d)\u{202F}€"
+        let sym = Formatters.currencySymbol(for: detail?.displayCurrency ?? "EUR")
+        return "\(d)\u{202F}\(sym)"
     }
 }

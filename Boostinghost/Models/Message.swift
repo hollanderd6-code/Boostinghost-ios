@@ -119,6 +119,8 @@ struct SendDirectBody: Encodable {
 struct QuickContextResponse: Decodable {
     let depositUrl: String?
     let depositAmountCents: Int?
+    // INTL-DEPOSIT-CONTEXT — ISO 4217 currency of the deposit; nil on old payloads → EUR fallback
+    let depositCurrency: String?
 }
 
 struct ShortLinkBody: Encodable {

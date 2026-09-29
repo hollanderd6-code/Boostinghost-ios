@@ -28,6 +28,7 @@ struct Debour: Decodable, Identifiable {
     let photoUrl: String?
     let status: String      // "pending" | "billed"
     let createdAt: String?
+    let currency: String?   // ISO 4217 — nil on legacy records (pre-INTL-DEBOUR)
 
     var isPdf: Bool { photoUrl?.lowercased().hasSuffix(".pdf") == true }
 
@@ -35,7 +36,7 @@ struct Debour: Decodable, Identifiable {
     var statusPillStyle: PillStyle { status == "billed" ? .vert : .or }
 
     private enum CodingKeys: CodingKey {
-        case id, userId, clientId, description, montant, date, photoUrl, status, createdAt
+        case id, userId, clientId, description, montant, date, photoUrl, status, createdAt, currency
     }
 
     init(from decoder: Decoder) throws {
@@ -49,6 +50,7 @@ struct Debour: Decodable, Identifiable {
         photoUrl    = try? c.decodeIfPresent(String.self, forKey: .photoUrl)
         status      = (try? c.decodeIfPresent(String.self, forKey: .status)) ?? "pending"
         createdAt   = try? c.decodeIfPresent(String.self, forKey: .createdAt)
+        currency    = try? c.decodeIfPresent(String.self, forKey: .currency)
     }
 }
 

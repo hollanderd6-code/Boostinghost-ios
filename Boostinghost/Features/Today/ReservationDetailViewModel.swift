@@ -52,6 +52,7 @@ final class ReservationDetailViewModel {
 
         if let r = found {
             let bdSum = r.daysBreakdown.map { $0.values.reduce(0, +) }
+            print("[DEBUG Conv] conversationId=\(r.conversationId.map { String($0) } ?? "nil")")
             print("[DEBUG Prix] uid=\(r.uid ?? "-")")
             print("[DEBUG Prix] amountTotal=\(r.amountTotal.map { String($0) } ?? "nil")")
             print("[DEBUG Prix] amountRooms=\(r.amountRooms.map { String($0) } ?? "nil")")

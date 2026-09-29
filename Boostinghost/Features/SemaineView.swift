@@ -293,10 +293,11 @@ private struct SemBgCell: View {
     var body: some View {
         ZStack {
             if showPrice, let p = propData?.price(for: dayKey, isWeekend: isWeekend) {
-                Text("\(Int(p.rounded()))€")
+                Text(Formatters.amountCompact(p, currency: propData?.currency ?? "EUR"))
                     .font(.system(size: CalBarLayout.priceSize, weight: .medium))
                     .foregroundStyle(Color.bhAttenue)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
         }
         .frame(maxWidth: .infinity, minHeight: swRowH)

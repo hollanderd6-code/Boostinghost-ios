@@ -36,6 +36,7 @@ struct MandatDraft {
     var parties: String         = "non"       // défaut spec
     var checkinTime: String     = "15:00"     // défaut spec
     var checkoutTime: String    = "11:00"     // défaut spec
+    var currency: String        = "EUR"       // ISO 4217 — devise du mandat
 
     // Missions (étape 2 — TODO)
     var missions: [String]         = []
@@ -128,6 +129,7 @@ struct MandatSource: Decodable {
     let respPlafond: String?
     let juridiction: String?
     let confidentialite: String?
+    let currency: String?
 
     init(from decoder: Decoder) throws {
         let c            = try decoder.container(keyedBy: CodingKeys.self)
@@ -150,6 +152,7 @@ struct MandatSource: Decodable {
         respPlafond      = try? c.decodeIfPresent(String.self, forKey: .respPlafond)
         juridiction      = try? c.decodeIfPresent(String.self, forKey: .juridiction)
         confidentialite  = try? c.decodeIfPresent(String.self, forKey: .confidentialite)
+        currency         = try? c.decodeIfPresent(String.self, forKey: .currency)
     }
 
     private enum CodingKeys: CodingKey {
@@ -158,6 +161,7 @@ struct MandatSource: Decodable {
         case tva, tarifPreavis, reversement
         case dureeType, dateDebut, dureeMois, renouvellement
         case preavis, exclusivite, respPlafond, juridiction, confidentialite
+        case currency
     }
 }
 
@@ -191,6 +195,9 @@ struct MandatSendBody: Encodable {
     let ownerPhone: String
     let ownerDOB: String
     let ownerSiren: String
+
+    // Devise du mandat
+    let currency: String
 
     // Bien
     let propAddress: String
@@ -240,6 +247,7 @@ struct MandatSendBody: Encodable {
     init(draft d: MandatDraft, clientId: String) {
         self.clientId          = clientId
         self.contractType      = "mandat"
+        self.currency          = d.currency
         self.companyName       = d.companyName
         self.companyEmail      = d.companyEmail
         self.companyPhone      = d.companyPhone

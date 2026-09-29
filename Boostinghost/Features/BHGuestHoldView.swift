@@ -101,7 +101,7 @@ struct BHGuestHoldView: View {
                 HStack {
                     TextField("Prix fixé", text: $priceText)
                         .keyboardType(.decimalPad)
-                    Text("€").foregroundStyle(Color.bhAttenue)
+                    Text(currencySymbol).foregroundStyle(Color.bhAttenue)
                 }
             } header: {
                 Text("Tarif fixé (facultatif)")
@@ -244,6 +244,14 @@ struct BHGuestHoldView: View {
     }
 
     // MARK: - Helpers
+
+    private var currencyCode: String {
+        Formatters.normalizeCurrency(property.currency)
+    }
+
+    private var currencySymbol: String {
+        Formatters.currencySymbol(for: currencyCode)
+    }
 
     private var parsedPrice: Double? {
         Double(priceText.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: "."))

@@ -235,7 +235,7 @@ struct PrestationsBlockView: View {
     private var lcoRows: [(String, String)] {
         var rows: [(String, String)] = []
         if let t = displayed.lateCheckoutToleranceMinutes, t > 0 { rows.append(("Tolérance gratuite", duration(t))) }
-        if let p = displayed.lateCheckoutPricePerHour,     p > 0 { rows.append(("Tarif", "\(Formatters.amount(p)) / h")) }
+        if let p = displayed.lateCheckoutPricePerHour,     p > 0 { rows.append(("Tarif", "\(Formatters.amount(p, currency: currencyCode)) / h")) }
         if let m = displayed.lateCheckoutMaxMinutes,        m > 0 { rows.append(("Maximum", duration(m))) }
         return rows
     }
@@ -261,7 +261,7 @@ struct PrestationsBlockView: View {
     private var eciRows: [(String, String)] {
         var rows: [(String, String)] = []
         if let t = displayed.earlyCheckinToleranceMinutes, t > 0 { rows.append(("Tolérance gratuite", duration(t))) }
-        if let p = displayed.earlyCheckinPricePerHour,     p > 0 { rows.append(("Tarif", "\(Formatters.amount(p)) / h")) }
+        if let p = displayed.earlyCheckinPricePerHour,     p > 0 { rows.append(("Tarif", "\(Formatters.amount(p, currency: currencyCode)) / h")) }
         if let m = displayed.earlyCheckinMaxMinutes,        m > 0 { rows.append(("Maximum", duration(m))) }
         return rows
     }
@@ -278,7 +278,7 @@ struct PrestationsBlockView: View {
                         HStack {
                             Text("Prix").font(.system(size: 15)).foregroundStyle(Color.bhAttenue)
                             Spacer()
-                            Text(Formatters.amount(price)).font(.system(size: 15)).foregroundStyle(Color.bhEncre)
+                            Text(Formatters.amount(price, currency: currencyCode)).font(.system(size: 15)).foregroundStyle(Color.bhEncre)
                         }
                     }
                 }
@@ -362,6 +362,14 @@ struct PrestationsBlockView: View {
 
     // MARK: - Row helpers
 
+    private var currencyCode: String {
+        Formatters.normalizeCurrency(displayed.currency)
+    }
+
+    private var currencySymbol: String {
+        Formatters.currencySymbol(for: currencyCode)
+    }
+
     private func euroRow(label: String, text: Binding<String>, showSep: Bool) -> some View {
         CardRow(showSeparator: showSep) {
             HStack {
@@ -370,7 +378,7 @@ struct PrestationsBlockView: View {
                 TextField("—", text: text)
                     .font(.system(size: 15)).foregroundStyle(Color.bhEncre)
                     .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
-                Text("€").font(.system(size: 15)).foregroundStyle(Color.bhAttenue)
+                Text(currencySymbol).font(.system(size: 15)).foregroundStyle(Color.bhAttenue)
             }
         }
     }

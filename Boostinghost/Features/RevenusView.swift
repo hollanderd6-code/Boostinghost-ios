@@ -41,20 +41,30 @@ private struct RevenusContent: View {
     let data: ReportingResponse
     var vm:   CalendarViewModel
 
+    private var currencyState: ReportingCurrencyState {
+        ReportingCurrencyState(summary: data.summary)
+    }
+
     var body: some View {
         LazyVStack(spacing: 12) {
-            GrossCard(summary: data.summary)
-            NetCard(summary: data.summary)
-            IndicatorsGrid(summary: data.summary)
+            if case .mixed(let codes) = currencyState {
+                MixedCurrencyBanner(currencies: codes)
+            }
+            GrossCard(summary: data.summary, currencyState: currencyState)
+            NetCard(summary: data.summary, currencyState: currencyState)
+            IndicatorsGrid(summary: data.summary, currencyState: currencyState)
 
             if let platforms = data.platforms, !platforms.isEmpty {
-                PlatformsCard(platforms: platforms)
+                PlatformsCard(platforms: platforms, currencyState: currencyState)
             }
             if let byProp = data.byProperty, !byProp.isEmpty {
-                TopPropertiesCard(properties: Array(byProp.sorted { $0.grossRevenue > $1.grossRevenue }.prefix(4)))
+                TopPropertiesCard(
+                    properties: Array(byProp.sorted { $0.grossRevenue > $1.grossRevenue }.prefix(4)),
+                    currencyState: currencyState
+                )
             }
 
-            ExportRow(vm: vm, data: data)
+            ExportRow(vm: vm, data: data, currencyState: currencyState)
 
             Color.clear.frame(height: 80)
         }
@@ -63,23 +73,49 @@ private struct RevenusContent: View {
     }
 }
 
+// MARK: - Bannière devises mixtes
+
+private struct MixedCurrencyBanner: View {
+    let currencies: [String]
+
+    var body: some View {
+        ListCard {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "info.circle")
+                    .foregroundStyle(Color.bhOr)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Devises mixtes (\(currencies.joined(separator: ", ")))")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.bhEncre)
+                    Text("Les montants couvrent plusieurs devises et ne peuvent pas être comparés.")
+                        .font(.bhMeta)
+                        .foregroundStyle(Color.bhAttenue)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(14)
+        }
+    }
+}
+
 // MARK: - 1. CA brut (carte héro)
 
 private struct GrossCard: View {
     let summary: ReportingSummary
+    let currencyState: ReportingCurrencyState
 
     var body: some View {
         ListCard(heroFill: true) {
             VStack(alignment: .leading, spacing: 6) {
                 SectionLabel(text: "CA brut")
                     .padding(.bottom, 2)
-                Text(Formatters.amount(summary.totalGrossRevenue))
+                Text(currencyState.format(summary.totalGrossRevenue))
                     .bhValeurHero()
-                Text("dont \(Formatters.amount(summary.totalCleaningFee)) ménage · \(Formatters.amount(summary.totalTouristTax)) taxe de séjour")
+                Text("dont \(currencyState.format(summary.totalCleaningFee)) ménage · \(currencyState.format(summary.totalTouristTax)) taxe de séjour")
                     .font(.bhMeta)
                     .foregroundStyle(Color.bhAttenue)
-                if summary.pendingGrossRevenue > 0 {
-                    Text("dont \(summary.pendingBookings) réservation\(summary.pendingBookings > 1 ? "s" : "") en attente d'approbation · \(Formatters.amount(summary.pendingGrossRevenue))")
+                if let pendingGross = summary.pendingGrossRevenue, pendingGross > 0 {
+                    Text("dont \(summary.pendingBookings) réservation\(summary.pendingBookings > 1 ? "s" : "") en attente d'approbation · \(currencyState.format(pendingGross))")
                         .font(.bhMeta)
                         .foregroundStyle(Color.bhOr)
                 }
@@ -98,13 +134,14 @@ private struct GrossCard: View {
 
 private struct NetCard: View {
     let summary: ReportingSummary
+    let currencyState: ReportingCurrencyState
 
     var body: some View {
         ListCard(heroFill: true) {
             VStack(alignment: .leading, spacing: 14) {
                 SectionLabel(text: "Revenu net")
                     .padding(.bottom, 2)
-                Text(Formatters.amount(summary.totalNetRevenue))
+                Text(currencyState.format(summary.totalNetRevenue))
                     .bhValeurHero(color: .bhVert)
 
                 HStack(spacing: 10) {
@@ -127,13 +164,13 @@ private struct NetCard: View {
         }
     }
 
-    private func subBlock(label: String, amount: Double,
+    private func subBlock(label: String, amount: Double?,
                           background: Color, textColor: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(textColor.opacity(0.65))
-            Text(Formatters.amount(amount))
+            Text(currencyState.format(amount))
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(textColor)
         }
@@ -148,10 +185,11 @@ private struct NetCard: View {
 
 private struct IndicatorsGrid: View {
     let summary: ReportingSummary
+    let currencyState: ReportingCurrencyState
 
     private var avgPerNight: String {
-        guard summary.totalNights > 0 else { return "—" }
-        return Formatters.amount(summary.totalGrossRevenue / Double(summary.totalNights))
+        guard let gross = summary.totalGrossRevenue, summary.totalNights > 0 else { return "—" }
+        return currencyState.format(gross / Double(summary.totalNights))
     }
 
     var body: some View {
@@ -161,7 +199,7 @@ private struct IndicatorsGrid: View {
         ) {
             IndicatorTile(label: "Réservations",    value: "\(summary.totalBookings)")
             IndicatorTile(label: "Nuits louées",    value: "\(summary.totalNights)")
-            IndicatorTile(label: "Commissions OTA", value: Formatters.amount(summary.totalOtaCommission),
+            IndicatorTile(label: "Commissions OTA", value: currencyState.format(summary.totalOtaCommission),
                           valueColor: .bhTerracotta)
             IndicatorTile(label: "Moy. par nuit",  value: avgPerNight)
         }
@@ -197,6 +235,7 @@ private struct IndicatorTile: View {
 
 private struct PlatformsCard: View {
     let platforms: [PlatformRevenuStat]
+    let currencyState: ReportingCurrencyState
 
     var body: some View {
         ListCard {
@@ -206,7 +245,7 @@ private struct PlatformsCard: View {
                 }
                 ForEach(Array(platforms.enumerated()), id: \.element.id) { idx, stat in
                     CardRow(showSeparator: idx < platforms.count - 1) {
-                        PlatformStatRow(stat: stat)
+                        PlatformStatRow(stat: stat, currencyState: currencyState)
                     }
                 }
             }
@@ -216,8 +255,9 @@ private struct PlatformsCard: View {
 
 private struct PlatformStatRow: View {
     let stat: PlatformRevenuStat
+    let currencyState: ReportingCurrencyState
 
-    private var isPendingOnly: Bool { stat.revenue == 0 && stat.pendingRevenue > 0 }
+    private var isPendingOnly: Bool { (stat.revenue ?? 0) == 0 && stat.pendingRevenue > 0 }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -231,7 +271,7 @@ private struct PlatformStatRow: View {
                 Spacer()
                 if isPendingOnly {
                     VStack(alignment: .trailing, spacing: 1) {
-                        Text(Formatters.amount(stat.pendingRevenue))
+                        Text(currencyState.format(stat.pendingRevenue))
                             .font(.system(size: 14.5, weight: .semibold))
                             .foregroundStyle(Color.bhOr)
                         Text("en attente")
@@ -240,7 +280,7 @@ private struct PlatformStatRow: View {
                     }
                 } else {
                     VStack(alignment: .trailing, spacing: 1) {
-                        Text(Formatters.amount(stat.revenue))
+                        Text(currencyState.format(stat.revenue))
                             .font(.system(size: 14.5, weight: .semibold))
                             .foregroundStyle(Color.bhEncre)
                         Text("\(Int(stat.pct.rounded())) %")
@@ -270,6 +310,7 @@ private struct PlatformStatRow: View {
 
 private struct TopPropertiesCard: View {
     let properties: [PropertyRevenuStat]
+    let currencyState: ReportingCurrencyState
 
     var body: some View {
         ListCard {
@@ -292,7 +333,7 @@ private struct TopPropertiesCard: View {
                                     .foregroundStyle(Color.bhAttenue)
                             }
                             Spacer()
-                            Text(Formatters.amount(prop.grossRevenue))
+                            Text(currencyState.format(prop.grossRevenue))
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(Color.bhEncre)
                         }
@@ -308,23 +349,25 @@ private struct TopPropertiesCard: View {
 private struct ExportRow: View {
     var vm:   CalendarViewModel
     var data: ReportingResponse
+    let currencyState: ReportingCurrencyState
 
     private var exportText: String {
         let s = data.summary
-        let avg = s.totalNights > 0
-            ? Formatters.amount(s.totalGrossRevenue / Double(s.totalNights))
-            : "—"
+        let avg: String = {
+            guard let gross = s.totalGrossRevenue, s.totalNights > 0 else { return "—" }
+            return currencyState.format(gross / Double(s.totalNights))
+        }()
         return """
         Rapport \(vm.monthTitle)
-        CA brut : \(Formatters.amount(s.totalGrossRevenue))
-          dont ménage : \(Formatters.amount(s.totalCleaningFee))
-          dont taxe de séjour : \(Formatters.amount(s.totalTouristTax))
-        Revenu net : \(Formatters.amount(s.totalNetRevenue))
-          Conciergerie : \(Formatters.amount(s.totalConcierge))
-          Propriétaires : \(Formatters.amount(s.totalOwnerRevenue))
+        CA brut : \(currencyState.format(s.totalGrossRevenue))
+          dont ménage : \(currencyState.format(s.totalCleaningFee))
+          dont taxe de séjour : \(currencyState.format(s.totalTouristTax))
+        Revenu net : \(currencyState.format(s.totalNetRevenue))
+          Conciergerie : \(currencyState.format(s.totalConcierge))
+          Propriétaires : \(currencyState.format(s.totalOwnerRevenue))
         Réservations : \(s.totalBookings)
         Nuits louées : \(s.totalNights)
-        Commissions OTA : \(Formatters.amount(s.totalOtaCommission))
+        Commissions OTA : \(currencyState.format(s.totalOtaCommission))
         Moy. par nuit : \(avg)
         """
     }

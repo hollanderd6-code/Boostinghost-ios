@@ -63,6 +63,14 @@ struct ReservationEditSheet: View {
         mode != .otaOnly && properties.count > 1
     }
 
+    // reservation.currency wins; fall back to the currently selected property, then EUR.
+    private var reservationCurrency: String {
+        Formatters.normalizeCurrency(
+            reservation.currency
+                ?? properties.first { $0.id == propertyId }?.currency
+        )
+    }
+
     private var propertyChanged: Bool {
         propertyId != reservation.propertyId
     }
@@ -420,7 +428,7 @@ struct ReservationEditSheet: View {
                 .multilineTextAlignment(.trailing)
                 .keyboardType(.decimalPad)
                 .frame(width: 90)
-            Text("€")
+            Text(Formatters.currencySymbol(for: reservationCurrency))
                 .font(.system(size: 15))
                 .foregroundStyle(Color.bhAttenue)
         }

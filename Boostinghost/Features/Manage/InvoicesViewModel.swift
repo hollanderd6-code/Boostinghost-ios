@@ -1,6 +1,19 @@
 import Foundation
 import Observation
 
+enum InvoiceHistoryCurrencyState {
+    case empty
+    case single(String)
+    case mixed
+
+    var totalText: ((Double) -> String)? {
+        switch self {
+        case .single(let code): return { Formatters.amount($0, currency: code) }
+        case .empty, .mixed:    return nil
+        }
+    }
+}
+
 @Observable
 @MainActor
 final class InvoicesViewModel {
@@ -24,6 +37,13 @@ final class InvoicesViewModel {
 
     var historyTotal: Double {
         all.compactMap(\.total).reduce(0, +)
+    }
+
+    var historyCurrencyState: InvoiceHistoryCurrencyState {
+        let withAmounts = all.filter { $0.total != nil }
+        if withAmounts.isEmpty { return .empty }
+        let codes = Set(withAmounts.map { Formatters.normalizeCurrency($0.currency) })
+        return codes.count == 1 ? .single(codes.first!) : .mixed
     }
 
     // MARK: - Load

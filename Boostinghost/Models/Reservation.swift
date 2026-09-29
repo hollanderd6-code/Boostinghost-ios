@@ -224,6 +224,8 @@ struct PropertySummary: Decodable, Identifiable {
     let arrivalTime: String?
     let departureTime: String?
     let color: String?
+    // ISO 4217 — nil on legacy responses (treat as EUR at display time)
+    let currency: String?
 
     var displayName: String { internalName.flatMap { $0.isEmpty ? nil : $0 } ?? name }
 
@@ -234,6 +236,7 @@ struct PropertySummary: Decodable, Identifiable {
         case arrivalTime
         case departureTime
         case color
+        case currency
     }
 
     init(from decoder: Decoder) throws {
@@ -244,6 +247,7 @@ struct PropertySummary: Decodable, Identifiable {
         arrivalTime   = try? c.decodeIfPresent(String.self, forKey: .arrivalTime)
         departureTime = try? c.decodeIfPresent(String.self, forKey: .departureTime)
         color         = try? c.decodeIfPresent(String.self, forKey: .color)
+        currency      = try? c.decodeIfPresent(String.self, forKey: .currency)
     }
 }
 
@@ -321,9 +325,10 @@ struct ManualReservationBody: Encodable {
     let amountCleaning:  Double?
     let amountTaxes:     Double?
     let otaCommission:   Double?
+    let currency:        String   // ISO 4217 — for transport; server uses property record as authority
 
     enum CodingKeys: String, CodingKey {
-        case propertyId, start, end, guestName, notes, platform, price, phone, email
+        case propertyId, start, end, guestName, notes, platform, price, phone, email, currency
         case guestCountry    = "guest_country"
         case occupancyAdults = "occupancy_adults"
         case amountRooms     = "amount_rooms"
@@ -337,6 +342,7 @@ struct ManualReservationBody: Encodable {
         try c.encode(propertyId, forKey: .propertyId)
         try c.encode(start,      forKey: .start)
         try c.encode(end,        forKey: .end)
+        try c.encode(currency,   forKey: .currency)
         try c.encodeIfPresent(guestName,       forKey: .guestName)
         try c.encodeIfPresent(notes,           forKey: .notes)
         try c.encodeIfPresent(platform,        forKey: .platform)

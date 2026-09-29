@@ -368,7 +368,7 @@ struct GlobalSearchSheet: View {
             }
             Spacer()
             if let total = inv.totalTtc {
-                Text(Formatters.amount(total))
+                Text(Formatters.amount(total, currency: Formatters.normalizeCurrency(inv.currency)))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Color.bhAttenue)
             }

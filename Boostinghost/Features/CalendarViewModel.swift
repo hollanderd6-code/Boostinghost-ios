@@ -422,6 +422,16 @@ final class CalendarViewModel {
 
     func clearPricing() { dayPrices = [:] }
 
+    // MARK: - Currency resolution
+
+    // Priority: calendarData (live pricing response) → PropertySummary → EUR fallback.
+    // Always returns a normalized 3-letter ISO code; never returns nil.
+    func currency(forPropertyId propertyId: String) -> String {
+        let raw = calendarData?.properties?[propertyId]?.currency
+            ?? properties.first(where: { $0.id == propertyId })?.currency
+        return Formatters.normalizeCurrency(raw)
+    }
+
     // MARK: Network — Pricing calendar (Jour + Semaine)
 
     func loadCalendar() async {
@@ -635,7 +645,8 @@ final class CalendarViewModel {
         amountRooms:     Double?,
         amountCleaning:  Double?,
         amountTaxes:     Double?,
-        otaCommission:   Double?
+        otaCommission:   Double?,
+        currency:        String
     ) async throws {
         let body = ManualReservationBody(
             propertyId:      propertyId,
@@ -652,7 +663,8 @@ final class CalendarViewModel {
             amountRooms:     amountRooms,
             amountCleaning:  amountCleaning,
             amountTaxes:     amountTaxes,
-            otaCommission:   otaCommission
+            otaCommission:   otaCommission,
+            currency:        currency
         )
         try await APIClient.shared.postVoid(Endpoint.manualReservations, body: body, agencyAll: true)
     }
@@ -699,7 +711,13 @@ final class CalendarViewModel {
         print("[CALORDER] submit = \(newOrder.map(\.displayName))")
         #endif
         let body = PropertyOrderBody(order: newOrder.map(\.id))
-        try await APIClient.shared.putVoid(Endpoint.propertiesOrderBulk, body: body)
+        // agencyAll: la route resout les comptes via getAgencyUserIds, qui
+        // n'inclut les comptes delegues que si la requete porte ?agency=all.
+        // Sans lui, les logements delegues sortent du WHERE et l'ecriture de
+        // display_order echoue — « Impossible de sauvegarder l'ordre ».
+        try await APIClient.shared.putVoid(
+            Endpoint.propertiesOrderBulk, body: body, agencyAll: true
+        )
         // PUT confirmed (200): DB commit done, backend cache refreshed.
         // Apply directly — no second GET that could return a stale order.
         properties = newOrder
@@ -765,3 +783,12 @@ final class CalendarViewModel {
 extension Notification.Name {
     static let calendarShouldRefresh = Notification.Name("CalendarShouldRefresh")
 }
+
+// MARK: - Test helpers
+
+#if DEBUG
+extension CalendarViewModel {
+    func injectCalendarDataForTesting(_ data: PricingCalendarResponse?) { calendarData = data }
+    func injectPropertiesForTesting(_ props: [PropertySummary])          { properties   = props }
+}
+#endif

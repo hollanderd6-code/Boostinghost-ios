@@ -46,9 +46,10 @@ struct SearchResultOwnerInvoice: Decodable, Identifiable, Hashable {
     let totalTtc: Double?
     let status: String?
     let issueDate: String?
+    let currency: String?
 
     private enum CodingKeys: CodingKey {
-        case id, invoiceNumber, clientName, totalTtc, status, issueDate
+        case id, invoiceNumber, clientName, totalTtc, status, issueDate, currency
     }
 
     init(from decoder: Decoder) throws {
@@ -59,6 +60,7 @@ struct SearchResultOwnerInvoice: Decodable, Identifiable, Hashable {
         totalTtc      = c.flexDouble(forKey: .totalTtc)
         status        = try? c.decodeIfPresent(String.self, forKey: .status)
         issueDate     = try? c.decodeIfPresent(String.self, forKey: .issueDate)
+        currency      = try? c.decodeIfPresent(String.self, forKey: .currency)
     }
 }
 

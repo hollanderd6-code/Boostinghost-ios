@@ -133,12 +133,14 @@ struct InvoiceDetailSheet: View {
         }
     }
 
+    private var currencyCode: String { Formatters.normalizeCurrency(invoice.currency) }
+
     // MARK: - Carte héro (montant total)
 
     private var heroCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let total = invoice.total {
-                Text(Formatters.amount(total))
+                Text(Formatters.amount(total, currency: currencyCode))
                     .bhValeurHero()
             } else {
                 Text("—")
@@ -196,17 +198,17 @@ struct InvoiceDetailSheet: View {
 
     private var montantsRows: [InvoiceDetailRow] {
         var rows: [InvoiceDetailRow] = []
-        if let v = invoice.rentAmount,       v > 0 { rows.append(.init(label: "Loyer",          value: Formatters.amount(v))) }
-        if let v = invoice.cleaningFee,      v > 0 { rows.append(.init(label: "Ménage",         value: Formatters.amount(v))) }
-        if let v = invoice.touristTaxAmount, v > 0 { rows.append(.init(label: "Taxe de séjour", value: Formatters.amount(v))) }
+        if let v = invoice.rentAmount,       v > 0 { rows.append(.init(label: "Loyer",          value: Formatters.amount(v, currency: currencyCode))) }
+        if let v = invoice.cleaningFee,      v > 0 { rows.append(.init(label: "Ménage",         value: Formatters.amount(v, currency: currencyCode))) }
+        if let v = invoice.touristTaxAmount, v > 0 { rows.append(.init(label: "Taxe de séjour", value: Formatters.amount(v, currency: currencyCode))) }
         if let rate = invoice.vatRate, let vat = invoice.vatAmount, vat > 0 {
             let rateStr = rate.truncatingRemainder(dividingBy: 1) == 0
                 ? "\(Int(rate))\u{202F}%"
                 : String(format: "%.2f", rate) + "\u{202F}%"
-            rows.append(.init(label: "TVA (\(rateStr))", value: Formatters.amount(vat)))
+            rows.append(.init(label: "TVA (\(rateStr))", value: Formatters.amount(vat, currency: currencyCode)))
         }
         if let v = invoice.total {
-            rows.append(.init(label: "Total", value: Formatters.amount(v), isAccent: true))
+            rows.append(.init(label: "Total", value: Formatters.amount(v, currency: currencyCode), isAccent: true))
         }
         return rows
     }
