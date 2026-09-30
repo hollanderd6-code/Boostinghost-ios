@@ -139,6 +139,29 @@ extension PricingCalendarProperty {
     }
 }
 
+// MARK: - Calendar presentation state
+
+/// Visual state for a single calendar day cell.
+/// Derived exclusively from sources[dayKey] + boostpriceEnabled.
+/// bpSchedule.status is secondary information, not the authority for price control.
+enum CalendarCellBoostState: Equatable {
+    case none
+    case effective   // sources[dayKey] == .boostprice — green bolt
+    case pending     // pending recommendation, source is NOT manual_override — gold bolt
+}
+
+extension PricingCalendarProperty {
+    func boostPriceCalendarState(for dayKey: String) -> CalendarCellBoostState {
+        guard isBoostPriceEnabled else { return .none }
+        if sources?[dayKey] == .boostprice { return .effective }
+        // Pending indicator: schedule says pending AND manual_override has NOT taken control.
+        if sources?[dayKey] != .manualOverride && hasPendingRecommendation(for: dayKey) {
+            return .pending
+        }
+        return .none
+    }
+}
+
 struct PricingCalendarEntry: Decodable, Identifiable {
     let start:    String   // "YYYY-MM-DD"
     let end:      String   // "YYYY-MM-DD"

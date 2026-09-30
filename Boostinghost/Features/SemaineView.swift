@@ -290,6 +290,15 @@ private struct SemBgCell: View {
         return !occupied && !checkin
     }
 
+    // BoostPrice badge: strictly free cells only (no checkout day bar overlap).
+    private var showBpIndicator: Bool {
+        guard canViewPricing else { return false }
+        let occupied = booked.contains { $0.start <= dayKey && $0.end > dayKey }
+        let checkin  = booked.contains { $0.start == dayKey }
+        let checkout = booked.contains { $0.end   == dayKey }
+        return !occupied && !checkin && !checkout
+    }
+
     var body: some View {
         ZStack {
             if showPrice, let p = propData?.price(for: dayKey, isWeekend: isWeekend) {
@@ -301,6 +310,17 @@ private struct SemBgCell: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: swRowH)
+        .overlay(alignment: .topTrailing) {
+            if showBpIndicator {
+                let bpState = propData?.boostPriceCalendarState(for: dayKey) ?? .none
+                if bpState != .none {
+                    BoostPriceCalendarBadge(state: bpState)
+                        .padding(.top, 5)
+                        .padding(.trailing, 4)
+                        .accessibilityHidden(true)
+                }
+            }
+        }
         .background(isWeekend ? swWeekend : Color.clear)
         .overlay(alignment: .trailing) {
             Rectangle().fill(swColSep).frame(width: 1.0)

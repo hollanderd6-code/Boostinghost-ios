@@ -142,6 +142,22 @@ private struct DayCell: View {
         .background(background)
         .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
         .overlay(selectionRing)
+        .overlay(alignment: .topTrailing) { bpBadge }
+    }
+
+    @ViewBuilder
+    private var bpBadge: some View {
+        if case .single(let propId) = vm.displayMode, canViewPricing {
+            let key      = CalendarViewModel.dayKey(for: date)
+            let propData = vm.calendarData?.properties?[propId]
+            let bpState  = propData?.boostPriceCalendarState(for: key) ?? .none
+            if bpState != .none && vm.dayPrices[key] != nil {
+                BoostPriceCalendarBadge(state: bpState)
+                    .padding(.top, 5)
+                    .padding(.trailing, 5)
+                    .accessibilityHidden(true)
+            }
+        }
     }
 
     @ViewBuilder

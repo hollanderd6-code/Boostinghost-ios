@@ -254,8 +254,9 @@ private struct TimelineRow: View {
                     }
                     let isCheckin  = reservations.contains { $0.startDayDate == date }
                     let isCheckout = reservations.contains { $0.endDayDate   == date }
-                    let isMidStay  = isOccupied && !isCheckin
-                    let showPrice  = canViewPricing && !isMidStay && !(isCheckin && isCheckout)
+                    let isMidStay       = isOccupied && !isCheckin
+                    let showPrice       = canViewPricing && !isMidStay && !(isCheckin && isCheckout)
+                    let showBpIndicator = canViewPricing && !isOccupied && !isCheckin && !isCheckout
 
                     ZStack {
                         if let p = price, showPrice {
@@ -293,6 +294,17 @@ private struct TimelineRow: View {
                         Rectangle()
                             .fill(sun ? tlWeekSep : tlColSep)
                             .frame(width: sun ? 1.5 : 1.0)
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if showBpIndicator {
+                            let bpState = propData?.boostPriceCalendarState(for: dayKey) ?? .none
+                            if bpState != .none {
+                                BoostPriceCalendarBadge(state: bpState)
+                                    .padding(.top, 5)
+                                    .padding(.trailing, 4)
+                                    .accessibilityHidden(true)
+                            }
+                        }
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -451,6 +463,28 @@ struct PlatformMiniChip: View {
                 .foregroundStyle(.white)
         }
         .frame(width: 16, height: 16)
+    }
+}
+
+// MARK: - BoostPrice calendar badge
+// Internal — also used by SemaineView and MonthGridView.
+
+struct BoostPriceCalendarBadge: View {
+    let state: CalendarCellBoostState
+
+    var body: some View {
+        switch state {
+        case .none:
+            EmptyView()
+        case .effective:
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 7, weight: .semibold))
+                .foregroundStyle(Color.bhOccupeFonce)
+        case .pending:
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 7, weight: .semibold))
+                .foregroundStyle(Color.bhOrClair)
+        }
     }
 }
 

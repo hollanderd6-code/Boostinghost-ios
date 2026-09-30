@@ -203,6 +203,159 @@ struct PricingCalendarBoostPriceTests {
         #expect(p.isBoostPriceEnabled == false)
     }
 
+    // MARK: - CalendarCellBoostState (IOS-BP-04)
+
+    private func property(
+        boostpriceEnabled: Bool? = true,
+        sources: [String: String]? = nil,
+        bpSchedule: [String: [String: Any]]? = nil
+    ) throws -> PricingCalendarProperty {
+        var obj: [String: Any] = [:]
+        if let b = boostpriceEnabled { obj["boostprice_enabled"] = b }
+        if let s = sources           { obj["sources"] = s }
+        if let sched = bpSchedule {
+            var encoded: [String: [String: Any]] = [:]
+            for (k, v) in sched { encoded[k] = v }
+            obj["bp_schedule"] = encoded
+        }
+        let data = try JSONSerialization.data(withJSONObject: obj)
+        return try decoder.decode(PricingCalendarProperty.self, from: data)
+    }
+
+    @Test("boostPriceCalendarState: base_price source → none")
+    func bpStateBasePrice() throws {
+        let p = try property(sources: ["2026-10-01": "base_price"])
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: weekend_price source → none")
+    func bpStateWeekendPrice() throws {
+        let p = try property(sources: ["2026-10-01": "weekend_price"])
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: period_rule source → none")
+    func bpStatePeriodRule() throws {
+        let p = try property(sources: ["2026-10-01": "period_rule"])
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: weekday_rule source → none")
+    func bpStateWeekdayRule() throws {
+        let p = try property(sources: ["2026-10-01": "weekday_rule"])
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: sources=boostprice + schedule=applied → effective")
+    func bpStateEffective() throws {
+        let p = try property(
+            sources:    ["2026-10-01": "boostprice"],
+            bpSchedule: ["2026-10-01": ["status": "applied", "price": 130]]
+        )
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .effective)
+    }
+
+    @Test("boostPriceCalendarState: sources=base_price + schedule=pending → pending")
+    func bpStatePendingWithBaseSource() throws {
+        let p = try property(
+            sources:    ["2026-10-01": "base_price"],
+            bpSchedule: ["2026-10-01": ["status": "pending", "price": 145]]
+        )
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .pending)
+    }
+
+    @Test("boostPriceCalendarState: sources=manual_override + schedule=applied → none (manual wins)")
+    func bpStateManualOverrideApplied() throws {
+        let p = try property(
+            sources:    ["2026-10-01": "manual_override"],
+            bpSchedule: ["2026-10-01": ["status": "applied", "price": 130]]
+        )
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: sources=manual_override + schedule=pending → none (manual authority preserved)")
+    func bpStateManualOverridePending() throws {
+        let p = try property(
+            sources:    ["2026-10-01": "manual_override"],
+            bpSchedule: ["2026-10-01": ["status": "pending", "price": 115]]
+        )
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: boostpriceEnabled=false → none always")
+    func bpStateDisabled() throws {
+        let p = try property(
+            boostpriceEnabled: false,
+            sources:    ["2026-10-01": "boostprice"],
+            bpSchedule: ["2026-10-01": ["status": "applied", "price": 130]]
+        )
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: absent sources → none")
+    func bpStateAbsentSources() throws {
+        let p = try property(sources: nil, bpSchedule: nil)
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: absent bpSchedule + boostprice source → effective (schedule not required)")
+    func bpStateEffectiveNoSchedule() throws {
+        let p = try property(sources: ["2026-10-01": "boostprice"], bpSchedule: nil)
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .effective)
+    }
+
+    @Test("boostPriceCalendarState: absent bpSchedule with base_price source → none (no pending)")
+    func bpStateNoPendingWhenNoSchedule() throws {
+        let p = try property(sources: ["2026-10-01": "base_price"], bpSchedule: nil)
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: unknown source + pending schedule → pending (not manual)")
+    func bpStateUnknownSourcePending() throws {
+        let p = try property(
+            sources:    ["2026-10-01": "future_source"],
+            bpSchedule: ["2026-10-01": ["status": "pending", "price": 145]]
+        )
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .pending)
+    }
+
+    @Test("boostPriceCalendarState: unknown/future schedule status → none for pending check")
+    func bpStateFutureScheduleStatus() throws {
+        let p = try property(
+            sources:    ["2026-10-01": "base_price"],
+            bpSchedule: ["2026-10-01": ["status": "future_status", "price": 145]]
+        )
+        // future_status is unknown → not .pending → no indicator
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
+    @Test("boostPriceCalendarState: multiple dates with mixed states")
+    func bpStateMixedDates() throws {
+        let p = try property(
+            sources: [
+                "2026-10-01": "boostprice",
+                "2026-10-02": "manual_override",
+                "2026-10-03": "base_price"
+            ],
+            bpSchedule: [
+                "2026-10-03": ["status": "pending", "price": 100]
+            ]
+        )
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .effective)
+        #expect(p.boostPriceCalendarState(for: "2026-10-02") == .none)
+        #expect(p.boostPriceCalendarState(for: "2026-10-03") == .pending)
+        #expect(p.boostPriceCalendarState(for: "2026-10-04") == .none)
+    }
+
+    @Test("boostPriceCalendarState: boostpriceEnabled nil defaults to false → none")
+    func bpStateNilEnabled() throws {
+        let p = try property(
+            boostpriceEnabled: nil,
+            sources:    ["2026-10-01": "boostprice"]
+        )
+        #expect(p.boostPriceCalendarState(for: "2026-10-01") == .none)
+    }
+
     // MARK: - DynamicPricingMode
 
     @Test("DynamicPricingMode unknown value is forward-compatible")
