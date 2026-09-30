@@ -108,6 +108,21 @@ func boostPriceFactorLabel(value: Double, factor: String) -> String {
     }
 }
 
+// MARK: - History ID resolution (nonisolated, testable)
+
+func boostPriceNeedsHistoryFallback(_ entry: DynamicPricingHistoryEntry?) -> Bool {
+    guard entry?.status == "pending" else { return false }
+    return entry?.historyId == nil
+}
+
+func boostPricePreferHistoryId(
+    dashEntry: DynamicPricingHistoryEntry?,
+    fallbackItems: [DynamicPricingHistoryItem]
+) -> Int? {
+    if let id = dashEntry?.historyId { return id }
+    return fallbackItems.first(where: { $0.status == "pending" })?.id
+}
+
 // MARK: - ViewModel
 
 @Observable
@@ -127,7 +142,8 @@ final class BoostPriceDetailViewModel {
     // Loaded data (read-only display)
     var config:             DynamicPricingConfig?
     var dashProp:           DynamicPricingDashboardProperty?
-    var pendingHistoryItem: DynamicPricingHistoryItem?
+    var resolvedHistoryId:  Int?                          = nil
+    var pendingDisplayEntry: DynamicPricingHistoryEntry?  = nil
     var currency:           String = "EUR"
 
     // Editable form state
@@ -182,16 +198,25 @@ final class BoostPriceDetailViewModel {
 
         let hasPending = dashProp?.history?.status == "pending"
         if hasPending {
-            let histResp: DynamicPricingHistoryListResponse? = try? await APIClient.shared.get(
-                Endpoint.dynamicPricingHistory,
-                extraQueryItems: [
-                    URLQueryItem(name: "propertyId", value: propertyId),
-                    URLQueryItem(name: "limit",      value: "1")
-                ]
-            )
-            pendingHistoryItem = histResp?.history.first(where: { $0.status == "pending" })
+            if boostPriceNeedsHistoryFallback(dashProp?.history) {
+                let histResp: DynamicPricingHistoryListResponse? = try? await APIClient.shared.get(
+                    Endpoint.dynamicPricingHistory,
+                    extraQueryItems: [
+                        URLQueryItem(name: "propertyId", value: propertyId),
+                        URLQueryItem(name: "limit",      value: "1")
+                    ]
+                )
+                resolvedHistoryId = boostPricePreferHistoryId(
+                    dashEntry: dashProp?.history,
+                    fallbackItems: histResp?.history ?? []
+                )
+            } else {
+                resolvedHistoryId = dashProp?.history?.historyId
+            }
+            pendingDisplayEntry = dashProp?.history
         } else {
-            pendingHistoryItem = nil
+            resolvedHistoryId   = nil
+            pendingDisplayEntry = nil
         }
 
         loadState = .loaded
@@ -238,7 +263,7 @@ final class BoostPriceDetailViewModel {
     // MARK: - Decision
 
     func acceptSuggestion() async {
-        guard let histId = pendingHistoryItem?.id else { return }
+        guard let histId = resolvedHistoryId else { return }
         guard case .idle = actionState else { return }
 
         actionState = .working
@@ -255,7 +280,7 @@ final class BoostPriceDetailViewModel {
     }
 
     func declineSuggestion() async {
-        guard let histId = pendingHistoryItem?.id else { return }
+        guard let histId = resolvedHistoryId else { return }
         guard case .idle = actionState else { return }
 
         actionState = .working
@@ -279,7 +304,7 @@ final class BoostPriceDetailViewModel {
         boostPriceCurrentStatus(isActive: isActive, mode: selectedMode, externalPricing: externalPricing)
     }
 
-    var hasPendingSuggestion: Bool { pendingHistoryItem != nil }
+    var hasPendingSuggestion: Bool { pendingDisplayEntry != nil }
 
     func markDirty() { isDirty = true }
 }

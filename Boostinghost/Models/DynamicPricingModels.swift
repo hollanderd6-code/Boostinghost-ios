@@ -123,6 +123,7 @@ struct DynamicPricingMarket: Decodable {
 }
 
 struct DynamicPricingHistoryEntry: Decodable {
+    let historyId:       Int?    // pricing_history.id — present on new backend, absent on old
     let status:          String?
     let priceBefore:     Double?
     let priceCalculated: Double?
@@ -136,6 +137,7 @@ struct DynamicPricingHistoryEntry: Decodable {
 
     init(from decoder: Decoder) throws {
         let c           = try decoder.container(keyedBy: CodingKeys.self)
+        historyId       = c.flexInt(forKey: .historyId)
         status          = try? c.decodeIfPresent(String.self, forKey: .status)
         priceBefore     = c.flexDouble(forKey: .priceBefore)
         priceCalculated = c.flexDouble(forKey: .priceCalculated)
@@ -149,7 +151,7 @@ struct DynamicPricingHistoryEntry: Decodable {
     }
 
     private enum CodingKeys: CodingKey {
-        case status, priceBefore, priceCalculated, priceApplied
+        case historyId, status, priceBefore, priceCalculated, priceApplied
         case modeUsed, reason, factorMarket, factorSelf, factorSeason, appliedAt
     }
 }

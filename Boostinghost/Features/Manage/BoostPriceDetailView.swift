@@ -440,7 +440,7 @@ struct BoostPriceDetailView: View {
                                 StatusPill(text: "En attente", style: .or)
                             }
 
-                            if let item = vm.pendingHistoryItem {
+                            if let item = vm.pendingDisplayEntry {
                                 HStack(spacing: 16) {
                                     if let before = item.priceBefore {
                                         priceChange(label: "Avant", value: before)
@@ -510,7 +510,7 @@ struct BoostPriceDetailView: View {
     }
 
     @ViewBuilder
-    private func factorsView(_ item: DynamicPricingHistoryItem) -> some View {
+    private func factorsView(_ item: DynamicPricingHistoryEntry) -> some View {
         let factors: [(name: String, value: Double, key: String)] = [
             ("Marché",      item.factorMarket  ?? 1.0, "market"),
             ("Historique",  item.factorSelf    ?? 1.0, "self"),

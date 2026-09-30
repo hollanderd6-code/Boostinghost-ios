@@ -242,4 +242,127 @@ struct BoostPriceDetailViewModelTests {
         let cfg = try config(strategy: 80)
         #expect(cfg.strategy == 80)
     }
+
+    // MARK: - boostPriceNeedsHistoryFallback
+
+    @Test("needsHistoryFallback nil entry → false")
+    func needsFallbackNilEntry() {
+        #expect(boostPriceNeedsHistoryFallback(nil) == false)
+    }
+
+    @Test("needsHistoryFallback status applied → false")
+    func needsFallbackStatusApplied() throws {
+        let json = #"{"status":"applied"}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        #expect(boostPriceNeedsHistoryFallback(entry) == false)
+    }
+
+    @Test("needsHistoryFallback status declined → false")
+    func needsFallbackStatusDeclined() throws {
+        let json = #"{"status":"declined"}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        #expect(boostPriceNeedsHistoryFallback(entry) == false)
+    }
+
+    @Test("needsHistoryFallback pending + no historyId → true (old backend)")
+    func needsFallbackPendingNoId() throws {
+        let json = #"{"status":"pending","price_before":100}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        #expect(boostPriceNeedsHistoryFallback(entry) == true)
+    }
+
+    @Test("needsHistoryFallback pending + historyId present → false (new backend)")
+    func needsFallbackPendingWithId() throws {
+        let json = #"{"history_id":42,"status":"pending"}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        #expect(boostPriceNeedsHistoryFallback(entry) == false)
+    }
+
+    // MARK: - boostPricePreferHistoryId
+
+    @Test("preferHistoryId uses dashEntry historyId when present")
+    func preferIdDashEntryWins() throws {
+        let json = #"{"history_id":42,"status":"pending"}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        let fallback = try [historyItem(id: 99, status: "pending")]
+        let result = boostPricePreferHistoryId(dashEntry: entry, fallbackItems: fallback)
+        #expect(result == 42)
+    }
+
+    @Test("preferHistoryId falls back to history item id when dashEntry has no historyId")
+    func preferIdFallbackUsed() throws {
+        let json = #"{"status":"pending"}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        let fallback = try [historyItem(id: 7, status: "pending")]
+        let result = boostPricePreferHistoryId(dashEntry: entry, fallbackItems: fallback)
+        #expect(result == 7)
+    }
+
+    @Test("preferHistoryId returns nil when dashEntry nil and fallback empty")
+    func preferIdBothEmpty() {
+        let result = boostPricePreferHistoryId(dashEntry: nil, fallbackItems: [])
+        #expect(result == nil)
+    }
+
+    @Test("preferHistoryId ignores non-pending items in fallback")
+    func preferIdIgnoresApplied() throws {
+        let json = #"{"status":"pending"}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        let fallback = try [historyItem(id: 5, status: "applied")]
+        let result = boostPricePreferHistoryId(dashEntry: entry, fallbackItems: fallback)
+        #expect(result == nil)
+    }
+
+    @Test("preferHistoryId with nil dashEntry uses fallback pending item")
+    func preferIdNilDashEntry() throws {
+        let fallback = try [historyItem(id: 13, status: "pending")]
+        let result = boostPricePreferHistoryId(dashEntry: nil, fallbackItems: fallback)
+        #expect(result == 13)
+    }
+
+    @Test("preferHistoryId picks first pending from mixed fallback list")
+    func preferIdFirstPendingInMixedList() throws {
+        let applied = try historyItem(id: 1, status: "applied")
+        let pending = try historyItem(id: 2, status: "pending")
+        let result = boostPricePreferHistoryId(dashEntry: nil, fallbackItems: [applied, pending])
+        #expect(result == 2)
+    }
+
+    // MARK: - DynamicPricingHistoryEntry.historyId decoding
+
+    @Test("historyEntry historyId decoded when present")
+    func historyEntryHistoryIdPresent() throws {
+        let json = #"{"history_id":99,"status":"pending","price_before":100}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        #expect(entry.historyId == 99)
+        #expect(entry.status == "pending")
+    }
+
+    @Test("historyEntry historyId nil when absent (backward compat)")
+    func historyEntryHistoryIdAbsent() throws {
+        let json = #"{"status":"pending","price_before":100}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        #expect(entry.historyId == nil)
+    }
+
+    @Test("full IOS-BP-03C flow: new backend → uses dashEntry historyId directly")
+    func fullFlowNewBackend() throws {
+        let json = #"{"history_id":55,"status":"pending","price_before":120,"price_calculated":145}"#.data(using: .utf8)!
+        let entry = try decoder.decode(DynamicPricingHistoryEntry.self, from: json)
+        let needsFallback = boostPriceNeedsHistoryFallback(entry)
+        let resolvedId    = boostPricePreferHistoryId(dashEntry: entry, fallbackItems: [])
+        #expect(needsFallback == false)
+        #expect(resolvedId == 55)
+    }
+
+    @Test("full IOS-BP-03C flow: old backend → resolves via fallback items")
+    func fullFlowOldBackend() throws {
+        let dashJson = #"{"status":"pending","price_before":120}"#.data(using: .utf8)!
+        let entry    = try decoder.decode(DynamicPricingHistoryEntry.self, from: dashJson)
+        let fallback = try [historyItem(id: 77, status: "pending")]
+        let needsFallback = boostPriceNeedsHistoryFallback(entry)
+        let resolvedId    = boostPricePreferHistoryId(dashEntry: entry, fallbackItems: fallback)
+        #expect(needsFallback == true)
+        #expect(resolvedId == 77)
+    }
 }
