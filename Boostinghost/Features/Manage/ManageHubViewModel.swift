@@ -25,6 +25,8 @@ final class ManageHubViewModel {
         return used >= limit
     }
 
+    var boostPricePendingCount: Int? = nil
+
     // Alerte diffusion — logements non prêts à la vente
     var diffusionAlertProperties: [DiffusionProperty] = []
 
@@ -43,6 +45,7 @@ final class ManageHubViewModel {
         async let depositsTask: [ReservationWithDeposit] = APIClient.shared.get(Endpoint.reservationsWithDeposits, agencyAll: agencyAll)
         async let subscriptionTask: SubscriptionStatus = APIClient.shared.get(Endpoint.subscriptionStatus)
         async let diffusionTask: DiffusionResponse = APIClient.shared.get(Endpoint.propertiesDiffusion, agencyAll: true)
+        async let bpDashTask: DynamicPricingDashboardResponse = APIClient.shared.get(Endpoint.dynamicPricingDashboard)
 
         do {
             let (props, groups) = try await (propsTask, groupsTask)
@@ -87,6 +90,11 @@ final class ManageHubViewModel {
 
         if let diff = try? await diffusionTask {
             diffusionAlertProperties = diff.logements.filter { !$0.vendable }
+        }
+
+        if let bpDash = try? await bpDashTask {
+            let pending = bpDash.properties.filter { $0.history?.status == "pending" }.count
+            boostPricePendingCount = pending > 0 ? pending : nil
         }
 
         loadState = .loaded

@@ -102,13 +102,16 @@ enum Endpoint {
     static func ownerInvoiceSend(_ id: String) -> URL { base.appending(path: "/api/owner-invoices/\(id)/send") }
     static func ownerInvoiceMarkPaid(_ id: String) -> URL { base.appending(path: "/api/owner-invoices/\(id)/mark-paid") }
     static let invoiceSummary = base.appending(path: "/api/reservations/invoice-summary")
-    static func invoiceSummaryQueryItems(dateFrom: String, dateTo: String, propertyIds: [String]) -> [URLQueryItem] {
+    static func invoiceSummaryQueryItems(dateFrom: String, dateTo: String, propertyIds: [String], ownerUserId: String? = nil) -> [URLQueryItem] {
         var items: [URLQueryItem] = [
             URLQueryItem(name: "date_from", value: dateFrom),
             URLQueryItem(name: "date_to",   value: dateTo)
         ]
         if !propertyIds.isEmpty {
             items.append(.init(name: "property_ids", value: propertyIds.joined(separator: ",")))
+        }
+        if let uid = ownerUserId {
+            items.append(.init(name: "owner_user_id", value: uid))
         }
         return items
     }
@@ -125,10 +128,11 @@ enum Endpoint {
     static let attestationSend     = base.appending(path: "/api/attestation/send")
 
     // Agency
-    static let delegations    = base.appending(path: "/api/agency/delegations")
-    static let agencySwitch   = base.appending(path: "/api/agency/switch")
+    static let delegations             = base.appending(path: "/api/agency/delegations")
+    static let agencyManagedProperties = base.appending(path: "/api/agency/managed-properties")
+    static let agencySwitch            = base.appending(path: "/api/agency/switch")
     static let targetAccounts = base.appending(path: "/api/agency/target-accounts")
-    static func agencyClientOverride(delegatorUserId: Int, clientId: String) -> URL {
+    static func agencyClientOverride(delegatorUserId: String, clientId: String) -> URL {
         base.appending(path: "/api/agency/client-override/\(delegatorUserId)/\(clientId)")
     }
 
@@ -178,6 +182,10 @@ enum Endpoint {
     }
     // Multi-property calendar: ?from=YYYY-MM-DD&to=YYYY-MM-DD&agency=all
     static let pricingCalendarAll = base.appending(path: "/api/pricing/calendar")
+
+    // Dynamic pricing (BoostPrice)
+    static let dynamicPricingConfig    = base.appending(path: "/api/dynamic-pricing/config")
+    static let dynamicPricingDashboard = base.appending(path: "/api/dynamic-pricing/dashboard")
 
     // Stays / deposits
     static let reservationsWithDeposits = base.appending(path: "/api/reservations-with-deposits")

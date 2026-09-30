@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Entrées du sommaire
 
 enum ManageEntry: CaseIterable, Hashable {
-    case properties, cleaning, owners, stays
+    case properties, cleaning, owners, stays, boostprice
 
     var title: String {
         switch self {
@@ -11,6 +11,7 @@ enum ManageEntry: CaseIterable, Hashable {
         case .cleaning:   return "Ménage"
         case .owners:     return "Propriétaires"
         case .stays:      return "Séjours"
+        case .boostprice: return "BoostPrice"
         }
     }
 
@@ -20,6 +21,7 @@ enum ManageEntry: CaseIterable, Hashable {
         case .cleaning:   return "planning, intervenants, historique"
         case .owners:     return "clients, contrats, factures, débours"
         case .stays:      return "factures voyageurs, cautions"
+        case .boostprice: return "Tarification dynamique"
         }
     }
 
@@ -29,6 +31,7 @@ enum ManageEntry: CaseIterable, Hashable {
         case .cleaning:   return "sparkles"
         case .owners:     return "person.2"
         case .stays:      return "doc.text"
+        case .boostprice: return "bolt.fill"
         }
     }
 
@@ -37,6 +40,7 @@ enum ManageEntry: CaseIterable, Hashable {
         case .properties: return Color(hex: "#DCE8E1")
         case .cleaning:   return Color.bhOrFond
         case .owners, .stays: return Color.white.opacity(0.55)
+        case .boostprice: return Color(hex: "#DCE8E1")
         }
     }
 
@@ -45,6 +49,7 @@ enum ManageEntry: CaseIterable, Hashable {
         case .properties: return Color.bhVert
         case .cleaning:   return Color.bhOr
         case .owners, .stays: return Color.bhAttenue
+        case .boostprice: return Color.bhOccupe
         }
     }
 
@@ -55,6 +60,7 @@ enum ManageEntry: CaseIterable, Hashable {
         case .cleaning:   return session.can("can_view_cleaning")
         case .owners:     return session.can("can_view_owners")
         case .stays:      return session.can("can_view_invoices")
+        case .boostprice: return session.can("can_view_properties")
         }
     }
 
@@ -246,6 +252,9 @@ struct ManageHubView: View {
             return "\(n)"
         case .owners:
             return nil
+        case .boostprice:
+            guard let n = vm.boostPricePendingCount, n > 0 else { return nil }
+            return "\(n)"
         }
     }
 
@@ -391,6 +400,7 @@ struct ManageHubView: View {
         case .cleaning:   CleaningView()
         case .owners:     OwnersView()
         case .stays:      StaysView()
+        case .boostprice: BoostPriceView()
         }
     }
 }
