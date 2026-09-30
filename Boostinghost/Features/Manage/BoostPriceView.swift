@@ -128,7 +128,11 @@ struct BoostPriceView: View {
     private var propertiesList: some View {
         ListCard {
             ForEach(Array(vm.rows.enumerated()), id: \.element.id) { idx, row in
-                NavigationLink(value: row.id) {
+                NavigationLink(value: BoostPriceNavTarget(
+                    propertyId: row.id,
+                    propertyName: row.name,
+                    externalPricing: row.status == .externalPricing
+                )) {
                     CardRow(showSeparator: idx < vm.rows.count - 1) {
                         propertyRow(row)
                     }
@@ -136,8 +140,8 @@ struct BoostPriceView: View {
                 .buttonStyle(.plain)
             }
         }
-        .navigationDestination(for: String.self) { propertyId in
-            BoostPricePropertyShell(propertyId: propertyId)
+        .navigationDestination(for: BoostPriceNavTarget.self) { target in
+            BoostPriceDetailView(target: target)
         }
     }
 
@@ -244,58 +248,3 @@ struct BoostPriceView: View {
     }
 }
 
-// MARK: - Minimal placeholder for future IOS-BP-04
-
-struct BoostPricePropertyShell: View {
-    let propertyId: String
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        ZStack {
-            AppBackground()
-
-            VStack(spacing: 0) {
-                HStack(alignment: .bottom, spacing: 0) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Color.bhVert)
-                            .frame(width: 38, height: 38)
-                            .glassEffect(in: .circle)
-                            .specularEdge(cornerRadius: 19)
-                    }
-                    .buttonStyle(.plain)
-
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("BoostPrice")
-                            .font(.bhSurTitre)
-                            .foregroundStyle(Color.bhAttenue)
-                        Text(propertyId)
-                            .bhGrandTitre()
-                    }
-                    .padding(.leading, 12)
-
-                    Spacer(minLength: 12)
-                }
-                .padding(.horizontal, 18)
-                .padding(.top, 8)
-                .padding(.bottom, 16)
-                .background {
-                    Rectangle()
-                        .glassEffect(in: .rect)
-                        .specularEdge(cornerRadius: 0)
-                        .chromeShadow()
-                        .ignoresSafeArea(edges: .top)
-                }
-
-                Spacer()
-                Text("Détail à venir")
-                    .font(.bhCorps)
-                    .foregroundStyle(Color.bhAttenue)
-                Spacer()
-            }
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .navigationBarBackButtonHidden(true)
-    }
-}

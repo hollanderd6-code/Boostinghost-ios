@@ -148,7 +148,10 @@
 		AB000000000000000000C002 /* DynamicPricingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000C001 /* DynamicPricingModels.swift */; };
 		AB000000000000000000D002 /* BoostPriceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D001 /* BoostPriceViewModel.swift */; };
 		AB000000000000000000D004 /* BoostPriceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D003 /* BoostPriceView.swift */; };
+		AB000000000000000000D006 /* BoostPriceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D005 /* BoostPriceDetailViewModel.swift */; };
+		AB000000000000000000D008 /* BoostPriceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D007 /* BoostPriceDetailView.swift */; };
 		AB000000000000000000D021 /* BoostPriceViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D011 /* BoostPriceViewModelTests.swift */; };
+		AB000000000000000000D031 /* BoostPriceDetailViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D013 /* BoostPriceDetailViewModelTests.swift */; };
 		AB000000000000000000C021 /* PricingCalendarBoostPriceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000C011 /* PricingCalendarBoostPriceTests.swift */; };
 		AB0000000000000000000501 /* SearchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000500 /* SearchModels.swift */; };
 		AB0000000000000000000503 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000502 /* SearchViewModel.swift */; };
@@ -348,7 +351,10 @@
 		AB000000000000000000C001 /* DynamicPricingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicPricingModels.swift; sourceTree = "<group>"; };
 		AB000000000000000000D001 /* BoostPriceViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceViewModel.swift; sourceTree = "<group>"; };
 		AB000000000000000000D003 /* BoostPriceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceView.swift; sourceTree = "<group>"; };
+		AB000000000000000000D005 /* BoostPriceDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceDetailViewModel.swift; sourceTree = "<group>"; };
+		AB000000000000000000D007 /* BoostPriceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceDetailView.swift; sourceTree = "<group>"; };
 		AB000000000000000000D011 /* BoostPriceViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceViewModelTests.swift; sourceTree = "<group>"; };
+		AB000000000000000000D013 /* BoostPriceDetailViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceDetailViewModelTests.swift; sourceTree = "<group>"; };
 		AB000000000000000000C011 /* PricingCalendarBoostPriceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricingCalendarBoostPriceTests.swift; sourceTree = "<group>"; };
 		AB0000000000000000000500 /* SearchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchModels.swift; sourceTree = "<group>"; };
 		AB0000000000000000000502 /* SearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewModel.swift; sourceTree = "<group>"; };
@@ -704,6 +710,8 @@
 				BFAA112233445566778899001AAA /* WelcomeBookView.swift */,
 				AB000000000000000000D001 /* BoostPriceViewModel.swift */,
 				AB000000000000000000D003 /* BoostPriceView.swift */,
+				AB000000000000000000D005 /* BoostPriceDetailViewModel.swift */,
+				AB000000000000000000D007 /* BoostPriceDetailView.swift */,
 			);
 			path = Manage;
 			sourceTree = "<group>";
@@ -803,6 +811,7 @@
 				AB000000000000000000B011 /* OwnerInvoiceCreateTests.swift */,
 				AB000000000000000000C011 /* PricingCalendarBoostPriceTests.swift */,
 				AB000000000000000000D011 /* BoostPriceViewModelTests.swift */,
+				AB000000000000000000D013 /* BoostPriceDetailViewModelTests.swift */,
 			);
 			path = BoostinghostTests;
 			sourceTree = "<group>";
@@ -1092,6 +1101,8 @@
 				AB0000000000000000000711 /* UpsellSheet.swift in Sources */,
 				AB000000000000000000D002 /* BoostPriceViewModel.swift in Sources */,
 				AB000000000000000000D004 /* BoostPriceView.swift in Sources */,
+				AB000000000000000000D006 /* BoostPriceDetailViewModel.swift in Sources */,
+				AB000000000000000000D008 /* BoostPriceDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1109,6 +1120,7 @@
 				AB000000000000000000B021 /* OwnerInvoiceCreateTests.swift in Sources */,
 				AB000000000000000000C021 /* PricingCalendarBoostPriceTests.swift in Sources */,
 				AB000000000000000000D021 /* BoostPriceViewModelTests.swift in Sources */,
+				AB000000000000000000D031 /* BoostPriceDetailViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

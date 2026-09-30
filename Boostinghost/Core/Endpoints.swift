@@ -186,6 +186,13 @@ enum Endpoint {
     // Dynamic pricing (BoostPrice)
     static let dynamicPricingConfig    = base.appending(path: "/api/dynamic-pricing/config")
     static let dynamicPricingDashboard = base.appending(path: "/api/dynamic-pricing/dashboard")
+    static let dynamicPricingHistory   = base.appending(path: "/api/dynamic-pricing/history")
+    static func dynamicPricingDecision(_ historyId: Int) -> URL {
+        base.appending(path: "/api/dynamic-pricing/decision/\(historyId)")
+    }
+    static func dynamicPricingRecompute(_ propertyId: String) -> URL {
+        base.appending(path: "/api/pricing/recompute/\(propertyId)")
+    }
 
     // Stays / deposits
     static let reservationsWithDeposits = base.appending(path: "/api/reservations-with-deposits")

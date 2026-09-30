@@ -25,6 +25,14 @@ enum BoostPriceStatus: Comparable {
     }
 }
 
+// MARK: - Navigation target (carries name to avoid showing technical IDs as titles)
+
+struct BoostPriceNavTarget: Hashable {
+    let propertyId:       String
+    let propertyName:     String
+    let externalPricing:  Bool
+}
+
 // MARK: - Row model
 
 struct BoostPricePropertyRow: Identifiable, Equatable {

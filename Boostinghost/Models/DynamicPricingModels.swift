@@ -6,6 +6,7 @@ enum DynamicPricingMode: Decodable, Equatable {
     case off
     case suggestion
     case auto
+    case manual
     case unknown(String)
 
     init(from decoder: Decoder) throws {
@@ -14,6 +15,7 @@ enum DynamicPricingMode: Decodable, Equatable {
         case "off":        self = .off
         case "suggestion": self = .suggestion
         case "auto":       self = .auto
+        case "manual":     self = .manual
         default:           self = .unknown(raw)
         }
     }
@@ -35,7 +37,7 @@ struct DynamicPricingConfig: Decodable, Identifiable {
     let zoneRadiusKm: Double?
     let propertyType: String?
     let bedrooms:     Int?
-    let strategy:     String?
+    let strategy:     Int?
     let createdAt:    String?
     let updatedAt:    String?
 
@@ -54,7 +56,7 @@ struct DynamicPricingConfig: Decodable, Identifiable {
         zoneRadiusKm = c.flexDouble(forKey: .zoneRadiusKm)
         propertyType = try? c.decodeIfPresent(String.self, forKey: .propertyType)
         bedrooms     = c.flexInt(forKey: .bedrooms)
-        strategy     = try? c.decodeIfPresent(String.self, forKey: .strategy)
+        strategy     = c.flexInt(forKey: .strategy)
         createdAt    = try? c.decodeIfPresent(String.self, forKey: .createdAt)
         updatedAt    = try? c.decodeIfPresent(String.self, forKey: .updatedAt)
     }
@@ -185,6 +187,91 @@ struct DynamicPricingDashboardProperty: Decodable, Identifiable {
         case notifyPush, propertyCurrency, market, history
     }
 }
+
+// MARK: - GET /api/dynamic-pricing/history
+
+struct DynamicPricingHistoryItem: Decodable, Identifiable {
+    let id:               Int
+    let propertyId:       String
+    let weekStart:        String?
+    let priceBefore:      Double?
+    let priceCalculated:  Double?
+    let priceApplied:     Double?
+    let status:           String?
+    let reason:           String?
+    let tensionLevel:     String?
+    let tensionLabel:     String?
+    let marketOccupancy:  Double?
+    let factorMarket:     Double?
+    let factorSelf:       Double?
+    let factorSeason:     Double?
+    let appliedAt:        String?
+    let propertyCurrency: String?
+
+    init(from decoder: Decoder) throws {
+        let c            = try decoder.container(keyedBy: CodingKeys.self)
+        id               = c.flexInt(forKey: .id) ?? 0
+        propertyId       = c.flexString(forKey: .propertyId) ?? ""
+        weekStart        = try? c.decodeIfPresent(String.self, forKey: .weekStart)
+        priceBefore      = c.flexDouble(forKey: .priceBefore)
+        priceCalculated  = c.flexDouble(forKey: .priceCalculated)
+        priceApplied     = c.flexDouble(forKey: .priceApplied)
+        status           = try? c.decodeIfPresent(String.self, forKey: .status)
+        reason           = try? c.decodeIfPresent(String.self, forKey: .reason)
+        tensionLevel     = try? c.decodeIfPresent(String.self, forKey: .tensionLevel)
+        tensionLabel     = try? c.decodeIfPresent(String.self, forKey: .tensionLabel)
+        marketOccupancy  = c.flexDouble(forKey: .marketOccupancy)
+        factorMarket     = c.flexDouble(forKey: .factorMarket)
+        factorSelf       = c.flexDouble(forKey: .factorSelf)
+        factorSeason     = c.flexDouble(forKey: .factorSeason)
+        appliedAt        = try? c.decodeIfPresent(String.self, forKey: .appliedAt)
+        propertyCurrency = try? c.decodeIfPresent(String.self, forKey: .propertyCurrency)
+    }
+
+    private enum CodingKeys: CodingKey {
+        case id, propertyId, weekStart, priceBefore, priceCalculated, priceApplied
+        case status, reason, tensionLevel, tensionLabel, marketOccupancy
+        case factorMarket, factorSelf, factorSeason, appliedAt, propertyCurrency
+    }
+}
+
+struct DynamicPricingHistoryListResponse: Decodable {
+    let history: [DynamicPricingHistoryItem]
+    let total:   Int
+
+    init(from decoder: Decoder) throws {
+        let c   = try decoder.container(keyedBy: CodingKeys.self)
+        history = (try? c.decode([DynamicPricingHistoryItem].self, forKey: .history)) ?? []
+        total   = c.flexInt(forKey: .total) ?? 0
+    }
+
+    private enum CodingKeys: CodingKey { case history, total }
+}
+
+// MARK: - POST /api/dynamic-pricing/config response
+
+struct BoostPriceSaveResponse: Decodable {
+    let success: Bool
+}
+
+// MARK: - POST /api/dynamic-pricing/decision response
+
+struct BoostPriceDecisionResponse: Decodable {
+    let success:      Bool
+    let action:       String?
+    let priceApplied: Double?
+
+    init(from decoder: Decoder) throws {
+        let c        = try decoder.container(keyedBy: CodingKeys.self)
+        success      = (try? c.decodeIfPresent(Bool.self, forKey: .success)) ?? false
+        action       = try? c.decodeIfPresent(String.self, forKey: .action)
+        priceApplied = c.flexDouble(forKey: .priceApplied)
+    }
+
+    private enum CodingKeys: CodingKey { case success, action, priceApplied }
+}
+
+// MARK: -
 
 struct DynamicPricingDashboardResponse: Decodable {
     let properties:           [DynamicPricingDashboardProperty]

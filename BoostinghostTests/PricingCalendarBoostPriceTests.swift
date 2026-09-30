@@ -228,7 +228,7 @@ struct PricingCalendarBoostPriceTests {
             "is_active": true,
             "notify_push": true,
             "bedrooms": 1,
-            "strategy": "balanced"
+            "strategy": 50
           }]
         }
         """.data(using: .utf8)!
@@ -243,7 +243,7 @@ struct PricingCalendarBoostPriceTests {
         #expect(c.mode == .suggestion)
         #expect(c.isActive == true)
         #expect(c.bedrooms == 1)
-        #expect(c.strategy == "balanced")
+        #expect(c.strategy == 50)
     }
 
     @Test("DynamicPricingConfigResponse missing configs key yields empty array")
