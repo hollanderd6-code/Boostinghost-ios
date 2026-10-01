@@ -73,6 +73,14 @@ struct DayCellActionSheet: View {
     @State private var showBHGuestHold       = false
     @State private var showBoostPriceDetail  = false
 
+    private enum ExplainState {
+        case idle                        // not relevant — section hidden
+        case loading
+        case loaded(NightScheduleRow?)   // nil = no row for this date
+        case failed
+    }
+    @State private var explainState: ExplainState = .idle
+
     // Orphaned state: unblock succeeded but the subsequent blockDates call failed.
     // The user must be told explicitly — dates are currently unblocked.
     private struct OrphanedBlock {
@@ -197,6 +205,30 @@ struct DayCellActionSheet: View {
         }
     }
 
+    // MARK: Explainability load
+
+    private func loadExplainability() async {
+        guard case .free = tap, canViewPricing else { return }
+        let propData = vm.calendarData?.properties?[property.id]
+        guard bpExplainabilityRelevant(
+            propData:        propData,
+            dayKey:          nightDayKey,
+            externalPricing: false
+        ) else { return }
+
+        explainState = .loading
+        do {
+            let resp: NightScheduleResponse = try await APIClient.shared.get(
+                Endpoint.pricingSchedule(property.id),
+                agencyAll: false,
+                extraQueryItems: Endpoint.pricingScheduleQueryItems(from: nightDayKey, to: nightDayKey)
+            )
+            explainState = .loaded(resp.nights.first { $0.date == nightDayKey })
+        } catch {
+            explainState = .failed
+        }
+    }
+
     // MARK: Night price detail
 
     @ViewBuilder
@@ -254,6 +286,95 @@ struct DayCellActionSheet: View {
                     }
                 }
             }
+
+            explainSection
+        }
+    }
+
+    // MARK: Pourquoi ce prix ?
+
+    @ViewBuilder
+    private var explainSection: some View {
+        switch explainState {
+        case .idle:
+            EmptyView()
+
+        case .loading:
+            Section {
+                HStack {
+                    Spacer()
+                    ProgressView().tint(Color.bhVert)
+                    Spacer()
+                }
+                .padding(.vertical, 4)
+            } header: {
+                Label("Pourquoi ce prix ?", systemImage: "bolt.fill")
+                    .foregroundStyle(Color.bhOccupeFonce)
+            }
+
+        case .loaded(let row):
+            Section {
+                explainRows(for: row)
+            } header: {
+                Label("Pourquoi ce prix ?", systemImage: "bolt.fill")
+                    .foregroundStyle(Color.bhOccupeFonce)
+            }
+
+        case .failed:
+            Section {
+                Button {
+                    Task { await loadExplainability() }
+                } label: {
+                    Label("Réessayer", systemImage: "arrow.clockwise")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.bhVert)
+                }
+            } header: {
+                Label("Pourquoi ce prix ?", systemImage: "bolt.fill")
+                    .foregroundStyle(Color.bhOccupeFonce)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func explainRows(for row: NightScheduleRow?) -> some View {
+        if let exp = row?.resolvedExplainability {
+            let items = bpExplanationItems(from: exp, date: initialDate)
+            if items.isEmpty {
+                Text("Aucun facteur significatif pour cette nuit.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.bhAttenue)
+            } else {
+                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: item.icon)
+                            .foregroundStyle(
+                                item.impact == .positive ? Color.bhOccupeFonce
+                                : item.impact == .negative ? Color.bhTerracotta
+                                : Color.bhAttenue
+                            )
+                            .imageScale(.small)
+                            .frame(width: 20)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.title)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(Color.bhEncre)
+                            if let detail = item.detail {
+                                Text(detail)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.bhAttenue)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 2)
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        } else {
+            Text("Le détail de ce calcul sera disponible après le prochain recalcul BoostPrice.")
+                .font(.system(size: 13))
+                .foregroundStyle(Color.bhAttenue)
         }
     }
 
@@ -297,6 +418,7 @@ struct DayCellActionSheet: View {
                 }
             }
         }
+        .task { await loadExplainability() }
     }
 
     // MARK: Block

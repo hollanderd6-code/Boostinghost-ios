@@ -193,6 +193,14 @@ enum Endpoint {
     static func dynamicPricingRecompute(_ propertyId: String) -> URL {
         base.appending(path: "/api/pricing/recompute/\(propertyId)")
     }
+    // Per-night schedule + explainability (backend commit 4df1aa76, agency safe).
+    // Use pricingScheduleQueryItems(from:to:) to add date range; from==to for one night.
+    static func pricingSchedule(_ propertyId: String) -> URL {
+        base.appending(path: "/api/pricing/schedule/\(propertyId)")
+    }
+    static func pricingScheduleQueryItems(from: String, to: String) -> [URLQueryItem] {
+        [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)]
+    }
 
     // Stays / deposits
     static let reservationsWithDeposits = base.appending(path: "/api/reservations-with-deposits")
