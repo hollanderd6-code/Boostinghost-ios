@@ -9,7 +9,7 @@ func boostPriceAuthorityLabel(_ source: PricingSource?) -> String {
     case .periodRule:     return "Règle de période"
     case .weekdayRule:    return "Règle hebdomadaire"
     case .weekendPrice:   return "Prix weekend"
-    case .basePrice, .none, nil: return "Prix de base"
+    case .basePrice, .some(.none), nil: return "Prix de base"
     case .unknown:        return "Prix calculé"
     }
 }
