@@ -471,6 +471,7 @@ struct PlatformMiniChip: View {
 
 struct BoostPriceCalendarBadge: View {
     let state: CalendarCellBoostState
+    var size:  CGFloat = 10
 
     var body: some View {
         switch state {
@@ -478,11 +479,11 @@ struct BoostPriceCalendarBadge: View {
             EmptyView()
         case .effective:
             Image(systemName: "bolt.fill")
-                .font(.system(size: 7, weight: .semibold))
+                .font(.system(size: size, weight: .bold))
                 .foregroundStyle(Color.bhOccupeFonce)
         case .pending:
             Image(systemName: "bolt.fill")
-                .font(.system(size: 7, weight: .semibold))
+                .font(.system(size: size, weight: .bold))
                 .foregroundStyle(Color.bhOrClair)
         }
     }

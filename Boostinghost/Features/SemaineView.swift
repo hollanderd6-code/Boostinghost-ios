@@ -314,7 +314,7 @@ private struct SemBgCell: View {
             if showBpIndicator {
                 let bpState = propData?.boostPriceCalendarState(for: dayKey) ?? .none
                 if bpState != .none {
-                    BoostPriceCalendarBadge(state: bpState)
+                    BoostPriceCalendarBadge(state: bpState, size: 9)
                         .padding(.top, 5)
                         .padding(.trailing, 4)
                         .accessibilityHidden(true)
