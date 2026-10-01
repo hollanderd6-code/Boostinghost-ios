@@ -1,5 +1,23 @@
 import SwiftUI
 
+// MARK: - Free functions (nonisolated, testable)
+
+func boostPriceAuthorityLabel(_ source: PricingSource?) -> String {
+    switch source {
+    case .manualOverride: return "Prix manuel"
+    case .boostprice:     return "Prix BoostPrice"
+    case .periodRule:     return "Règle de période"
+    case .weekdayRule:    return "Règle hebdomadaire"
+    case .weekendPrice:   return "Prix weekend"
+    case .basePrice, .none, nil: return "Prix de base"
+    case .unknown:        return "Prix calculé"
+    }
+}
+
+func boostPriceDayDelta(effective: Double, scheduled: Double) -> Double {
+    scheduled - effective
+}
+
 // MARK: - Cell tap context
 
 enum CellTap: Identifiable {
@@ -22,6 +40,7 @@ struct DayCellActionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthStore.self) private var authStore
 
+    private var canViewPricing:   Bool { authStore.session?.can("can_view_pricing")   ?? true }
     private var canManagePricing: Bool { authStore.session?.can("can_manage_pricing") ?? true }
 
     private var currencySymbol: String {
@@ -52,6 +71,7 @@ struct DayCellActionSheet: View {
     @State private var error: String?
     @State private var showCreateReservation = false
     @State private var showBHGuestHold       = false
+    @State private var showBoostPriceDetail  = false
 
     // Orphaned state: unblock succeeded but the subsequent blockDates call failed.
     // The user must be told explicitly — dates are currently unblocked.
@@ -65,6 +85,13 @@ struct DayCellActionSheet: View {
 
     private let initialDate: Date
     private let initialDatePlusOne: Date
+
+    private var nightDayKey: String { CalendarViewModel.dayKey(for: initialDate) }
+
+    private var initialDateIsWeekend: Bool {
+        let w = vm.utcCal.component(.weekday, from: initialDate)
+        return w == 1 || w == 7
+    }
 
     private var property: PropertySummary {
         switch tap {
@@ -151,6 +178,13 @@ struct DayCellActionSheet: View {
                     onComplete: { dismiss() }
                 )
             }
+            .navigationDestination(isPresented: $showBoostPriceDetail) {
+                BoostPriceDetailView(target: BoostPriceNavTarget(
+                    propertyId:      property.id,
+                    propertyName:    property.displayName,
+                    externalPricing: false
+                ))
+            }
         }
         .presentationDragIndicator(.visible)
         .alert("Erreur", isPresented: Binding(
@@ -163,10 +197,72 @@ struct DayCellActionSheet: View {
         }
     }
 
+    // MARK: Night price detail
+
+    @ViewBuilder
+    private var nightPriceSection: some View {
+        if canViewPricing,
+           let propData = vm.calendarData?.properties?[property.id],
+           let price = propData.price(for: nightDayKey, isWeekend: initialDateIsWeekend) {
+            let source    = propData.pricingSource(for: nightDayKey)
+            let currency  = vm.currency(forPropertyId: property.id)
+            let bpEnabled = propData.isBoostPriceEnabled
+            let pending   = propData.boostPriceScheduleEntry(for: nightDayKey)
+
+            Section(Formatters.day(initialDate).capitalized) {
+                LabeledContent("Prix de la nuit") {
+                    Text(Formatters.amount(price, currency: currency))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.bhEncre)
+                }
+
+                HStack(spacing: 4) {
+                    if source == .manualOverride {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color.bhEncre)
+                    } else if source == .boostprice {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color.bhOccupeFonce)
+                    }
+                    Text(boostPriceAuthorityLabel(source))
+                        .font(.system(size: 13))
+                        .foregroundStyle(source == .boostprice ? Color.bhOccupeFonce : Color.bhAttenue)
+                }
+
+                if let entry = pending, entry.status == .pending, entry.price > 0 {
+                    LabeledContent("Recommandation") {
+                        HStack(spacing: 4) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(Color.bhOrClair)
+                            Text(Formatters.amount(entry.price, currency: currency))
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Color.bhOrClair)
+                        }
+                    }
+                }
+
+                if bpEnabled {
+                    Button {
+                        showBoostPriceDetail = true
+                    } label: {
+                        Label("Voir dans BoostPrice", systemImage: "bolt.fill")
+                            .font(.system(size: 15))
+                            .foregroundStyle(Color.bhVert)
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: Free cell form
 
     private var freeForm: some View {
         Form {
+            nightPriceSection
+
             if canManagePricing {
                 Section {
                     Picker("", selection: $selectedAction) {
