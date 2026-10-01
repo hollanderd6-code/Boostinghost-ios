@@ -153,6 +153,9 @@
 		AB000000000000000000D021 /* BoostPriceViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D011 /* BoostPriceViewModelTests.swift */; };
 		AB000000000000000000D031 /* BoostPriceDetailViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D013 /* BoostPriceDetailViewModelTests.swift */; };
 		AB000000000000000000C021 /* PricingCalendarBoostPriceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000C011 /* PricingCalendarBoostPriceTests.swift */; };
+		AB000000000000000000E002 /* NightScheduleModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000E001 /* NightScheduleModels.swift */; };
+		AB000000000000000000E004 /* NightPriceExplanation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000E003 /* NightPriceExplanation.swift */; };
+		AB000000000000000000E006 /* NightPriceDetailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000E005 /* NightPriceDetailTests.swift */; };
 		AB0000000000000000000501 /* SearchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000500 /* SearchModels.swift */; };
 		AB0000000000000000000503 /* SearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000502 /* SearchViewModel.swift */; };
 		AB0000000000000000000505 /* GlobalSearchSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000504 /* GlobalSearchSheet.swift */; };
@@ -360,6 +363,9 @@
 		AB0000000000000000000502 /* SearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000504 /* GlobalSearchSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalSearchSheet.swift; sourceTree = "<group>"; };
 		AB0000000000000000000600 /* CalendarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModels.swift; sourceTree = "<group>"; };
+		AB000000000000000000E001 /* NightScheduleModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightScheduleModels.swift; sourceTree = "<group>"; };
+		AB000000000000000000E003 /* NightPriceExplanation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightPriceExplanation.swift; sourceTree = "<group>"; };
+		AB000000000000000000E005 /* NightPriceDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightPriceDetailTests.swift; sourceTree = "<group>"; };
 		AB0000000000000000000602 /* JourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000604 /* SemaineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemaineView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000700 /* DayCellActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayCellActionSheet.swift; sourceTree = "<group>"; };
@@ -543,6 +549,7 @@
 				AB0000000000000000003006 /* PropertyReorderSheet.swift */,
 				AB0000000000000000000145 /* RevenusView.swift */,
 				AB0000000000000000000600 /* CalendarModels.swift */,
+				AB000000000000000000E003 /* NightPriceExplanation.swift */,
 				AB0000000000000000000602 /* JourView.swift */,
 				AB0000000000000000000604 /* SemaineView.swift */,
 				BHSPL000000000000000001 /* SplashView.swift */,
@@ -596,6 +603,7 @@
 				56A0A46F304B63FC001E71EE /* CleaningModels.swift */,
 				AB0000000000000000000431 /* HostQuestion.swift */,
 				AB000000000000000000C001 /* DynamicPricingModels.swift */,
+				AB000000000000000000E001 /* NightScheduleModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -812,6 +820,7 @@
 				AB000000000000000000C011 /* PricingCalendarBoostPriceTests.swift */,
 				AB000000000000000000D011 /* BoostPriceViewModelTests.swift */,
 				AB000000000000000000D013 /* BoostPriceDetailViewModelTests.swift */,
+				AB000000000000000000E005 /* NightPriceDetailTests.swift */,
 			);
 			path = BoostinghostTests;
 			sourceTree = "<group>";
@@ -1098,6 +1107,8 @@
 				AB000000000000000000B004 /* OwnerInvoiceCreateViewModel.swift in Sources */,
 				AB000000000000000000B006 /* OwnerInvoiceCreateView.swift in Sources */,
 				AB000000000000000000C002 /* DynamicPricingModels.swift in Sources */,
+				AB000000000000000000E002 /* NightScheduleModels.swift in Sources */,
+				AB000000000000000000E004 /* NightPriceExplanation.swift in Sources */,
 				AB0000000000000000000711 /* UpsellSheet.swift in Sources */,
 				AB000000000000000000D002 /* BoostPriceViewModel.swift in Sources */,
 				AB000000000000000000D004 /* BoostPriceView.swift in Sources */,
@@ -1121,6 +1132,7 @@
 				AB000000000000000000C021 /* PricingCalendarBoostPriceTests.swift in Sources */,
 				AB000000000000000000D021 /* BoostPriceViewModelTests.swift in Sources */,
 				AB000000000000000000D031 /* BoostPriceDetailViewModelTests.swift in Sources */,
+				AB000000000000000000E006 /* NightPriceDetailTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
