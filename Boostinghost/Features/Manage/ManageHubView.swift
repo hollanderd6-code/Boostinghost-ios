@@ -253,7 +253,7 @@ struct ManageHubView: View {
         case .owners:
             return nil
         case .boostprice:
-            guard let n = vm.boostPricePendingCount, n > 0 else { return nil }
+            guard let n = vm.boostPriceActiveCount else { return nil }
             return "\(n)"
         }
     }

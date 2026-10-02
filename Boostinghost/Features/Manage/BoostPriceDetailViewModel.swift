@@ -89,6 +89,10 @@ func boostPriceInitForm(from config: DynamicPricingConfig) -> (
     )
 }
 
+func boostPriceFormatOccupancy(_ rate: Double) -> String {
+    "\(Int(rate.rounded())) %"
+}
+
 func boostPriceFactorLabel(value: Double, factor: String) -> String {
     switch factor {
     case "market":

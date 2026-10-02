@@ -328,6 +328,74 @@ struct BoostPriceDetailViewModelTests {
         #expect(result == 2)
     }
 
+    // MARK: - IOS-BOOSTPRICE-OCCUPANCY-FIX-01 — occupancy display (0–100 scale)
+
+    @Test("occupancyRate 59 → '59 %' (no ×100)")
+    func occupancy59() {
+        #expect(boostPriceFormatOccupancy(59) == "59 %")
+    }
+
+    @Test("occupancyRate 0 → '0 %'")
+    func occupancy0() {
+        #expect(boostPriceFormatOccupancy(0) == "0 %")
+    }
+
+    @Test("occupancyRate 100 → '100 %'")
+    func occupancy100() {
+        #expect(boostPriceFormatOccupancy(100) == "100 %")
+    }
+
+    @Test("occupancyRate 59.4 → '59 %' (rounds down)")
+    func occupancy59point4() {
+        #expect(boostPriceFormatOccupancy(59.4) == "59 %")
+    }
+
+    @Test("occupancyRate 59.6 → '60 %' (rounds up)")
+    func occupancy59point6() {
+        #expect(boostPriceFormatOccupancy(59.6) == "60 %")
+    }
+
+    @Test("occupancyRate 5900 would only appear if ×100 bug survives — must not equal '5900 %' for input 59")
+    func occupancyNot5900() {
+        #expect(boostPriceFormatOccupancy(59) != "5900 %")
+    }
+
+    @Test("JSON occupancy_rate:59 decodes as 59.0 without normalization")
+    func occupancyRateDecodingDirect() throws {
+        let json = #"{"occupancy_rate": 59}"#.data(using: .utf8)!
+        let market = try decoder.decode(DynamicPricingMarket.self, from: json)
+        #expect(market.occupancyRate == 59.0)
+    }
+
+    @Test("JSON occupancy_rate:0 decodes as 0.0")
+    func occupancyRateDecodingZero() throws {
+        let json = #"{"occupancy_rate": 0}"#.data(using: .utf8)!
+        let market = try decoder.decode(DynamicPricingMarket.self, from: json)
+        #expect(market.occupancyRate == 0.0)
+    }
+
+    @Test("JSON occupancy_rate:100 decodes as 100.0")
+    func occupancyRateDecodingMax() throws {
+        let json = #"{"occupancy_rate": 100}"#.data(using: .utf8)!
+        let market = try decoder.decode(DynamicPricingMarket.self, from: json)
+        #expect(market.occupancyRate == 100.0)
+    }
+
+    @Test("JSON occupancy_rate:59.4 decodes without rounding")
+    func occupancyRateDecodingFractional() throws {
+        let json = #"{"occupancy_rate": 59.4}"#.data(using: .utf8)!
+        let market = try decoder.decode(DynamicPricingMarket.self, from: json)
+        #expect(abs((market.occupancyRate ?? 0) - 59.4) < 0.001)
+    }
+
+    @Test("end-to-end: JSON 59 → decoded 59.0 → formatted '59 %'")
+    func occupancyEndToEnd() throws {
+        let json = #"{"occupancy_rate": 59}"#.data(using: .utf8)!
+        let market = try decoder.decode(DynamicPricingMarket.self, from: json)
+        let displayed = market.occupancyRate.map { boostPriceFormatOccupancy($0) }
+        #expect(displayed == "59 %")
+    }
+
     // MARK: - DynamicPricingHistoryEntry.historyId decoding
 
     @Test("historyEntry historyId decoded when present")

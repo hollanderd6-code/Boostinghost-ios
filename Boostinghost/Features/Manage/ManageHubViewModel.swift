@@ -1,6 +1,14 @@
 import Foundation
 import Observation
 
+// MARK: - Free function (nonisolated, testable)
+
+func manageHubBoostPriceActiveCount(configs: [DynamicPricingConfig]) -> Int {
+    configs.filter { $0.isActive == true && $0.mode != .off }.count
+}
+
+// MARK: - ViewModel
+
 @Observable
 @MainActor
 final class ManageHubViewModel {
@@ -25,7 +33,7 @@ final class ManageHubViewModel {
         return used >= limit
     }
 
-    var boostPricePendingCount: Int? = nil
+    var boostPriceActiveCount: Int? = nil
 
     // Alerte diffusion — logements non prêts à la vente
     var diffusionAlertProperties: [DiffusionProperty] = []
@@ -45,7 +53,7 @@ final class ManageHubViewModel {
         async let depositsTask: [ReservationWithDeposit] = APIClient.shared.get(Endpoint.reservationsWithDeposits, agencyAll: agencyAll)
         async let subscriptionTask: SubscriptionStatus = APIClient.shared.get(Endpoint.subscriptionStatus)
         async let diffusionTask: DiffusionResponse = APIClient.shared.get(Endpoint.propertiesDiffusion, agencyAll: true)
-        async let bpDashTask: DynamicPricingDashboardResponse = APIClient.shared.get(Endpoint.dynamicPricingDashboard)
+        async let bpConfigTask: DynamicPricingConfigResponse = APIClient.shared.get(Endpoint.dynamicPricingConfig)
 
         do {
             let (props, groups) = try await (propsTask, groupsTask)
@@ -92,9 +100,8 @@ final class ManageHubViewModel {
             diffusionAlertProperties = diff.logements.filter { !$0.vendable }
         }
 
-        if let bpDash = try? await bpDashTask {
-            let pending = bpDash.properties.filter { $0.history?.status == "pending" }.count
-            boostPricePendingCount = pending > 0 ? pending : nil
+        if let bpConfig = try? await bpConfigTask {
+            boostPriceActiveCount = manageHubBoostPriceActiveCount(configs: bpConfig.configs)
         }
 
         loadState = .loaded

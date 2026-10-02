@@ -82,6 +82,8 @@
 		AB0000000000000000000028 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000137 /* Message.swift */; };
 		AB0000000000000000000029 /* ConversationDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000138 /* ConversationDetailViewModel.swift */; };
 		AB000000000000000000002A /* ConversationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000139 /* ConversationDetailView.swift */; };
+		AB0000000000000000001F02 /* MessageTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000001F01 /* MessageTranslation.swift */; };
+		AB0000000000000000000F13 /* MessageTranslationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000F12 /* MessageTranslationTests.swift */; };
 		AB000000000000000000002B /* Property.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013A /* Property.swift */; };
 		AB000000000000000000002C /* ManageHubViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013B /* ManageHubViewModel.swift */; };
 		AB000000000000000000002D /* ManageHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000013C /* ManageHubView.swift */; };
@@ -152,6 +154,7 @@
 		AB000000000000000000D008 /* BoostPriceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D007 /* BoostPriceDetailView.swift */; };
 		AB000000000000000000D021 /* BoostPriceViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D011 /* BoostPriceViewModelTests.swift */; };
 		AB000000000000000000D031 /* BoostPriceDetailViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000D013 /* BoostPriceDetailViewModelTests.swift */; };
+		AB000000000000000000F021 /* ManageHubViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000F011 /* ManageHubViewModelTests.swift */; };
 		AB000000000000000000C021 /* PricingCalendarBoostPriceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000C011 /* PricingCalendarBoostPriceTests.swift */; };
 		AB000000000000000000E002 /* NightScheduleModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000E001 /* NightScheduleModels.swift */; };
 		AB000000000000000000E004 /* NightPriceExplanation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000E003 /* NightPriceExplanation.swift */; };
@@ -288,6 +291,8 @@
 		AB0000000000000000000137 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		AB0000000000000000000138 /* ConversationDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationDetailViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000139 /* ConversationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationDetailView.swift; sourceTree = "<group>"; };
+		AB0000000000000000001F01 /* MessageTranslation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTranslation.swift; sourceTree = "<group>"; };
+		AB0000000000000000000F12 /* MessageTranslationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTranslationTests.swift; sourceTree = "<group>"; };
 		AB000000000000000000013A /* Property.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Property.swift; sourceTree = "<group>"; };
 		AB000000000000000000013B /* ManageHubViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageHubViewModel.swift; sourceTree = "<group>"; };
 		AB000000000000000000013C /* ManageHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageHubView.swift; sourceTree = "<group>"; };
@@ -358,6 +363,7 @@
 		AB000000000000000000D007 /* BoostPriceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceDetailView.swift; sourceTree = "<group>"; };
 		AB000000000000000000D011 /* BoostPriceViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceViewModelTests.swift; sourceTree = "<group>"; };
 		AB000000000000000000D013 /* BoostPriceDetailViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostPriceDetailViewModelTests.swift; sourceTree = "<group>"; };
+		AB000000000000000000F011 /* ManageHubViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageHubViewModelTests.swift; sourceTree = "<group>"; };
 		AB000000000000000000C011 /* PricingCalendarBoostPriceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricingCalendarBoostPriceTests.swift; sourceTree = "<group>"; };
 		AB0000000000000000000500 /* SearchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchModels.swift; sourceTree = "<group>"; };
 		AB0000000000000000000502 /* SearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewModel.swift; sourceTree = "<group>"; };
@@ -639,6 +645,7 @@
 				AB0000000000000000000136 /* MessagesView.swift */,
 				AB0000000000000000000138 /* ConversationDetailViewModel.swift */,
 				AB0000000000000000000139 /* ConversationDetailView.swift */,
+				AB0000000000000000001F01 /* MessageTranslation.swift */,
 				AB0000000000000000000F02 /* TemplatePickerSheet.swift */,
 				AB0000000000000000000F04 /* NoteSheet.swift */,
 			);
@@ -820,7 +827,9 @@
 				AB000000000000000000C011 /* PricingCalendarBoostPriceTests.swift */,
 				AB000000000000000000D011 /* BoostPriceViewModelTests.swift */,
 				AB000000000000000000D013 /* BoostPriceDetailViewModelTests.swift */,
+				AB000000000000000000F011 /* ManageHubViewModelTests.swift */,
 				AB000000000000000000E005 /* NightPriceDetailTests.swift */,
+				AB0000000000000000000F12 /* MessageTranslationTests.swift */,
 			);
 			path = BoostinghostTests;
 			sourceTree = "<group>";
@@ -1015,6 +1024,7 @@
 				AB0000000000000000000028 /* Message.swift in Sources */,
 				AB0000000000000000000029 /* ConversationDetailViewModel.swift in Sources */,
 				AB000000000000000000002A /* ConversationDetailView.swift in Sources */,
+				AB0000000000000000001F02 /* MessageTranslation.swift in Sources */,
 				AB0000000000000000000F01 /* TemplatePickerSheet.swift in Sources */,
 				AB0000000000000000000F03 /* NoteSheet.swift in Sources */,
 				AB000000000000000000002B /* Property.swift in Sources */,
@@ -1132,7 +1142,9 @@
 				AB000000000000000000C021 /* PricingCalendarBoostPriceTests.swift in Sources */,
 				AB000000000000000000D021 /* BoostPriceViewModelTests.swift in Sources */,
 				AB000000000000000000D031 /* BoostPriceDetailViewModelTests.swift in Sources */,
+				AB000000000000000000F021 /* ManageHubViewModelTests.swift in Sources */,
 				AB000000000000000000E006 /* NightPriceDetailTests.swift in Sources */,
+				AB0000000000000000000F13 /* MessageTranslationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

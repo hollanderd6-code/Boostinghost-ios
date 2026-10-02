@@ -591,12 +591,12 @@ struct BoostPriceDetailView: View {
                                     .font(.system(size: 14))
                                     .foregroundStyle(Color.bhAttenue)
                                 Spacer()
-                                Text("\(Int((occ * 100).rounded())) %")
+                                Text(boostPriceFormatOccupancy(occ))
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundStyle(Color.bhEncre)
                             }
                         }
-                        .accessibilityLabel("Taux d'occupation : \(Int((occ * 100).rounded())) pourcent")
+                        .accessibilityLabel("Taux d'occupation : \(Int(occ.rounded())) pourcent")
                     }
                 }
             }
