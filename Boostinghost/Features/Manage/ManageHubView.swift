@@ -420,10 +420,11 @@ struct ManageHubView: View {
 // clé lue par public/js/auth-fetch.js côté site.
 
 enum ManageWebShortcut: String, CaseIterable, Hashable {
-    case welcomeBooks, smartLocks, reporting
+    case paymentLink, welcomeBooks, smartLocks, reporting
 
     var title: String {
         switch self {
+        case .paymentLink:  return "Lien de paiement"
         case .welcomeBooks: return "Livrets d'accueil"
         case .smartLocks:   return "Serrures connectées"
         case .reporting:    return "Reporting"
@@ -432,6 +433,7 @@ enum ManageWebShortcut: String, CaseIterable, Hashable {
 
     var icon: String {
         switch self {
+        case .paymentLink:  return "link"
         case .welcomeBooks: return "book"
         case .smartLocks:   return "lock"
         case .reporting:    return "chart.bar"
@@ -441,6 +443,7 @@ enum ManageWebShortcut: String, CaseIterable, Hashable {
     /// Même permission que la carte du site (public/manage.html, data-perm).
     var permission: String {
         switch self {
+        case .paymentLink:  return "can_view_payments"
         case .welcomeBooks: return "can_view_properties"
         case .smartLocks:   return "can_view_smart_locks"
         case .reporting:    return "can_view_reporting"
@@ -450,6 +453,7 @@ enum ManageWebShortcut: String, CaseIterable, Hashable {
     var url: URL {
         let path: String
         switch self {
+        case .paymentLink:  path = "/paiement.html"
         case .welcomeBooks: path = "/livrets.html"
         case .smartLocks:   path = "/serrures.html"
         case .reporting:    path = "/revenus.html"
