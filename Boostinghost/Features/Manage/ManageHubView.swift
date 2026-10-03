@@ -465,13 +465,15 @@ enum ManageWebShortcut: String, CaseIterable, Hashable {
 struct ManageWebScreen: View {
     let shortcut: ManageWebShortcut
     @Environment(\.dismiss) private var dismiss
+    @Environment(AuthStore.self) private var authStore
     @State private var isLoading = true
     @State private var loadError: String?
 
     var body: some View {
         ZStack {
             Color.bhGradientMid.ignoresSafeArea()
-            ManageWebView(url: shortcut.url, isLoading: $isLoading, loadError: $loadError) {
+            ManageWebView(url: shortcut.url, agencyAll: authStore.agencyAll,
+                          isLoading: $isLoading, loadError: $loadError) {
                 dismiss()
             }
             .ignoresSafeArea(edges: .bottom)
@@ -501,6 +503,9 @@ struct ManageWebScreen: View {
 
 private struct ManageWebView: UIViewRepresentable {
     let url: URL
+    /// Vue « Tous les comptes » de l'app → même vue côté site (auth-fetch.js
+    /// ajoute ?agency=all aux appels API quand bh_agency_view vaut 'all').
+    let agencyAll: Bool
     @Binding var isLoading: Bool
     @Binding var loadError: String?
     let onLeave: () -> Void
@@ -519,10 +524,16 @@ private struct ManageWebView: UIViewRepresentable {
                 forMainFrameOnly: true
             ))
         }
+        controller.addUserScript(WKUserScript(
+            source: "try { localStorage.setItem('bh_agency_view', '\(agencyAll ? "all" : "mine")'); } catch (e) {}",
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        ))
         // La navigation du site (barre latérale, onglets, en-tête mobile) fait doublon
         // avec celle de l'app : on la masque.
+        // La marge basse du site (130 px + zone sûre) est conservée : la barre
+        // d'onglets de l'app flotte par-dessus la page et masquerait le dernier bouton.
         let css = ".gx-tabbar,.gx-aside,.bhr-tabs,.bhr-top,.bhr-rail,.mobile-tabs{display:none!important}"
-            + ".bhp-stack{padding-bottom:40px!important}"
         controller.addUserScript(WKUserScript(
             source: "var s=document.createElement('style');s.textContent='\(css)';document.documentElement.appendChild(s);",
             injectionTime: .atDocumentStart,
