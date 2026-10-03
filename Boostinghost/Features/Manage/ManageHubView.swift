@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 // MARK: - Entrées du sommaire
 
@@ -91,6 +92,9 @@ struct ManageHubView: View {
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationDestination(for: ManageEntry.self) { entry in
                         subScreenView(for: entry)
+                    }
+                    .navigationDestination(for: ManageWebShortcut.self) { shortcut in
+                        ManageWebScreen(shortcut: shortcut)
                     }
             }
             .task { await reload() }
@@ -294,6 +298,15 @@ struct ManageHubView: View {
             SectionLabel(text: "Raccourcis")
 
             ListCard {
+                ForEach(visibleWebShortcuts, id: \.self) { shortcut in
+                    NavigationLink(value: shortcut) {
+                        CardRow(showSeparator: true) {
+                            shortcutRow(icon: shortcut.icon, label: shortcut.title)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 Button {
                     if vm.isAtStarterLimit {
                         showPlanLimitAlert = true
@@ -324,6 +337,10 @@ struct ManageHubView: View {
                 .disabled(vm.isSyncing)
             }
         }
+    }
+
+    private var visibleWebShortcuts: [ManageWebShortcut] {
+        ManageWebShortcut.allCases.filter { authStore.session?.can($0.permission) ?? false }
     }
 
     private var addPropertyQuota: String? {
@@ -391,6 +408,184 @@ struct ManageHubView: View {
         case .cleaning:   CleaningView()
         case .owners:     OwnersView()
         case .stays:      StaysView()
+        }
+    }
+}
+
+// MARK: - Raccourcis web (Livrets, Serrures, Reporting)
+//
+// Ces trois écrans n'existent pas encore en natif. En attendant, ils ouvrent les pages
+// du site (déjà au style de l'app) dans un WKWebView, avec la session de l'app :
+// le jeton du Keychain est posé dans localStorage["lcc_token"] avant le chargement,
+// clé lue par public/js/auth-fetch.js côté site.
+
+enum ManageWebShortcut: String, CaseIterable, Hashable {
+    case welcomeBooks, smartLocks, reporting
+
+    var title: String {
+        switch self {
+        case .welcomeBooks: return "Livrets d'accueil"
+        case .smartLocks:   return "Serrures connectées"
+        case .reporting:    return "Reporting"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .welcomeBooks: return "book"
+        case .smartLocks:   return "lock"
+        case .reporting:    return "chart.bar"
+        }
+    }
+
+    /// Même permission que la carte du site (public/manage.html, data-perm).
+    var permission: String {
+        switch self {
+        case .welcomeBooks: return "can_view_properties"
+        case .smartLocks:   return "can_view_smart_locks"
+        case .reporting:    return "can_view_reporting"
+        }
+    }
+
+    var url: URL {
+        let path: String
+        switch self {
+        case .welcomeBooks: path = "/livrets.html"
+        case .smartLocks:   path = "/serrures.html"
+        case .reporting:    path = "/revenus.html"
+        }
+        return URL(string: "https://www.boostinghost.fr" + path)!
+    }
+}
+
+struct ManageWebScreen: View {
+    let shortcut: ManageWebShortcut
+    @Environment(\.dismiss) private var dismiss
+    @State private var isLoading = true
+    @State private var loadError: String?
+
+    var body: some View {
+        ZStack {
+            Color.bhGradientMid.ignoresSafeArea()
+            ManageWebView(url: shortcut.url, isLoading: $isLoading, loadError: $loadError) {
+                dismiss()
+            }
+            .ignoresSafeArea(edges: .bottom)
+            if isLoading {
+                ProgressView().tint(Color.bhVert)
+            }
+            if let loadError {
+                VStack(spacing: 12) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .font(.system(size: 36))
+                        .foregroundStyle(Color.bhAttenue)
+                    Text(loadError)
+                        .font(.bhCorps)
+                        .foregroundStyle(Color.bhAttenue)
+                        .multilineTextAlignment(.center)
+                    Button("Retour") { dismiss() }
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.bhVert)
+                }
+                .padding(24)
+            }
+        }
+        // La page web a son propre en-tête avec bouton retour (renvoyé vers dismiss()).
+        .toolbar(.hidden, for: .navigationBar)
+    }
+}
+
+private struct ManageWebView: UIViewRepresentable {
+    let url: URL
+    @Binding var isLoading: Bool
+    @Binding var loadError: String?
+    let onLeave: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        let controller = WKUserContentController()
+
+        // Session de l'app → localStorage du site, avant tout script de la page.
+        if let token = KeychainStore.load(), let json = jsonString(token) {
+            controller.addUserScript(WKUserScript(
+                source: "try { localStorage.setItem('lcc_token', \(json)); } catch (e) {}",
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: true
+            ))
+        }
+        // La navigation du site (barre latérale, onglets, en-tête mobile) fait doublon
+        // avec celle de l'app : on la masque.
+        let css = ".gx-tabbar,.gx-aside,.bhr-tabs,.bhr-top,.bhr-rail,.mobile-tabs{display:none!important}"
+            + ".bhp-stack{padding-bottom:40px!important}"
+        controller.addUserScript(WKUserScript(
+            source: "var s=document.createElement('style');s.textContent='\(css)';document.documentElement.appendChild(s);",
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        ))
+        config.userContentController = controller
+
+        let wv = WKWebView(frame: .zero, configuration: config)
+        wv.navigationDelegate = context.coordinator
+        wv.uiDelegate = context.coordinator
+        wv.allowsBackForwardNavigationGestures = true
+        wv.isOpaque = false
+        wv.backgroundColor = .clear
+        wv.load(URLRequest(url: url))
+        return wv
+    }
+
+    func updateUIView(_ wv: WKWebView, context: Context) {}
+
+    private func jsonString(_ s: String) -> String? {
+        guard let data = try? JSONEncoder().encode(s) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
+        var parent: ManageWebView
+        init(_ parent: ManageWebView) { self.parent = parent }
+
+        func webView(_ webView: WKWebView,
+                     decidePolicyFor action: WKNavigationAction) async -> WKNavigationActionPolicy {
+            let path = action.request.url?.path ?? ""
+            // Le bouton retour de la page renvoie vers le sommaire Gestion du site,
+            // ou vers la connexion si la session a expiré : on revient à l'écran natif.
+            if path == "/manage.html" || path == "/app.html" || path == "/login.html" {
+                parent.onLeave()
+                return .cancel
+            }
+            return .allow
+        }
+
+        // Liens « Aperçu » / « Voir le livret » (window.open) : ouverts dans Safari.
+        func webView(_ webView: WKWebView, createWebViewWith _: WKWebViewConfiguration,
+                     for action: WKNavigationAction, windowFeatures _: WKWindowFeatures) -> WKWebView? {
+            if let url = action.request.url, url.scheme == "https" {
+                UIApplication.shared.open(url)
+            }
+            return nil
+        }
+
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation _: WKNavigation!) {
+            parent.isLoading = true
+            parent.loadError = nil
+        }
+
+        func webView(_ webView: WKWebView, didFinish _: WKNavigation!) {
+            parent.isLoading = false
+        }
+
+        func webView(_ webView: WKWebView, didFail _: WKNavigation!, withError error: Error) {
+            parent.isLoading = false
+            parent.loadError = error.localizedDescription
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation _: WKNavigation!, withError error: Error) {
+            parent.isLoading = false
+            if (error as NSError).code == NSURLErrorCancelled { return }
+            parent.loadError = error.localizedDescription
         }
     }
 }
